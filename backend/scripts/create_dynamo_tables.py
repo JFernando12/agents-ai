@@ -45,6 +45,8 @@ TABLE_NAMES = {
     "unanswered_comment":  os.getenv("UNANSWERED_COMMENT_TABLE", "ai-unanswered-comment"),
     "tool":                os.getenv("TOOL_TABLE",               "ai-tool"),
     "product":             os.getenv("PRODUCT_TABLE",            "ai-product"),
+    "account":             os.getenv("ACCOUNT_TABLE",            "ai-account"),
+    "user":                os.getenv("USER_TABLE",               "ai-user"),
 }
 
 # Default billing / throughput for every table
@@ -338,6 +340,56 @@ TABLES = [
                 "IndexName": "slug-index",
                 "KeySchema": [
                     {"AttributeName": "slug", "KeyType": "HASH"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+        ],
+        "BillingMode": BILLING_MODE,
+    },
+
+    # ------------------------------------------------------------------
+    # ai-account  (organizations / tenants)
+    # PK: id (S)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["account"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id", "AttributeType": "S"},
+        ],
+        "BillingMode": BILLING_MODE,
+    },
+
+    # ------------------------------------------------------------------
+    # ai-user  (users within accounts)
+    # PK: id (S)
+    # GSI email-index          →  email (S)
+    # GSI account_id-index     →  account_id (S)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["user"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id",         "AttributeType": "S"},
+            {"AttributeName": "email",      "AttributeType": "S"},
+            {"AttributeName": "account_id", "AttributeType": "S"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "email-index",
+                "KeySchema": [
+                    {"AttributeName": "email", "KeyType": "HASH"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+            {
+                "IndexName": "account_id-index",
+                "KeySchema": [
+                    {"AttributeName": "account_id", "KeyType": "HASH"},
                 ],
                 "Projection": {"ProjectionType": "ALL"},
             },

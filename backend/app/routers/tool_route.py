@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
-from app.middleware import get_current_user
+from app.middleware import get_current_user, require_roles
 from app.utils import success_response
 from app.services import tool_service
 from app.models import User, ToolCreate, ToolUpdate, ParseToolDocsRequest
@@ -33,21 +33,7 @@ def get_all_tools(
     cursor: str | None = Query(default=None, description="Pagination cursor returned by the previous call."),
     current_user: User = Depends(get_current_user),
 ):
-    result = tool_service.get_all(limit=limit, cursor=cursor)
-    return JSONResponse(
-        status_code=200,
-        content=success_response(result, "Tools retrieved successfully")
-    )
-
-
-@tool_router.get("/product/{product_id}")
-def get_tools_by_product(
-    product_id: str,
-    limit: int | None = Query(default=None, ge=1, le=500, description="Items per page. Omit to fetch all."),
-    cursor: str | None = Query(default=None, description="Pagination cursor returned by the previous call."),
-    current_user: User = Depends(get_current_user),
-):
-    result = tool_service.get_by_product(product_id, limit=limit, cursor=cursor)
+    result = tool_service.get_all(limit=limit, cursor=cursor, account_id=current_user.account_id)
     return JSONResponse(
         status_code=200,
         content=success_response(result, "Tools retrieved successfully")
@@ -71,9 +57,9 @@ def get_tool(
 @tool_router.post("/")
 def create_tool(
     tool_data: ToolCreate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin"))
 ):
-    tool_id = tool_service.create(tool_data)
+    tool_id = tool_service.create(tool_data, account_id=current_user.account_id)
     if not tool_id:
         return JSONResponse(status_code=500, content={"error": "Failed to create tool"})
     return JSONResponse(
@@ -86,7 +72,7 @@ def create_tool(
 def update_tool(
     tool_id: str,
     tool_data: ToolUpdate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin"))
 ):
     updated = tool_service.update(tool_id, tool_data)
     if not updated:
@@ -100,7 +86,7 @@ def update_tool(
 @tool_router.delete("/{tool_id}")
 def delete_tool(
     tool_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin"))
 ):
     deleted = tool_service.delete(tool_id)
     if not deleted:

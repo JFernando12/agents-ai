@@ -15,7 +15,6 @@ import {
   useUpdateTool,
   useDeleteTool,
 } from '@/lib/hooks/useTools';
-import { useAllProducts } from '@/lib/hooks/useProducts';
 import { useAgents } from '@/lib/hooks/useAgents';
 import { apiTools } from '@/lib/api/tools';
 import ModalDelete from '../ui/ModalDelete';
@@ -56,11 +55,6 @@ export default function AgentFormTools({
     isLoading: loadingTools,
     isFetching: fetchingTools,
   } = useAllTools();
-  const {
-    data: products,
-    isLoading: loadingProducts,
-    isFetching: fetchingProducts,
-  } = useAllProducts();
   const { data: allAgents } = useAgents();
   const createTool = useCreateTool();
   const updateTool = useUpdateTool();
@@ -90,9 +84,7 @@ export default function AgentFormTools({
     assignedSubAgentIds.includes(a.id),
   );
 
-  // ── Derived data ──────────────────────────────────────────────────────────
-
-  const productMap = new Map((products ?? []).map((p) => [p.id, p]));
+  // ── Derived data ─────────────────────────────────────────────────────────
 
   const assignedGrouped = groupTools(
     (tools ?? []).filter((t) => assignedToolIds.includes(t.id)),
@@ -103,10 +95,7 @@ export default function AgentFormTools({
     (t) =>
       !searchLower ||
       t.display_name.toLowerCase().includes(searchLower) ||
-      t.name.toLowerCase().includes(searchLower) ||
-      (productMap.get(t.product_id)?.name ?? '')
-        .toLowerCase()
-        .includes(searchLower),
+      t.name.toLowerCase().includes(searchLower),
   );
   const pickerGrouped = groupTools(pickerFiltered);
 
@@ -159,7 +148,6 @@ export default function AgentFormTools({
 
     if (mode === 'create') {
       const payload: ToolCreate = {
-        product_id: form.product_id,
         section: form.section || null,
         name: form.name,
         display_name: form.display_name,
@@ -174,7 +162,6 @@ export default function AgentFormTools({
         onToolsChange([...assignedTools, { id: result.id, enabled: true }]);
     } else if (mode === 'edit' && editingId) {
       const payload: ToolUpdate = {
-        product_id: form.product_id,
         section: form.section || null,
         name: form.name,
         display_name: form.display_name,
@@ -287,8 +274,8 @@ export default function AgentFormTools({
   };
 
   const isMutating = createTool.isPending || updateTool.isPending;
-  const isLoading = loadingTools || loadingProducts;
-  const isFetching = fetchingTools || fetchingProducts;
+  const isLoading = loadingTools;
+  const isFetching = fetchingTools;
 
   // ── Render form ───────────────────────────────────────────────────────────
 
@@ -297,7 +284,6 @@ export default function AgentFormTools({
       <ToolForm
         mode={mode}
         form={form}
-        products={products ?? []}
         isMutating={isMutating}
         jsonError={jsonError}
         onFormChange={setForm}
@@ -402,7 +388,7 @@ export default function AgentFormTools({
       {!isLoading &&
         !isFetching &&
         assignedToolIds.length > 0 &&
-        assignedGrouped.size === 0 && (
+        assignedGrouped.length === 0 && (
           <div className="rounded-lg border border-orange-200 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/[0.06] px-4 py-3 text-xs text-orange-700 dark:text-orange-400">
             Las capacidades asignadas no se encontraron en el catálogo. Puede
             que hayan sido eliminadas.
@@ -416,66 +402,40 @@ export default function AgentFormTools({
           </div>
         )}
 
-      {/* Assigned tools grouped by product → section */}
+      {/* Assigned tools grouped by section */}
       {!isLoading &&
         !isFetching &&
         assignedToolIds.length > 0 &&
-        assignedGrouped.size > 0 &&
-        Array.from(assignedGrouped.entries()).map(
-          ([productId, sectionGroups]) => {
-            const product = productMap.get(productId);
-            return (
-              <div key={productId} className="space-y-3">
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {product?.name ?? 'Sin producto'}
-                  </span>
-                  {product?.description && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      — {product.description}
-                    </span>
-                  )}
-                  <div className="flex-1 h-px bg-gray-200 dark:bg-white/[0.08]" />
-                </div>
-
-                {sectionGroups.map(({ section, tools: sectionTools }) => (
-                  <div key={section} className="space-y-2">
-                    {section && (
-                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 pl-1 ml-1 border-l-2 border-gray-300 dark:border-white/[0.12]">
-                        {section}
-                      </p>
-                    )}
-                    {sectionTools.map((tool) => (
-                      <AssignedToolCard
-                        key={tool.id}
-                        tool={tool}
-                        isEnabled={
-                          assignedTools.find((t) => t.id === tool.id)
-                            ?.enabled ?? true
-                        }
-                        isExpanded={expandedToolId === tool.id}
-                        isDeleting={deleteTool.isPending}
-                        onToggleExpand={() =>
-                          setExpandedToolId(
-                            expandedToolId === tool.id ? null : tool.id,
-                          )
-                        }
-                        onToggleActive={() => handleToggleActive(tool)}
-                        onEdit={() => handleEdit(tool)}
-                        onUnassign={() =>
-                          onToolsChange(
-                            assignedTools.filter((t) => t.id !== tool.id),
-                          )
-                        }
-                        onDelete={() => setToolToDelete(tool.id)}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            );
-          },
-        )}
+        assignedGrouped.length > 0 &&
+        assignedGrouped.map(({ section, tools: sectionTools }) => (
+          <div key={section} className="space-y-2">
+            {section && (
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 pl-1 ml-1 border-l-2 border-gray-200 dark:border-white/[0.1]">
+                {section}
+              </p>
+            )}
+            {sectionTools.map((tool) => (
+              <AssignedToolCard
+                key={tool.id}
+                tool={tool}
+                isEnabled={
+                  assignedTools.find((t) => t.id === tool.id)?.enabled ?? true
+                }
+                isExpanded={expandedToolId === tool.id}
+                isDeleting={deleteTool.isPending}
+                onToggleExpand={() =>
+                  setExpandedToolId(expandedToolId === tool.id ? null : tool.id)
+                }
+                onToggleActive={() => handleToggleActive(tool)}
+                onEdit={() => handleEdit(tool)}
+                onUnassign={() =>
+                  onToolsChange(assignedTools.filter((t) => t.id !== tool.id))
+                }
+                onDelete={() => setToolToDelete(tool.id)}
+              />
+            ))}
+          </div>
+        ))}
 
       {/* Delete confirmation */}
       <ModalDelete
@@ -568,7 +528,6 @@ export default function AgentFormTools({
         <CatalogPicker
           tools={tools ?? []}
           pickerGrouped={pickerGrouped}
-          productMap={productMap}
           assignedToolIds={assignedToolIds}
           catalogSearch={catalogSearch}
           onSearchChange={setCatalogSearch}

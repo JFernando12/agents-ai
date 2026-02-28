@@ -18,6 +18,7 @@ class CreateLog(BaseModel):
     agent_id: str
     agent_name: str
     action: str
+    account_id: str = 'default'
     agent_before_state: Agent | None = None
     agent_after_state: Agent | None = None
     detail: str | None = None

@@ -27,7 +27,6 @@ class ToolRepository(BaseDynamoDBRepository):
     def _map_to_tool(self, item: dict) -> Tool:
         return Tool(
             id=item['id'],
-            product_id=item.get('product_id', ''),
             section=item.get('section') or None,
             name=item['name'],
             display_name=item['display_name'],
@@ -41,13 +40,13 @@ class ToolRepository(BaseDynamoDBRepository):
             updated_at=datetime.fromtimestamp(self._decimal_to_float(item['updated_at']) / 1000),
         )
 
-    def create(self, tool_data: ToolCreate) -> str:
+    def create(self, tool_data: ToolCreate, account_id: str = 'default') -> str:
         tool_id = str(uuid.uuid4())
         now = int(datetime.now().timestamp() * 1000)
 
         item = {
             'id': tool_id,
-            'product_id': tool_data.product_id,
+            'account_id': account_id,
             'section': tool_data.section or '',
             'name': tool_data.name,
             'display_name': tool_data.display_name,
@@ -103,6 +102,7 @@ class ToolRepository(BaseDynamoDBRepository):
         self,
         limit: int | None = None,
         cursor: str | None = None,
+        account_id: str | None = None,
     ) -> tuple[list[Tool], str | None]:
         """Query all tools using all_tools GSI with constant partition key."""
         try:
@@ -110,6 +110,10 @@ class ToolRepository(BaseDynamoDBRepository):
                 'IndexName': 'all_tools-index',
                 'KeyConditionExpression': Key('all_tools').eq('1')
             }
+            if account_id:
+                kwargs['FilterExpression'] = '#acc = :account_id'
+                kwargs['ExpressionAttributeValues'] = {':account_id': account_id}
+                kwargs['ExpressionAttributeNames'] = {'#acc': 'account_id'}
             if cursor:
                 kwargs['ExclusiveStartKey'] = _decode_cursor(cursor)
 
@@ -136,51 +140,11 @@ class ToolRepository(BaseDynamoDBRepository):
             print(f"Error getting all tools: {e}")
             return [], None
 
-    def get_by_product(
-        self,
-        product_id: str,
-        limit: int | None = None,
-        cursor: str | None = None,
-    ) -> tuple[list[Tool], str | None]:
-        """Query tools by product_id using GSI."""
-        try:
-            kwargs: dict = {
-                'IndexName': 'product_id-index',
-                'KeyConditionExpression': Key('product_id').eq(product_id)
-            }
-            if cursor:
-                kwargs['ExclusiveStartKey'] = _decode_cursor(cursor)
-
-            if limit is None:
-                # Get all items for this product
-                items: list[dict] = []
-                while True:
-                    response = self.tool_table.query(**kwargs)
-                    items.extend(response.get('Items', []))
-                    last_key = response.get('LastEvaluatedKey')
-                    if not last_key:
-                        break
-                    kwargs['ExclusiveStartKey'] = last_key
-                return [self._map_to_tool(item) for item in items], None
-            else:
-                # Single page with limit
-                kwargs['Limit'] = limit
-                response = self.tool_table.query(**kwargs)
-                items = response.get('Items', [])
-                last_key = response.get('LastEvaluatedKey')
-                next_cursor = _encode_cursor(last_key) if last_key else None
-                return [self._map_to_tool(item) for item in items], next_cursor
-        except Exception as e:
-            print(f"Error getting tools for product {product_id}: {e}")
-            return [], None
-
     def update(self, tool_id: str, tool_data: ToolUpdate) -> bool:
         try:
             now = int(datetime.now().timestamp() * 1000)
 
             updates: dict = {'updated_at': now}
-            if tool_data.product_id is not None:
-                updates['product_id'] = tool_data.product_id
             if tool_data.section is not None:
                 updates['section'] = tool_data.section
             if tool_data.name is not None:

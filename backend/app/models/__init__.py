@@ -4,8 +4,9 @@ from .document import Document, DocumentUpdate, DocumentUpload
 from .conversation import Conversation, Message, ConversationCreate
 from .log import Log, CreateLog, LogsResponse
 from .tool import Tool, ToolCreate, ToolUpdate, ToolConfig, ToolResult, ParseToolDocsRequest, ToolPage
-from .product import Product, ProductCreate, ProductUpdate
-from .user import User
+from .user import User, UserRecord, UserCreate, UserUpdate, UserResetPassword, UserPublic, UserRole
+from .account import Account, AccountCreate, AccountUpdate, AccountPublic
+from .auth import LoginRequest, LoginResponse
 from .unanswered_question import (
     Unanswered,
     UnansweredCreate,
@@ -38,10 +39,19 @@ __all__ = [
     "ToolConfig",
     "ToolResult",
     "ParseToolDocsRequest",
-    "Product",
-    "ProductCreate",
-    "ProductUpdate",
     "User",
+    "UserRecord",
+    "UserCreate",
+    "UserUpdate",
+    "UserResetPassword",
+    "UserPublic",
+    "UserRole",
+    "Account",
+    "AccountCreate",
+    "AccountUpdate",
+    "AccountPublic",
+    "LoginRequest",
+    "LoginResponse",
     "Unanswered",
     "UnansweredCreate",
     "UnansweredUpdate",

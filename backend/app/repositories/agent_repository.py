@@ -18,7 +18,8 @@ class AgentRepository(BaseDynamoDBRepository):
     def create(
             self,
             agent_data: AgentCreate,
-            user: str
+            user: str,
+            account_id: str = 'default'
         ) -> str:
         agent_id = str(uuid.uuid4())
         current_time_timestamp = int(datetime.now().timestamp() * 1000)
@@ -26,6 +27,7 @@ class AgentRepository(BaseDynamoDBRepository):
         item = {
             'id': agent_id,
             'user': user,
+            'account_id': account_id,
             'name': agent_data.name,
             'description': agent_data.description,
             'status': agent_data.status,
@@ -82,16 +84,36 @@ class AgentRepository(BaseDynamoDBRepository):
     
     def get_all(
             self,
-            is_public: bool | None = None
+            is_public: bool | None = None,
+            account_id: str | None = None
         ) -> list[Agent]:
+        filter_expr = None
+        filter_values: dict = {}
+        filter_names: dict = {}
+
+        if account_id is not None:
+            filter_expr = '#acc = :account_id'
+            filter_values[':account_id'] = account_id
+            filter_names['#acc'] = 'account_id'
+
         if is_public is not None:
-            response = self.agent_table.query(
-                IndexName='is_public-index',
-                KeyConditionExpression='is_public = :is_public',
-                ExpressionAttributeValues={':is_public': 1 if is_public else 0}
-            )
+            query_kwargs: dict = {
+                'IndexName': 'is_public-index',
+                'KeyConditionExpression': 'is_public = :is_public',
+                'ExpressionAttributeValues': {':is_public': 1 if is_public else 0},
+            }
+            if filter_expr:
+                query_kwargs['FilterExpression'] = filter_expr
+                query_kwargs['ExpressionAttributeValues'].update(filter_values)
+                query_kwargs['ExpressionAttributeNames'] = filter_names
+            response = self.agent_table.query(**query_kwargs)
         else:
-            response = self.agent_table.scan()
+            scan_kwargs: dict = {}
+            if filter_expr:
+                scan_kwargs['FilterExpression'] = filter_expr
+                scan_kwargs['ExpressionAttributeValues'] = filter_values
+                scan_kwargs['ExpressionAttributeNames'] = filter_names
+            response = self.agent_table.scan(**scan_kwargs)
         
         agents = []
         for item in response['Items']:

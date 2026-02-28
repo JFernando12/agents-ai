@@ -5,8 +5,9 @@ from .document_route import document_router
 from .log_route import log_router
 from .message_route import message_router
 from .tool_route import tool_router
-from .product_route import product_router
 from .unanswered_route import unanswered_router
+from .auth_route import auth_router
+from .account_route import account_router
 
 __all__ = [
     "agent_router",
@@ -16,6 +17,7 @@ __all__ = [
     "log_router",
     "message_router",
     "tool_router",
-    "product_router",
     "unanswered_router",
+    "auth_router",
+    "account_router",
 ]

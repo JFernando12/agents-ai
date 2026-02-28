@@ -5,7 +5,6 @@ from datetime import datetime
 
 class Tool(BaseModel):
     id: str
-    product_id: str
     section: str | None = None
     name: str           # snake_case function name used by the LLM
     display_name: str   # human-readable label
@@ -20,7 +19,6 @@ class Tool(BaseModel):
 
 
 class ToolCreate(BaseModel):
-    product_id: str
     section: str | None = None
     name: str
     display_name: str
@@ -31,7 +29,6 @@ class ToolCreate(BaseModel):
     input_schema: dict[str, Any]
 
 class ToolUpdate(BaseModel):
-    product_id: str | None = None
     section: str | None = None
     name: str | None = None
     display_name: str | None = None

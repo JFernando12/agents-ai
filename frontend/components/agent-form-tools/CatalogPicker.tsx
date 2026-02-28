@@ -1,14 +1,13 @@
 'use client';
 
 import { Search, X, Check } from 'lucide-react';
-import { Tool, Product } from '@/types';
+import { Tool } from '@/types';
 import { ToolGroup } from './utils';
 import { MethodBadge } from './MethodBadge';
 
 interface CatalogPickerProps {
   tools: Tool[];
-  pickerGrouped: Map<string, ToolGroup>;
-  productMap: Map<string, Product>;
+  pickerGrouped: ToolGroup;
   assignedToolIds: string[];
   catalogSearch: string;
   onSearchChange: (value: string) => void;
@@ -19,7 +18,6 @@ interface CatalogPickerProps {
 export function CatalogPicker({
   tools,
   pickerGrouped,
-  productMap,
   assignedToolIds,
   catalogSearch,
   onSearchChange,
@@ -76,64 +74,52 @@ export function CatalogPicker({
               Sin resultados para &quot;{catalogSearch}&quot;.
             </p>
           )}
-          {Array.from(pickerGrouped.entries()).map(
-            ([productId, sectionGroups]) => {
-              const product = productMap.get(productId);
-              return (
-                <div key={productId} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wide text-gray-400">
-                      {product?.name ?? 'Sin producto'}
-                    </span>
-                    <div className="flex-1 h-px bg-gray-100" />
-                  </div>
-                  {sectionGroups.map(({ section, tools: sectionTools }) => (
-                    <div key={section} className="space-y-1">
-                      {section && (
-                        <p className="text-xs text-gray-400 pl-1 border-l-2 border-gray-200">
-                          {section}
-                        </p>
-                      )}
-                      {sectionTools.map((tool) => {
-                        const isAssigned = assignedToolIds.includes(tool.id);
-                        return (
-                          <button
-                            key={tool.id}
-                            type="button"
-                            onClick={() => onToggle(tool.id)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors ${
-                              isAssigned
-                                ? 'border-indigo-600 bg-indigo-600/5'
-                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                            }`}
-                          >
-                            <span
-                              className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                                isAssigned
-                                  ? 'bg-indigo-600 border-indigo-600 text-white'
-                                  : 'border-gray-300'
-                              }`}
-                            >
-                              {isAssigned && <Check className="w-3 h-3" />}
-                            </span>
-                            <MethodBadge method={tool.method} />
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-800 truncate">
-                                {tool.display_name}
-                              </p>
-                              <p className="text-xs text-gray-400 font-mono truncate">
-                                {tool.name}
-                              </p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
+          {pickerGrouped.map(({ section, tools: sectionTools }) => (
+            <div key={section} className="space-y-1">
+              {section && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wide text-gray-400">
+                    {section}
+                  </span>
+                  <div className="flex-1 h-px bg-gray-100" />
                 </div>
-              );
-            },
-          )}
+              )}
+              {sectionTools.map((tool) => {
+                const isAssigned = assignedToolIds.includes(tool.id);
+                return (
+                  <button
+                    key={tool.id}
+                    type="button"
+                    onClick={() => onToggle(tool.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors ${
+                      isAssigned
+                        ? 'border-indigo-600 bg-indigo-600/5'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span
+                      className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                        isAssigned
+                          ? 'bg-indigo-600 border-indigo-600 text-white'
+                          : 'border-gray-300'
+                      }`}
+                    >
+                      {isAssigned && <Check className="w-3 h-3" />}
+                    </span>
+                    <MethodBadge method={tool.method} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">
+                        {tool.display_name}
+                      </p>
+                      <p className="text-xs text-gray-400 font-mono truncate">
+                        {tool.name}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         {/* Footer */}

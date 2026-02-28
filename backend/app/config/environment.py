@@ -35,7 +35,8 @@ class Environment(BaseSettings):
     unanswered_table: str = 'ai-unanswered'
     unanswered_comment_table: str = 'ai-unanswered-comment'
     tool_table: str = 'ai-tool'
-    product_table: str = 'ai-product'
+    account_table: str = 'ai-account'
+    user_table: str = 'ai-user'
 
     class Config:
         env_file = ".env"

@@ -5,8 +5,8 @@ from app.config import env, DEFAULT_AGENT_PROMPT, PROMPT_IMPROVEMENT_SYSTEM
 import boto3
 
 class AgentService:
-    def get_all(self, is_public: bool | None = False) -> list[dict]:
-        agents = agent_repository.get_all(is_public=is_public)
+    def get_all(self, is_public: bool | None = False, account_id: str | None = None) -> list[dict]:
+        agents = agent_repository.get_all(is_public=is_public, account_id=account_id)
         return [agent.model_dump(mode='json') for agent in agents]
     
     def get_one(self, agent_id: str) -> dict | None:
@@ -15,11 +15,11 @@ class AgentService:
             return None
         return agent.model_dump(mode='json')
     
-    def create(self, agent_data: AgentCreate, user: str) -> str |None:
+    def create(self, agent_data: AgentCreate, user: str, account_id: str = 'default') -> str | None:
         agent_data.custom_prompt = agent_data.custom_prompt or DEFAULT_AGENT_PROMPT
         agent_data.status = "active"
 
-        new_agent_id = agent_repository.create(agent_data=agent_data, user=user)
+        new_agent_id = agent_repository.create(agent_data=agent_data, user=user, account_id=account_id)
 
         created_agent = agent_repository.get_by_id(agent_id=new_agent_id)
         
@@ -31,13 +31,14 @@ class AgentService:
             agent_id=created_agent.id,
             agent_name=created_agent.name,
             action="CREATE_AGENT",
+            account_id=account_id,
             agent_before_state=None,
             agent_after_state=created_agent
         ))
 
         return new_agent_id
     
-    def update(self, agent_id: str, agent_data: AgentUpdate, user: str) -> bool:
+    def update(self, agent_id: str, agent_data: AgentUpdate, user: str, account_id: str = 'default') -> bool:
         existing_agent = agent_repository.get_by_id(agent_id)
 
         if not existing_agent:
@@ -56,13 +57,14 @@ class AgentService:
                 agent_id=updated_agent.id,
                 agent_name=updated_agent.name,
                 action="UPDATE_AGENT",
+                account_id=account_id,
                 agent_before_state=existing_agent,
                 agent_after_state=updated_agent
             )
         )
         return True
     
-    def delete(self, agent_id: str, user: str) -> bool:
+    def delete(self, agent_id: str, user: str, account_id: str = 'default') -> bool:
         existing_agent = agent_repository.get_by_id(agent_id=agent_id)
         if not existing_agent:
             return False
@@ -107,6 +109,7 @@ class AgentService:
             agent_id=agent_id,
             agent_name=agent_name,
             action="DELETE_AGENT",
+            account_id=account_id,
             agent_before_state=existing_agent,
             agent_after_state=None
         ))

@@ -1,26 +1,25 @@
+export type UserRole = 'super_admin' | 'owner' | 'admin' | 'editor' | 'viewer';
+
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: UserRole;
+  account_id: string;
   token?: string;
 }
 
 // Function to get user data from localStorage
 export const getUserFromStorage = (): User | null => {
   if (typeof window === 'undefined') return null;
-  
+
   try {
     const userData = localStorage.getItem('userData');
-    
+
     if (!userData) return null;
-    
-    const user = JSON.parse(userData);
-    // Add the computed role to the user object
-    return {
-      ...user,
-      role: user.role
-    };
+
+    const user = JSON.parse(userData) as User;
+    return user;
   } catch (error) {
     console.error('Error parsing user data from localStorage:', error);
     localStorage.removeItem('userData');
@@ -30,7 +29,7 @@ export const getUserFromStorage = (): User | null => {
 
 export const saveUserToStorage = (user: User | null): void => {
   if (typeof window === 'undefined') return;
-  
+
   try {
     if (!user) {
       localStorage.removeItem('userData');
@@ -44,7 +43,5 @@ export const saveUserToStorage = (user: User | null): void => {
 };
 
 export const getCurrentUser = (): User | null => {
-  const user = getUserFromStorage();
-  console.log("Current user from localStorage:", user);
-  return user;
+  return getUserFromStorage();
 };

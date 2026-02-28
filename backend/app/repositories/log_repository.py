@@ -42,6 +42,7 @@ class LogRepository(BaseDynamoDBRepository):
             'agent_id': log_data.agent_id,
             'agent_name': log_data.agent_name,
             'action': log_data.action,
+            'account_id': log_data.account_id,
             'agent_before_state': agent_before,
             'agent_after_state': agent_after,
             'detail': log_data.detail,
@@ -51,7 +52,7 @@ class LogRepository(BaseDynamoDBRepository):
         self.log_table.put_item(Item=item)
         return log_id
     
-    def get(self, limit: int = 20, last_key: dict | None = None) -> LogsResponse:
+    def get(self, limit: int = 20, last_key: dict | None = None, account_id: str | None = None) -> LogsResponse:
         params = {
             "IndexName": "log_id-created_at-index",
             "KeyConditionExpression": "log_id = :log_id",
@@ -59,8 +60,11 @@ class LogRepository(BaseDynamoDBRepository):
                 ":log_id": "LOG"
             },
             "Limit": limit,
-            "ScanIndexForward": False 
+            "ScanIndexForward": False
         }
+        if account_id:
+            params["FilterExpression"] = "account_id = :account_id"
+            params["ExpressionAttributeValues"][":account_id"] = account_id
         if last_key:
             params["ExclusiveStartKey"] = last_key
 

@@ -5,8 +5,9 @@ from .document_service import document_service
 from .log_service import log_service
 from .message_service import message_service
 from .tool_service import tool_service
-from .product_service import product_service
 from .unanswered_service import unanswered_service
+from .auth_service import auth_service
+from .account_service import account_service
 
 __all__ = [
     "agent_service",
@@ -16,6 +17,7 @@ __all__ = [
     "log_service",
     "message_service",
     "tool_service",
-    "product_service",
     "unanswered_service",
+    "auth_service",
+    "account_service",
 ]

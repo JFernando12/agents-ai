@@ -10,30 +10,15 @@ import {
   ChevronUp,
   X,
   Sparkles,
-  Package,
   Wrench,
 } from 'lucide-react';
-import {
-  Tool,
-  ToolCreate,
-  ToolUpdate,
-  ToolInputSchema,
-  Product,
-  ProductCreate,
-  ProductUpdate,
-} from '@/types';
+import { Tool, ToolCreate, ToolUpdate, ToolInputSchema } from '@/types';
 import {
   useAllTools,
   useCreateTool,
   useUpdateTool,
   useDeleteTool,
 } from '@/lib/hooks/useTools';
-import {
-  useAllProducts,
-  useCreateProduct,
-  useUpdateProduct,
-  useDeleteProduct,
-} from '@/lib/hooks/useProducts';
 import { apiTools } from '@/lib/api/tools';
 import ModalDelete from '@/components/ui/ModalDelete';
 
@@ -136,7 +121,6 @@ function MethodBadge({ method }: { method: string }) {
 }
 
 interface ToolFormState {
-  product_id: string;
   section: string;
   display_name: string;
   name: string;
@@ -150,7 +134,6 @@ interface ToolFormState {
 }
 
 const emptyToolForm = (): ToolFormState => ({
-  product_id: '',
   section: '',
   display_name: '',
   name: '',
@@ -169,7 +152,6 @@ const emptyToolForm = (): ToolFormState => ({
 
 function toolToFormState(tool: Tool): ToolFormState {
   return {
-    product_id: tool.product_id,
     section: tool.section || '',
     display_name: tool.display_name,
     name: tool.name,
@@ -183,37 +165,13 @@ function toolToFormState(tool: Tool): ToolFormState {
   };
 }
 
-interface ProductFormState {
-  name: string;
-  description: string;
-  slug: string;
-}
-
-const emptyProductForm = (): ProductFormState => ({
-  name: '',
-  description: '',
-  slug: '',
-});
-
-function productToFormState(product: Product): ProductFormState {
-  return {
-    name: product.name,
-    description: product.description || '',
-    slug: product.slug,
-  };
-}
+type ToolGroup = { section: string; tools: Tool[] };
 
 export default function ToolsPage() {
-  const [activeTab, setActiveTab] = useState<'catalog' | 'products'>('catalog');
-
   const { data: tools, isLoading: loadingTools } = useAllTools();
-  const { data: products, isLoading: loadingProducts } = useAllProducts();
   const createTool = useCreateTool();
   const updateTool = useUpdateTool();
   const deleteTool = useDeleteTool();
-  const createProduct = useCreateProduct();
-  const updateProduct = useUpdateProduct();
-  const deleteProduct = useDeleteProduct();
 
   const [toolMode, setToolMode] = useState<'list' | 'create' | 'edit'>('list');
   const [editingToolId, setEditingToolId] = useState<string | null>(null);
@@ -226,35 +184,17 @@ export default function ToolsPage() {
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
 
-  const [productMode, setProductMode] = useState<'list' | 'create' | 'edit'>(
-    'list',
-  );
-  const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [productForm, setProductForm] =
-    useState<ProductFormState>(emptyProductForm());
-  const [productToDelete, setProductToDelete] = useState<string | null>(null);
-
-  const productMap = useMemo(
-    () => new Map<string, Product>((products ?? []).map((p) => [p.id, p])),
-    [products],
-  );
-
-  type ToolGroup = { section: string; tools: Tool[] }[];
-  const grouped = useMemo(() => {
-    const map = new Map<string, ToolGroup>();
+  const grouped = useMemo<ToolGroup[]>(() => {
+    const map = new Map<string, Tool[]>();
     (tools ?? []).forEach((tool) => {
-      const pid = tool.product_id || '__none__';
-      if (!map.has(pid)) map.set(pid, []);
-      const sections = map.get(pid)!;
-      const sectionKey = tool.section || '';
-      const existing = sections.find((sg) => sg.section === sectionKey);
-      if (existing) {
-        existing.tools.push(tool);
-      } else {
-        sections.push({ section: sectionKey, tools: [tool] });
-      }
+      const key = tool.section || '';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(tool);
     });
-    return map;
+    return Array.from(map.entries()).map(([section, tools]) => ({
+      section,
+      tools,
+    }));
   }, [tools]);
 
   const handleToolDisplayNameChange = (value: string) => {
@@ -336,7 +276,6 @@ export default function ToolsPage() {
 
     if (toolMode === 'create') {
       const payload: ToolCreate = {
-        product_id: toolForm.product_id,
         section: toolForm.section || null,
         name: toolForm.name,
         display_name: toolForm.display_name,
@@ -349,7 +288,6 @@ export default function ToolsPage() {
       await createTool.mutateAsync(payload);
     } else if (toolMode === 'edit' && editingToolId) {
       const payload: ToolUpdate = {
-        product_id: toolForm.product_id,
         section: toolForm.section || null,
         name: toolForm.name,
         display_name: toolForm.display_name,
@@ -374,7 +312,6 @@ export default function ToolsPage() {
     setToolForm(toolToFormState(tool));
     setEditingToolId(tool.id);
     setToolMode('edit');
-    setActiveTab('catalog');
   };
 
   const handleConfirmDeleteTool = async () => {
@@ -428,58 +365,7 @@ export default function ToolsPage() {
     setJsonError(null);
   };
 
-  const handleProductNameChange = (value: string) => {
-    setProductForm((prev) => ({
-      ...prev,
-      name: value,
-      ...(productMode === 'create' ? { slug: toSlug(value) } : {}),
-    }));
-  };
-
-  const handleProductSubmit = async () => {
-    if (productMode === 'create') {
-      const payload: ProductCreate = {
-        name: productForm.name,
-        description: productForm.description || null,
-        slug: productForm.slug,
-      };
-      await createProduct.mutateAsync(payload);
-    } else if (productMode === 'edit' && editingProductId) {
-      const payload: ProductUpdate = {
-        name: productForm.name,
-        description: productForm.description || null,
-        slug: productForm.slug,
-      };
-      await updateProduct.mutateAsync({
-        productId: editingProductId,
-        productData: payload,
-      });
-    }
-    setProductMode('list');
-    setEditingProductId(null);
-    setProductForm(emptyProductForm());
-  };
-
-  const handleEditProduct = (product: Product) => {
-    setProductForm(productToFormState(product));
-    setEditingProductId(product.id);
-    setProductMode('edit');
-  };
-
-  const handleConfirmDeleteProduct = async () => {
-    if (!productToDelete) return;
-    await deleteProduct.mutateAsync(productToDelete);
-    setProductToDelete(null);
-  };
-
-  const handleCancelProduct = () => {
-    setProductMode('list');
-    setEditingProductId(null);
-    setProductForm(emptyProductForm());
-  };
-
   const isMutatingTool = createTool.isPending || updateTool.isPending;
-  const isMutatingProduct = createProduct.isPending || updateProduct.isPending;
 
   return (
     <div className="flex flex-col h-full">
@@ -492,233 +378,315 @@ export default function ToolsPage() {
               Herramientas
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Gestiona las capacidades y productos disponibles para tus agentes.
+              Gestiona las capacidades disponibles para tus agentes.
             </p>
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex-shrink-0 flex items-center gap-1 px-5 py-3 border-b border-gray-100 dark:border-white/[0.06]">
-          <button
-            onClick={() => setActiveTab('catalog')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'catalog'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/[0.08]'
-            }`}
-          >
-            <Wrench className="w-4 h-4" />
-            Capacidades
-          </button>
-          <button
-            onClick={() => setActiveTab('products')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'products'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/[0.08]'
-            }`}
-          >
-            <Package className="w-4 h-4" />
-            Productos
-            {(products ?? []).length > 0 && (
-              <span className="ml-1 bg-gray-200 dark:bg-white/[0.08] text-gray-600 dark:text-gray-400 text-xs px-1.5 py-0.5 rounded-full">
-                {(products ?? []).length}
-              </span>
-            )}
-          </button>
+          {toolMode === 'list' && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowParseDrawer(true);
+                  setParseDocs('');
+                  setParseError(null);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-indigo-500/40 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-sm font-medium transition-colors"
+              >
+                <Sparkles className="w-4 h-4" /> Auto-completar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setToolForm(emptyToolForm());
+                  setToolMode('create');
+                }}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm"
+              >
+                <Plus className="w-4 h-4" /> Nueva Capacidad
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-auto p-5">
-          {/* ── CATALOG TAB ── */}
-          {activeTab === 'catalog' && (
-            <div className="space-y-4 pb-6">
-              {(toolMode === 'create' || toolMode === 'edit') && (
-                <div className="space-y-4 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl p-5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {toolMode === 'create'
-                        ? 'Nueva Capacidad'
-                        : 'Editar Capacidad'}
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={handleCancelTool}
-                      className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+          <div className="space-y-4 pb-6">
+            {(toolMode === 'create' || toolMode === 'edit') && (
+              <div className="space-y-4 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl p-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {toolMode === 'create'
+                      ? 'Nueva Capacidad'
+                      : 'Editar Capacidad'}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleCancelTool}
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelClass}>Producto *</label>
-                      <select
-                        className={selectClass}
-                        value={toolForm.product_id}
-                        onChange={(e) =>
-                          setToolForm((p) => ({
-                            ...p,
-                            product_id: e.target.value,
-                          }))
-                        }
-                      >
-                        <option value="">Selecciona un producto...</option>
-                        {(products ?? []).map((prod) => (
-                          <option key={prod.id} value={prod.id}>
-                            {prod.name}
-                          </option>
-                        ))}
-                      </select>
-                      {(products ?? []).length === 0 && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                          Crea un producto primero en la pestaña
-                          &quot;Productos&quot;.
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className={labelClass}>
-                        Sección{' '}
-                        <span className="text-xs text-gray-400 font-normal">
-                          (opcional)
-                        </span>
-                      </label>
-                      <input
-                        type="text"
-                        className={formControlClass}
-                        value={toolForm.section}
-                        onChange={(e) =>
-                          setToolForm((p) => ({
-                            ...p,
-                            section: e.target.value,
-                          }))
-                        }
-                        placeholder="ej. Gestión de Tickets"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className={labelClass}>
+                    Sección{' '}
+                    <span className="text-xs text-gray-400 font-normal">
+                      (opcional)
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    className={formControlClass}
+                    value={toolForm.section}
+                    onChange={(e) =>
+                      setToolForm((p) => ({
+                        ...p,
+                        section: e.target.value,
+                      }))
+                    }
+                    placeholder="ej. Gestión de Tickets"
+                  />
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelClass}>Nombre visible *</label>
-                      <input
-                        type="text"
-                        className={formControlClass}
-                        value={toolForm.display_name}
-                        onChange={(e) =>
-                          handleToolDisplayNameChange(e.target.value)
-                        }
-                        placeholder="ej. Crear Ticket de Jira"
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass}>
-                        Nombre de función *{' '}
-                        <span className="ml-1 text-xs text-gray-400">
-                          (snake_case)
-                        </span>
-                      </label>
-                      <input
-                        type="text"
-                        className={formControlClass}
-                        value={toolForm.name}
-                        onChange={(e) =>
-                          setToolForm((p) => ({
-                            ...p,
-                            name: toSnakeCase(e.target.value),
-                          }))
-                        }
-                        placeholder="ej. crear_ticket_jira"
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>Nombre visible *</label>
+                    <input
+                      type="text"
+                      className={formControlClass}
+                      value={toolForm.display_name}
+                      onChange={(e) =>
+                        handleToolDisplayNameChange(e.target.value)
+                      }
+                      placeholder="ej. Crear Ticket de Jira"
+                    />
                   </div>
-
                   <div>
                     <label className={labelClass}>
-                      Descripción para el LLM *
+                      Nombre de función *{' '}
+                      <span className="ml-1 text-xs text-gray-400">
+                        (snake_case)
+                      </span>
                     </label>
-                    <textarea
-                      rows={2}
+                    <input
+                      type="text"
                       className={formControlClass}
-                      value={toolForm.description}
+                      value={toolForm.name}
                       onChange={(e) =>
                         setToolForm((p) => ({
                           ...p,
-                          description: e.target.value,
+                          name: toSnakeCase(e.target.value),
                         }))
                       }
-                      placeholder="Describe qué hace esta capacidad y cuándo usarla..."
+                      placeholder="ej. crear_ticket_jira"
                     />
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="col-span-1">
-                      <label className={labelClass}>Método</label>
-                      <select
-                        className={selectClass}
-                        value={toolForm.method}
-                        onChange={(e) =>
-                          setToolForm((p) => ({
-                            ...p,
-                            method: e.target.value as ToolFormState['method'],
-                          }))
-                        }
+                <div>
+                  <label className={labelClass}>
+                    Descripción para el LLM *
+                  </label>
+                  <textarea
+                    rows={2}
+                    className={formControlClass}
+                    value={toolForm.description}
+                    onChange={(e) =>
+                      setToolForm((p) => ({
+                        ...p,
+                        description: e.target.value,
+                      }))
+                    }
+                    placeholder="Describe qué hace esta capacidad y cuándo usarla..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="col-span-1">
+                    <label className={labelClass}>Método</label>
+                    <select
+                      className={selectClass}
+                      value={toolForm.method}
+                      onChange={(e) =>
+                        setToolForm((p) => ({
+                          ...p,
+                          method: e.target.value as ToolFormState['method'],
+                        }))
+                      }
+                    >
+                      {HTTP_METHODS.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-3">
+                    <label className={labelClass}>URL *</label>
+                    <input
+                      type="text"
+                      className={formControlClass}
+                      value={toolForm.url}
+                      onChange={(e) =>
+                        setToolForm((p) => ({ ...p, url: e.target.value }))
+                      }
+                      placeholder="https://api.ejemplo.com/endpoint"
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 dark:border-white/[0.06] pt-3">
+                  <label className={labelClass}>Headers (opcional)</label>
+                  <div className="space-y-2">
+                    {toolForm.headerRows.map((row, i) => (
+                      <div key={i} className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          className={`${formControlClass} flex-1`}
+                          placeholder="Clave"
+                          value={row.key}
+                          onChange={(e) =>
+                            handleHeaderChange(i, 'key', e.target.value)
+                          }
+                        />
+                        <input
+                          type="text"
+                          className={`${formControlClass} flex-1`}
+                          placeholder="Valor"
+                          value={row.value}
+                          onChange={(e) =>
+                            handleHeaderChange(i, 'value', e.target.value)
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setToolForm((p) => ({
+                              ...p,
+                              headerRows: p.headerRows.filter(
+                                (_, j) => j !== i,
+                              ),
+                            }))
+                          }
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setToolForm((p) => ({
+                          ...p,
+                          headerRows: [...p.headerRows, { key: '', value: '' }],
+                        }))
+                      }
+                      className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Agregar header
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 dark:border-white/[0.06] pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={labelClass + ' mb-0'}>
+                      Parámetros de entrada
+                    </label>
+                    <div className="flex bg-gray-100 dark:bg-white/[0.06] rounded-md p-0.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={switchToBuilder}
+                        className={`px-3 py-1 rounded-md transition-colors ${
+                          toolForm.schemaMode === 'builder'
+                            ? 'bg-white dark:bg-white/[0.12] shadow text-gray-800 dark:text-white font-medium'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
                       >
-                        {HTTP_METHODS.map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-3">
-                      <label className={labelClass}>URL *</label>
-                      <input
-                        type="text"
-                        className={formControlClass}
-                        value={toolForm.url}
-                        onChange={(e) =>
-                          setToolForm((p) => ({ ...p, url: e.target.value }))
-                        }
-                        placeholder="https://api.ejemplo.com/endpoint"
-                      />
+                        Builder
+                      </button>
+                      <button
+                        type="button"
+                        onClick={switchToJson}
+                        className={`px-3 py-1 rounded-md transition-colors ${
+                          toolForm.schemaMode === 'json'
+                            ? 'bg-white dark:bg-white/[0.12] shadow text-gray-800 dark:text-white font-medium'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        JSON
+                      </button>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-100 dark:border-white/[0.06] pt-3">
-                    <label className={labelClass}>Headers (opcional)</label>
+                  {toolForm.schemaMode === 'builder' ? (
                     <div className="space-y-2">
-                      {toolForm.headerRows.map((row, i) => (
-                        <div key={i} className="flex gap-2 items-center">
+                      {toolForm.params.map((param, i) => (
+                        <div
+                          key={i}
+                          className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] p-2 rounded-lg"
+                        >
                           <input
                             type="text"
-                            className={`${formControlClass} flex-1`}
-                            placeholder="Clave"
-                            value={row.key}
+                            className={`${formControlClass} col-span-3`}
+                            placeholder="nombre"
+                            value={param.name}
                             onChange={(e) =>
-                              handleHeaderChange(i, 'key', e.target.value)
+                              handleParamChange(i, 'name', e.target.value)
                             }
                           />
+                          <select
+                            className={`${selectClass} col-span-2`}
+                            value={param.type}
+                            onChange={(e) =>
+                              handleParamChange(i, 'type', e.target.value)
+                            }
+                          >
+                            {PARAM_TYPES.map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
+                          </select>
                           <input
                             type="text"
-                            className={`${formControlClass} flex-1`}
-                            placeholder="Valor"
-                            value={row.value}
+                            className={`${formControlClass} col-span-5`}
+                            placeholder="descripción para el LLM"
+                            value={param.description}
                             onChange={(e) =>
-                              handleHeaderChange(i, 'value', e.target.value)
+                              handleParamChange(
+                                i,
+                                'description',
+                                e.target.value,
+                              )
                             }
                           />
+                          <div className="col-span-1 flex items-center justify-center gap-1">
+                            <input
+                              type="checkbox"
+                              title="Requerido"
+                              checked={param.required}
+                              onChange={(e) =>
+                                handleParamChange(
+                                  i,
+                                  'required',
+                                  e.target.checked,
+                                )
+                              }
+                              className="w-4 h-4 text-indigo-500 dark:text-indigo-400"
+                            />
+                            <span className="text-xs text-gray-400">req</span>
+                          </div>
                           <button
                             type="button"
                             onClick={() =>
                               setToolForm((p) => ({
                                 ...p,
-                                headerRows: p.headerRows.filter(
-                                  (_, j) => j !== i,
-                                ),
+                                params: p.params.filter((_, j) => j !== i),
                               }))
                             }
-                            className="text-gray-400 hover:text-red-500"
+                            className="col-span-1 text-gray-400 hover:text-red-500 flex justify-center"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -729,716 +697,310 @@ export default function ToolsPage() {
                         onClick={() =>
                           setToolForm((p) => ({
                             ...p,
-                            headerRows: [
-                              ...p.headerRows,
-                              { key: '', value: '' },
+                            params: [
+                              ...p.params,
+                              {
+                                name: '',
+                                type: 'string',
+                                description: '',
+                                required: false,
+                              },
                             ],
                           }))
                         }
                         className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1"
                       >
-                        <Plus className="w-3 h-3" /> Agregar header
+                        <Plus className="w-3 h-3" /> Agregar parámetro
                       </button>
                     </div>
-                  </div>
-
-                  <div className="border-t border-gray-100 dark:border-white/[0.06] pt-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className={labelClass + ' mb-0'}>
-                        Parámetros de entrada
-                      </label>
-                      <div className="flex bg-gray-100 dark:bg-white/[0.06] rounded-md p-0.5 text-xs">
-                        <button
-                          type="button"
-                          onClick={switchToBuilder}
-                          className={`px-3 py-1 rounded-md transition-colors ${
-                            toolForm.schemaMode === 'builder'
-                              ? 'bg-white dark:bg-white/[0.12] shadow text-gray-800 dark:text-white font-medium'
-                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                          }`}
-                        >
-                          Builder
-                        </button>
-                        <button
-                          type="button"
-                          onClick={switchToJson}
-                          className={`px-3 py-1 rounded-md transition-colors ${
-                            toolForm.schemaMode === 'json'
-                              ? 'bg-white dark:bg-white/[0.12] shadow text-gray-800 dark:text-white font-medium'
-                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                          }`}
-                        >
-                          JSON
-                        </button>
-                      </div>
-                    </div>
-
-                    {toolForm.schemaMode === 'builder' ? (
-                      <div className="space-y-2">
-                        {toolForm.params.map((param, i) => (
-                          <div
-                            key={i}
-                            className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] p-2 rounded-lg"
-                          >
-                            <input
-                              type="text"
-                              className={`${formControlClass} col-span-3`}
-                              placeholder="nombre"
-                              value={param.name}
-                              onChange={(e) =>
-                                handleParamChange(i, 'name', e.target.value)
-                              }
-                            />
-                            <select
-                              className={`${selectClass} col-span-2`}
-                              value={param.type}
-                              onChange={(e) =>
-                                handleParamChange(i, 'type', e.target.value)
-                              }
-                            >
-                              {PARAM_TYPES.map((t) => (
-                                <option key={t} value={t}>
-                                  {t}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="text"
-                              className={`${formControlClass} col-span-5`}
-                              placeholder="descripción para el LLM"
-                              value={param.description}
-                              onChange={(e) =>
-                                handleParamChange(
-                                  i,
-                                  'description',
-                                  e.target.value,
-                                )
-                              }
-                            />
-                            <div className="col-span-1 flex items-center justify-center gap-1">
-                              <input
-                                type="checkbox"
-                                title="Requerido"
-                                checked={param.required}
-                                onChange={(e) =>
-                                  handleParamChange(
-                                    i,
-                                    'required',
-                                    e.target.checked,
-                                  )
-                                }
-                                className="w-4 h-4 text-indigo-500 dark:text-indigo-400"
-                              />
-                              <span className="text-xs text-gray-400">req</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setToolForm((p) => ({
-                                  ...p,
-                                  params: p.params.filter((_, j) => j !== i),
-                                }))
-                              }
-                              className="col-span-1 text-gray-400 hover:text-red-500 flex justify-center"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setToolForm((p) => ({
-                              ...p,
-                              params: [
-                                ...p.params,
-                                {
-                                  name: '',
-                                  type: 'string',
-                                  description: '',
-                                  required: false,
-                                },
-                              ],
-                            }))
-                          }
-                          className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1"
-                        >
-                          <Plus className="w-3 h-3" /> Agregar parámetro
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <textarea
-                          rows={8}
-                          className={`${formControlClass} font-mono`}
-                          value={toolForm.jsonSchema}
-                          onChange={(e) => {
-                            setToolForm((p) => ({
-                              ...p,
-                              jsonSchema: e.target.value,
-                            }));
-                            setJsonError(null);
-                          }}
-                        />
-                        {jsonError && (
-                          <p className="text-xs text-red-500 mt-1">
-                            {jsonError}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-white/[0.06] pt-3">
-                    <button
-                      type="button"
-                      onClick={handleCancelTool}
-                      className="px-3.5 py-1.5 text-sm bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleToolSubmit}
-                      disabled={
-                        isMutatingTool ||
-                        !toolForm.display_name ||
-                        !toolForm.name ||
-                        !toolForm.url ||
-                        !toolForm.product_id
-                      }
-                      className="px-3.5 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-                    >
-                      {isMutatingTool && (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      )}
-                      {isMutatingTool ? 'Guardando...' : 'Guardar'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {toolMode === 'list' && (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Capacidades
-                    </h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      Todas las capacidades disponibles agrupadas por producto.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowParseDrawer(true);
-                        setParseDocs('');
-                        setParseError(null);
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 border border-indigo-500/40 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-xs font-medium transition-colors"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" /> Auto-completar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setToolForm(emptyToolForm());
-                        setToolMode('create');
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Nueva Capacidad
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {showParseDrawer && toolMode === 'list' && (
-                <div className="rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/[0.04] p-4 space-y-3">
-                  <div className="flex items-start justify-between">
+                  ) : (
                     <div>
-                      <p className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />{' '}
-                        Auto-completar con IA
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        Pega la documentación de la API (texto libre, cURL,
-                        Swagger, Postman…) y la IA rellenará el formulario
-                        automáticamente.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowParseDrawer(false)}
-                      className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <textarea
-                    rows={5}
-                    className={`${formControlClass} font-mono text-xs`}
-                    placeholder={`Ejemplo:\ncurl -X POST https://api.ejemplo.com/tickets \\\n  -H "Authorization: Bearer TOKEN" \\\n  -d '{"titulo": "...", "descripcion": "..."}'`}
-                    value={parseDocs}
-                    onChange={(e) => {
-                      setParseDocs(e.target.value);
-                      setParseError(null);
-                    }}
-                  />
-                  {parseError && (
-                    <p className="text-xs text-red-600 dark:text-red-400">
-                      {parseError}
-                    </p>
-                  )}
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowParseDrawer(false)}
-                      className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] text-gray-700 dark:text-gray-300 transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleParseDocs}
-                      disabled={isParsing || !parseDocs.trim()}
-                      className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
-                    >
-                      {isParsing ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />{' '}
-                          Analizando...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-3.5 h-3.5" /> Completar
-                          formulario
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {loadingTools && (
-                <div className="flex items-center gap-2 text-gray-400 text-sm py-6">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Cargando
-                  capacidades...
-                </div>
-              )}
-
-              {!loadingTools &&
-                (tools ?? []).length === 0 &&
-                toolMode === 'list' && (
-                  <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/[0.08] p-10 text-center">
-                    <Wrench className="w-7 h-7 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No hay capacidades registradas.
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                      Haz clic en{' '}
-                      <strong className="text-gray-600 dark:text-gray-300">
-                        Nueva Capacidad
-                      </strong>{' '}
-                      para agregar una.
-                    </p>
-                  </div>
-                )}
-
-              {!loadingTools &&
-                toolMode === 'list' &&
-                Array.from(grouped.entries()).map(
-                  ([productId, sectionGroups]) => {
-                    const product = productMap.get(productId);
-                    return (
-                      <div key={productId} className="space-y-3">
-                        <div className="flex items-center gap-2 pt-1">
-                          <span className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                            {product?.name ?? 'Sin producto'}
-                          </span>
-                          {product?.description && (
-                            <span className="text-xs text-gray-400 dark:text-gray-500">
-                              — {product.description}
-                            </span>
-                          )}
-                          <div className="flex-1 h-px bg-gray-100 dark:bg-white/[0.06]" />
-                        </div>
-
-                        {sectionGroups.map(
-                          ({ section, tools: sectionTools }) => (
-                            <div key={section} className="space-y-2">
-                              {section && (
-                                <p className="text-xs font-medium text-gray-400 dark:text-gray-500 pl-2 ml-1 border-l-2 border-gray-200 dark:border-white/[0.1]">
-                                  {section}
-                                </p>
-                              )}
-                              {sectionTools.map((tool) => (
-                                <div
-                                  key={tool.id}
-                                  className="border border-gray-200 dark:border-white/[0.07] rounded-lg overflow-hidden"
-                                >
-                                  <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-white/[0.02] hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <MethodBadge method={tool.method} />
-                                      <div className="min-w-0">
-                                        <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
-                                          {tool.display_name}
-                                        </p>
-                                        <p className="text-xs text-gray-400 dark:text-gray-500 font-mono truncate">
-                                          {tool.name}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-0.5 flex-shrink-0 ml-2">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setExpandedToolId(
-                                            expandedToolId === tool.id
-                                              ? null
-                                              : tool.id,
-                                          )
-                                        }
-                                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 transition-colors"
-                                      >
-                                        {expandedToolId === tool.id ? (
-                                          <ChevronUp className="w-3.5 h-3.5" />
-                                        ) : (
-                                          <ChevronDown className="w-3.5 h-3.5" />
-                                        )}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleEditTool(tool)}
-                                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-                                      >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => setToolToDelete(tool.id)}
-                                        disabled={deleteTool.isPending}
-                                        className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                                      >
-                                        {deleteTool.isPending ? (
-                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                        ) : (
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        )}
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {expandedToolId === tool.id && (
-                                    <div className="border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-white/[0.02] px-4 py-3 space-y-2 text-xs">
-                                      <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
-                                        {tool.description}
-                                      </p>
-                                      <div className="flex gap-1.5 items-center">
-                                        <span className="text-gray-400 dark:text-gray-500 font-medium">
-                                          URL:
-                                        </span>
-                                        <span className="font-mono text-gray-600 dark:text-gray-300 truncate">
-                                          {tool.url}
-                                        </span>
-                                      </div>
-                                      {tool.headers &&
-                                        Object.keys(tool.headers).length >
-                                          0 && (
-                                          <div>
-                                            <span className="text-gray-400 dark:text-gray-500 font-medium">
-                                              Headers:
-                                            </span>
-                                            <div className="mt-1 space-y-0.5">
-                                              {Object.entries(tool.headers).map(
-                                                ([k, v]) => (
-                                                  <div
-                                                    key={k}
-                                                    className="font-mono text-gray-500 dark:text-gray-400"
-                                                  >
-                                                    <span className="text-indigo-500 dark:text-indigo-400">
-                                                      {k}
-                                                    </span>
-                                                    :{' '}
-                                                    <span className="text-gray-400 dark:text-gray-500">
-                                                      {v}
-                                                    </span>
-                                                  </div>
-                                                ),
-                                              )}
-                                            </div>
-                                          </div>
-                                        )}
-                                      {tool.input_schema?.properties &&
-                                        Object.keys(
-                                          tool.input_schema.properties,
-                                        ).length > 0 && (
-                                          <div>
-                                            <span className="text-gray-400 dark:text-gray-500 font-medium">
-                                              Parámetros:
-                                            </span>
-                                            <div className="mt-1.5 flex flex-wrap gap-1.5">
-                                              {Object.entries(
-                                                tool.input_schema.properties,
-                                              ).map(([name, prop]) => (
-                                                <span
-                                                  key={name}
-                                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-mono ${
-                                                    tool.input_schema.required?.includes(
-                                                      name,
-                                                    )
-                                                      ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20'
-                                                      : 'bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-gray-400'
-                                                  }`}
-                                                >
-                                                  {name}
-                                                  <span className="text-gray-400 dark:text-gray-500">
-                                                    :{prop.type}
-                                                  </span>
-                                                  {tool.input_schema.required?.includes(
-                                                    name,
-                                                  ) && (
-                                                    <span className="text-indigo-400 dark:text-indigo-400 text-[10px]">
-                                                      req
-                                                    </span>
-                                                  )}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    );
-                  },
-                )}
-            </div>
-          )}
-
-          {/* ── PRODUCTS TAB ── */}
-          {activeTab === 'products' && (
-            <div className="space-y-4 pb-6">
-              {(productMode === 'create' || productMode === 'edit') && (
-                <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {productMode === 'create'
-                        ? 'Nuevo Producto'
-                        : 'Editar Producto'}
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={handleCancelProduct}
-                      className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelClass}>Nombre *</label>
-                      <input
-                        type="text"
-                        className={formControlClass}
-                        value={productForm.name}
-                        onChange={(e) =>
-                          handleProductNameChange(e.target.value)
-                        }
-                        placeholder="ej. Jira"
-                      />
-                    </div>
-                    <div>
-                      <label className={labelClass}>
-                        Slug *{' '}
-                        <span className="text-xs text-gray-400 font-normal">
-                          (identificador único)
-                        </span>
-                      </label>
-                      <input
-                        type="text"
-                        className={formControlClass}
-                        value={productForm.slug}
-                        onChange={(e) =>
-                          setProductForm((p) => ({
+                      <textarea
+                        rows={8}
+                        className={`${formControlClass} font-mono`}
+                        value={toolForm.jsonSchema}
+                        onChange={(e) => {
+                          setToolForm((p) => ({
                             ...p,
-                            slug: toSlug(e.target.value),
-                          }))
-                        }
-                        placeholder="ej. jira"
+                            jsonSchema: e.target.value,
+                          }));
+                          setJsonError(null);
+                        }}
                       />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={labelClass}>
-                      Descripción{' '}
-                      <span className="text-xs text-gray-400 font-normal">
-                        (opcional)
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      className={formControlClass}
-                      value={productForm.description}
-                      onChange={(e) =>
-                        setProductForm((p) => ({
-                          ...p,
-                          description: e.target.value,
-                        }))
-                      }
-                      placeholder="Descripción breve del producto..."
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-white/[0.06] pt-3">
-                    <button
-                      type="button"
-                      onClick={handleCancelProduct}
-                      className="px-3.5 py-1.5 text-sm bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleProductSubmit}
-                      disabled={
-                        isMutatingProduct ||
-                        !productForm.name ||
-                        !productForm.slug
-                      }
-                      className="px-3.5 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-                    >
-                      {isMutatingProduct && (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                      {jsonError && (
+                        <p className="text-xs text-red-500 mt-1">{jsonError}</p>
                       )}
-                      {isMutatingProduct ? 'Guardando...' : 'Guardar'}
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {productMode === 'list' && (
-                <div className="flex items-center justify-between">
+                <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-white/[0.06] pt-3">
+                  <button
+                    type="button"
+                    onClick={handleCancelTool}
+                    className="px-3.5 py-1.5 text-sm bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleToolSubmit}
+                    disabled={
+                      isMutatingTool ||
+                      !toolForm.display_name ||
+                      !toolForm.name ||
+                      !toolForm.url
+                    }
+                    className="px-3.5 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                  >
+                    {isMutatingTool && (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    )}
+                    {isMutatingTool ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showParseDrawer && toolMode === 'list' && (
+              <div className="rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/[0.04] p-4 space-y-3">
+                <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Productos
-                    </h2>
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-500" />{' '}
+                      Auto-completar con IA
+                    </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      Los productos agrupan y categorizan las capacidades
-                      disponibles.
+                      Pega la documentación de la API (texto libre, cURL,
+                      Swagger, Postman…) y la IA rellenará el formulario
+                      automáticamente.
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      setProductForm(emptyProductForm());
-                      setProductMode('create');
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors"
+                    onClick={() => setShowParseDrawer(false)}
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Nuevo Producto
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
-              )}
+                <textarea
+                  rows={5}
+                  className={`${formControlClass} font-mono text-xs`}
+                  placeholder={`Ejemplo:\ncurl -X POST https://api.ejemplo.com/tickets \\\n  -H "Authorization: Bearer TOKEN" \\\n  -d '{"titulo": "...", "descripcion": "..."}'`}
+                  value={parseDocs}
+                  onChange={(e) => {
+                    setParseDocs(e.target.value);
+                    setParseError(null);
+                  }}
+                />
+                {parseError && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {parseError}
+                  </p>
+                )}
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowParseDrawer(false)}
+                    className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] text-gray-700 dark:text-gray-300 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleParseDocs}
+                    disabled={isParsing || !parseDocs.trim()}
+                    className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
+                  >
+                    {isParsing ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />{' '}
+                        Analizando...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" /> Completar
+                        formulario
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
 
-              {loadingProducts && (
-                <div className="flex items-center gap-2 text-gray-400 text-sm py-6">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Cargando
-                  productos...
+            {loadingTools && (
+              <div className="flex items-center gap-2 text-gray-400 text-sm py-6">
+                <Loader2 className="w-4 h-4 animate-spin" /> Cargando
+                capacidades...
+              </div>
+            )}
+
+            {!loadingTools &&
+              (tools ?? []).length === 0 &&
+              toolMode === 'list' && (
+                <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/[0.08] p-10 text-center">
+                  <Wrench className="w-7 h-7 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No hay capacidades registradas.
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    Haz clic en{' '}
+                    <strong className="text-gray-600 dark:text-gray-300">
+                      Nueva Capacidad
+                    </strong>{' '}
+                    para agregar una.
+                  </p>
                 </div>
               )}
 
-              {!loadingProducts &&
-                (products ?? []).length === 0 &&
-                productMode === 'list' && (
-                  <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/[0.08] p-10 text-center">
-                    <Package className="w-7 h-7 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No hay productos.
+            {!loadingTools &&
+              toolMode === 'list' &&
+              grouped.map(({ section, tools: sectionTools }) => (
+                <div key={section} className="space-y-2">
+                  {section && (
+                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500 pl-2 ml-1 border-l-2 border-gray-200 dark:border-white/[0.1]">
+                      {section}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                      Haz clic en{' '}
-                      <strong className="text-gray-600 dark:text-gray-300">
-                        Nuevo Producto
-                      </strong>{' '}
-                      para agregar uno.
-                    </p>
-                  </div>
-                )}
-
-              {productMode === 'list' && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {(products ?? []).map((product) => {
-                    const toolCount = (tools ?? []).filter(
-                      (t) => t.product_id === product.id,
-                    ).length;
-                    return (
-                      <div
-                        key={product.id}
-                        className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.07] rounded-xl p-4 flex flex-col gap-3 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-2">
+                  )}
+                  {sectionTools.map((tool) => (
+                    <div
+                      key={tool.id}
+                      className="border border-gray-200 dark:border-white/[0.07] rounded-lg overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-white/[0.02] hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <MethodBadge method={tool.method} />
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-white truncate">
-                              {product.name}
+                            <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                              {tool.display_name}
                             </p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">
-                              {product.slug}
+                            <p className="text-xs text-gray-400 dark:text-gray-500 font-mono truncate">
+                              {tool.name}
                             </p>
-                          </div>
-                          <div className="flex items-center gap-0.5 flex-shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => handleEditProduct(product)}
-                              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setProductToDelete(product.id)}
-                              disabled={deleteProduct.isPending}
-                              className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
                           </div>
                         </div>
-                        {product.description && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                            {product.description}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-                          <Wrench className="w-3 h-3" />
-                          <span>
-                            {toolCount} capacidad{toolCount !== 1 ? 'es' : ''}
-                          </span>
-                          {toolCount > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setActiveTab('catalog')}
-                              className="ml-1 text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 underline transition-colors"
-                            >
-                              Ver capacidades
-                            </button>
-                          )}
+                        <div className="flex items-center gap-0.5 flex-shrink-0 ml-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedToolId(
+                                expandedToolId === tool.id ? null : tool.id,
+                              )
+                            }
+                            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 transition-colors"
+                          >
+                            {expandedToolId === tool.id ? (
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEditTool(tool)}
+                            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setToolToDelete(tool.id)}
+                            disabled={deleteTool.isPending}
+                            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                          >
+                            {deleteTool.isPending ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
                         </div>
                       </div>
-                    );
-                  })}
+
+                      {expandedToolId === tool.id && (
+                        <div className="border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-white/[0.02] px-4 py-3 space-y-2 text-xs">
+                          <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                            {tool.description}
+                          </p>
+                          <div className="flex gap-1.5 items-center">
+                            <span className="text-gray-400 dark:text-gray-500 font-medium">
+                              URL:
+                            </span>
+                            <span className="font-mono text-gray-600 dark:text-gray-300 truncate">
+                              {tool.url}
+                            </span>
+                          </div>
+                          {tool.headers &&
+                            Object.keys(tool.headers).length > 0 && (
+                              <div>
+                                <span className="text-gray-400 dark:text-gray-500 font-medium">
+                                  Headers:
+                                </span>
+                                <div className="mt-1 space-y-0.5">
+                                  {Object.entries(tool.headers).map(
+                                    ([k, v]) => (
+                                      <div
+                                        key={k}
+                                        className="font-mono text-gray-500 dark:text-gray-400"
+                                      >
+                                        <span className="text-indigo-500 dark:text-indigo-400">
+                                          {k}
+                                        </span>
+                                        :{' '}
+                                        <span className="text-gray-400 dark:text-gray-500">
+                                          {v}
+                                        </span>
+                                      </div>
+                                    ),
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          {tool.input_schema?.properties &&
+                            Object.keys(tool.input_schema.properties).length >
+                              0 && (
+                              <div>
+                                <span className="text-gray-400 dark:text-gray-500 font-medium">
+                                  Parámetros:
+                                </span>
+                                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                  {Object.entries(
+                                    tool.input_schema.properties,
+                                  ).map(([name, prop]) => (
+                                    <span
+                                      key={name}
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-mono ${
+                                        tool.input_schema.required?.includes(
+                                          name,
+                                        )
+                                          ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20'
+                                          : 'bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-gray-400'
+                                      }`}
+                                    >
+                                      {name}
+                                      <span className="text-gray-400 dark:text-gray-500">
+                                        :{prop.type}
+                                      </span>
+                                      {tool.input_schema.required?.includes(
+                                        name,
+                                      ) && (
+                                        <span className="text-indigo-400 dark:text-indigo-400 text-[10px]">
+                                          req
+                                        </span>
+                                      )}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
-          )}
+              ))}
+          </div>
         </div>
       </div>
 
@@ -1448,13 +1010,6 @@ export default function ToolsPage() {
         onSave={handleConfirmDeleteTool}
         isLoading={deleteTool.isPending}
         message="¿Estás seguro de que quieres eliminar esta capacidad? Se eliminará de todos los agentes que la tengan asignada."
-      />
-      <ModalDelete
-        isOpen={productToDelete !== null}
-        onClose={() => setProductToDelete(null)}
-        onSave={handleConfirmDeleteProduct}
-        isLoading={deleteProduct.isPending}
-        message="¿Estás seguro de que quieres eliminar este producto? Las capacidades asociadas quedarán sin producto asignado."
       />
     </div>
   );

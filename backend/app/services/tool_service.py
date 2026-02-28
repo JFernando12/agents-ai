@@ -10,20 +10,9 @@ class ToolService:
         self,
         limit: int | None = None,
         cursor: str | None = None,
+        account_id: str | None = None,
     ) -> list[dict] | dict:
-        tools, next_cursor = tool_repository.get_all(limit=limit, cursor=cursor)
-        items = [t.model_dump(mode='json') for t in tools]
-        if limit is None:
-            return items
-        return {'items': items, 'next_cursor': next_cursor, 'count': len(items)}
-
-    def get_by_product(
-        self,
-        product_id: str,
-        limit: int | None = None,
-        cursor: str | None = None,
-    ) -> list[dict] | dict:
-        tools, next_cursor = tool_repository.get_by_product(product_id, limit=limit, cursor=cursor)
+        tools, next_cursor = tool_repository.get_all(limit=limit, cursor=cursor, account_id=account_id)
         items = [t.model_dump(mode='json') for t in tools]
         if limit is None:
             return items
@@ -39,8 +28,8 @@ class ToolService:
             return None
         return tool.model_dump(mode='json')
 
-    def create(self, tool_data: ToolCreate) -> str | None:
-        return tool_repository.create(tool_data)
+    def create(self, tool_data: ToolCreate, account_id: str = 'default') -> str | None:
+        return tool_repository.create(tool_data, account_id=account_id)
 
     def update(self, tool_id: str, tool_data: ToolUpdate) -> bool:
         existing = tool_repository.get_by_id(tool_id)

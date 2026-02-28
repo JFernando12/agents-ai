@@ -21,12 +21,13 @@ class ProductRepository(BaseDynamoDBRepository):
             updated_at=datetime.fromtimestamp(self._decimal_to_float(item['updated_at']) / 1000),
         )
 
-    def create(self, product_data: ProductCreate) -> str:
+    def create(self, product_data: ProductCreate, account_id: str = 'default') -> str:
         product_id = str(uuid.uuid4())
         now = int(datetime.now().timestamp() * 1000)
 
         item = {
             'id': product_id,
+            'account_id': account_id,
             'name': product_data.name,
             'description': product_data.description or '',
             'slug': product_data.slug,
@@ -62,9 +63,14 @@ class ProductRepository(BaseDynamoDBRepository):
             print(f"Error getting product by slug {slug}: {e}")
             return None
 
-    def get_all(self) -> list[Product]:
+    def get_all(self, account_id: str | None = None) -> list[Product]:
         try:
-            response = self.product_table.scan()
+            scan_kwargs: dict = {}
+            if account_id:
+                scan_kwargs['FilterExpression'] = '#acc = :account_id'
+                scan_kwargs['ExpressionAttributeValues'] = {':account_id': account_id}
+                scan_kwargs['ExpressionAttributeNames'] = {'#acc': 'account_id'}
+            response = self.product_table.scan(**scan_kwargs)
             return [self._map_to_product(item) for item in response.get('Items', [])]
         except Exception as e:
             print(f"Error getting all products: {e}")

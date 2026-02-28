@@ -3,8 +3,8 @@ from app.models import ProductCreate, ProductUpdate
 
 
 class ProductService:
-    def get_all(self) -> list[dict]:
-        products = product_repository.get_all()
+    def get_all(self, account_id: str | None = None) -> list[dict]:
+        products = product_repository.get_all(account_id=account_id)
         return [p.model_dump(mode='json') for p in products]
 
     def get_one(self, product_id: str) -> dict | None:
@@ -13,8 +13,8 @@ class ProductService:
             return None
         return product.model_dump(mode='json')
 
-    def create(self, product_data: ProductCreate) -> str | None:
-        return product_repository.create(product_data)
+    def create(self, product_data: ProductCreate, account_id: str = 'default') -> str | None:
+        return product_repository.create(product_data, account_id=account_id)
 
     def update(self, product_id: str, product_data: ProductUpdate) -> bool:
         existing = product_repository.get_by_id(product_id)

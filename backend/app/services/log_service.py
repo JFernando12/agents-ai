@@ -18,8 +18,8 @@ def convert_decimals(obj):
 
 
 class LogService:
-    def get_all(self, limit: int = 20, last_key: dict | None = None) -> dict:
-        logs_response: LogsResponse = log_repository.get(limit=limit, last_key=last_key)
+    def get_all(self, limit: int = 20, last_key: dict | None = None, account_id: str | None = None) -> dict:
+        logs_response: LogsResponse = log_repository.get(limit=limit, last_key=last_key, account_id=account_id)
 
         result = []
 

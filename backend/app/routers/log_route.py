@@ -12,7 +12,7 @@ log_router = APIRouter(tags=["logs"], prefix="/logs")
 def get_logs(
     current_user: User = Depends(get_current_user)
 ):
-    logs = log_service.get_all()
+    logs = log_service.get_all(account_id=current_user.account_id)
     
     return JSONResponse(
         status_code=200,

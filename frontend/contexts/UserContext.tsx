@@ -1,13 +1,14 @@
 "use client";
 
 import { getUserFromStorage, saveUserToStorage, User } from "@/lib/user";
+import { queryClient } from '@/providers/QueryProvider';
 import React, {
   createContext,
   useContext,
   useState,
   useEffect,
   ReactNode,
-} from "react";
+} from 'react';
 
 interface UserContextType {
   user: User | null;
@@ -41,7 +42,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    console.log("User logged out, localStorage cleared");
+    queryClient.clear();
   };
 
   const value = {

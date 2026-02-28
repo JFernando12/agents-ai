@@ -5,7 +5,8 @@ from .document_repository import document_repository
 from .log_repository import log_repository
 from .unanswered_repository import unanswered_repository
 from .tool_repository import tool_repository
-from .product_repository import product_repository
+from .account_repository import account_repository
+from .user_repository import user_repository
 
 __all__ = [
     "agent_repository",
@@ -15,5 +16,6 @@ __all__ = [
     "log_repository",
     "unanswered_repository",
     "tool_repository",
-    "product_repository",
+    "account_repository",
+    "user_repository",
 ]

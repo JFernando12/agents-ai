@@ -48,7 +48,6 @@ export function rowsToHeaders(
 
 export function emptyForm(): ToolFormState {
   return {
-    product_id: '',
     section: '',
     display_name: '',
     name: '',
@@ -68,7 +67,6 @@ export function emptyForm(): ToolFormState {
 
 export function toolToFormState(tool: Tool): ToolFormState {
   return {
-    product_id: tool.product_id,
     section: tool.section || '',
     display_name: tool.display_name,
     name: tool.name,
@@ -84,19 +82,15 @@ export function toolToFormState(tool: Tool): ToolFormState {
 
 export type ToolGroup = { section: string; tools: Tool[] }[];
 
-export function groupTools(toolList: Tool[]): Map<string, ToolGroup> {
-  const result = new Map<string, ToolGroup>();
+export function groupTools(toolList: Tool[]): ToolGroup {
+  const map = new Map<string, Tool[]>();
   toolList.forEach((tool) => {
-    const pid = tool.product_id || '__none__';
-    if (!result.has(pid)) result.set(pid, []);
-    const sections = result.get(pid)!;
     const sectionKey = tool.section || '';
-    const existing = sections.find((sg) => sg.section === sectionKey);
-    if (existing) {
-      existing.tools.push(tool);
-    } else {
-      sections.push({ section: sectionKey, tools: [tool] });
-    }
+    if (!map.has(sectionKey)) map.set(sectionKey, []);
+    map.get(sectionKey)!.push(tool);
   });
-  return result;
+  return Array.from(map.entries()).map(([section, tools]) => ({
+    section,
+    tools,
+  }));
 }

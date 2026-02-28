@@ -1,15 +1,18 @@
 'use client';
 
 import { Loader2, Plus, X } from 'lucide-react';
-import { Product } from '@/types';
-import { HTTP_METHODS, PARAM_TYPES, labelClass, formControlClass } from './constants';
+import {
+  HTTP_METHODS,
+  PARAM_TYPES,
+  labelClass,
+  formControlClass,
+} from './constants';
 import { Param, HeaderRow, ToolFormState } from './types';
 import { toSnakeCase } from './utils';
 
 interface ToolFormProps {
   mode: 'create' | 'edit';
   form: ToolFormState;
-  products: Product[];
   isMutating: boolean;
   jsonError: string | null;
   onFormChange: (updater: (prev: ToolFormState) => ToolFormState) => void;
@@ -22,7 +25,6 @@ interface ToolFormProps {
 export function ToolForm({
   mode,
   form,
-  products,
   isMutating,
   jsonError,
   onFormChange,
@@ -97,40 +99,21 @@ export function ToolForm({
         </button>
       </div>
 
-      {/* Product + Section */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelClass}>Producto *</label>
-          <select
-            className={`${formControlClass} bg-white`}
-            value={form.product_id}
-            onChange={(e) =>
-              onFormChange((p) => ({ ...p, product_id: e.target.value }))
-            }
-          >
-            <option value="">Selecciona un producto...</option>
-            {products.map((prod) => (
-              <option key={prod.id} value={prod.id}>
-                {prod.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>
-            Sección{' '}
-            <span className="text-xs text-gray-400 font-normal">(opcional)</span>
-          </label>
-          <input
-            type="text"
-            className={formControlClass}
-            value={form.section}
-            onChange={(e) =>
-              onFormChange((p) => ({ ...p, section: e.target.value }))
-            }
-            placeholder="ej. Gestión de Tickets"
-          />
-        </div>
+      {/* Section */}
+      <div>
+        <label className={labelClass}>
+          Sección{' '}
+          <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+        </label>
+        <input
+          type="text"
+          className={formControlClass}
+          value={form.section}
+          onChange={(e) =>
+            onFormChange((p) => ({ ...p, section: e.target.value }))
+          }
+          placeholder="ej. Gestión de Tickets"
+        />
       </div>
 
       {/* Basic info */}

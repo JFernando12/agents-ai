@@ -13,7 +13,6 @@ export interface HeaderRow {
 }
 
 export interface ToolFormState {
-  product_id: string;
   section: string;
   display_name: string;
   name: string;

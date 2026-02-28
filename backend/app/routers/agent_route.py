@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from app.middleware import get_current_user
+from app.middleware import get_current_user, require_roles
 from app.utils import success_response, error_response
 from app.services import agent_service
 from app.models import User, AgentCreate, AgentUpdate, ImprovePromptRequest
@@ -22,7 +22,7 @@ def get_agents(
     is_public: bool | None = None,
     current_user: User = Depends(get_current_user)
 ):
-    agents = agent_service.get_all(is_public=is_public)
+    agents = agent_service.get_all(is_public=is_public, account_id=current_user.account_id)
     
     return JSONResponse(
         status_code=200,
@@ -49,11 +49,12 @@ def get_agent(
 @agent_router.post("/")
 def create_agent(
     agent_data: AgentCreate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin", "editor"))
 ):
     new_agent_id = agent_service.create(
         agent_data=agent_data,
-        user=current_user.email
+        user=current_user.email,
+        account_id=current_user.account_id
     )
 
     if not new_agent_id:
@@ -71,12 +72,13 @@ def create_agent(
 def update_agent(
     agent_id: str,
     agent_data: AgentUpdate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin", "editor"))
 ):
     success = agent_service.update(
         agent_id=agent_id,
         agent_data=agent_data,
-        user=current_user.email
+        user=current_user.email,
+        account_id=current_user.account_id
     )
 
     if not success:
@@ -93,11 +95,12 @@ def update_agent(
 @agent_router.delete("/{agent_id}")
 def delete_agent(
     agent_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin"))
 ):
     success = agent_service.delete(
         agent_id=agent_id,
-        user=current_user.email
+        user=current_user.email,
+        account_id=current_user.account_id
     )
 
     if not success:

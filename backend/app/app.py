@@ -9,8 +9,9 @@ from app.routers import (
     log_router,
     message_router,
     tool_router,
-    product_router,
-    unanswered_router
+    unanswered_router,
+    auth_router,
+    account_router,
 )
 
 def create_app() -> FastAPI:
@@ -27,6 +28,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.include_router(auth_router, prefix="/api")
+    app.include_router(account_router, prefix="/api")
     app.include_router(agent_router, prefix="/api")
     app.include_router(chat_router, prefix="/api")
     app.include_router(conversation_router, prefix="/api")
@@ -34,7 +37,6 @@ def create_app() -> FastAPI:
     app.include_router(log_router, prefix="/api")
     app.include_router(message_router, prefix="/api")
     app.include_router(tool_router, prefix="/api")
-    app.include_router(product_router, prefix="/api")
     app.include_router(unanswered_router, prefix="/api")
 
     @app.get("/health")
