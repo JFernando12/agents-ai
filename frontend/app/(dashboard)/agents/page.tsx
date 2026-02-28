@@ -34,29 +34,29 @@ export default function AgentsPage() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-4">
-      {/* Page header */}
-      <div className="flex-shrink-0 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Centro de Agentes
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Crea y gestiona tus agentes de IA
-          </p>
+    <div className="h-full flex flex-col">
+      {/* Single card */}
+      <div className="bg-white dark:bg-[#18181B] rounded-xl border border-gray-200 dark:border-white/[0.08] h-full flex flex-col overflow-hidden">
+        {/* Card header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.06] flex-shrink-0">
+          <div>
+            <h1 className="text-base font-semibold text-gray-900 dark:text-white">
+              Centro de Agentes
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Crea y gestiona tus agentes de IA
+            </p>
+          </div>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo agente
+          </button>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Nuevo agente
-        </button>
-      </div>
-
-      {/* Content card */}
-      <div className="bg-white dark:bg-[#18181B] rounded-xl border border-gray-200 dark:border-white/[0.08] flex-1 min-h-0 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-100 dark:border-white/[0.05] flex-shrink-0">
+        {/* Column header */}
+        <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-100 dark:border-white/[0.05] flex-shrink-0 bg-gray-50/60 dark:bg-white/[0.01]">
           <div className="w-9 flex-shrink-0" />
           <span className="flex-1 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
             Agente

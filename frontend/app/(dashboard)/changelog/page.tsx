@@ -141,39 +141,52 @@ export default function ChangelogPage() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-4">
-      {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Log de Cambios</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Historial de acciones realizadas sobre los agentes.
-          </p>
+    <div className="h-full flex flex-col">
+      {/* Single card */}
+      <div className="h-full bg-white dark:bg-[#18181B] border border-gray-200 dark:border-white/[0.08] rounded-xl overflow-hidden flex flex-col">
+        {/* Card header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.06] flex-shrink-0">
+          <div>
+            <h1 className="text-base font-semibold text-gray-900 dark:text-white">
+              Log de Cambios
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Historial de acciones realizadas sobre los agentes.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-500 dark:text-gray-400">
+              Por página:
+            </label>
+            <select
+              className="text-sm bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] text-gray-900 dark:text-white px-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-colors"
+              value={limit}
+              onChange={handleLimitChange}
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-500 dark:text-gray-400">Por página:</label>
-          <select
-            className="text-sm bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] text-gray-900 dark:text-white px-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-colors"
-            value={limit}
-            onChange={handleLimitChange}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Content card */}
-      <div className="flex-1 min-h-0 bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.08] rounded-xl overflow-hidden flex flex-col">
 
         {/* Table header */}
         <div className="flex-shrink-0 grid grid-cols-[2fr_1fr_3fr_2fr_2fr_auto] px-5 py-2.5 border-b border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-white/[0.02]">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Agente</span>
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Acción</span>
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Detalles</span>
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Usuario</span>
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Fecha</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Agente
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Acción
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Detalles
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Usuario
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Fecha
+          </span>
           <span className="w-8" />
         </div>
 
@@ -190,51 +203,75 @@ export default function ChangelogPage() {
               <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/[0.05] flex items-center justify-center">
                 <ScrollText className="w-5 h-5 text-gray-400 dark:text-gray-500" />
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">No hay cambios registrados todavía.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                No hay cambios registrados todavía.
+              </p>
             </div>
           )}
 
-          {!isLoading && logs.map((log) => {
-            const isExpanded = expandedId === log.id;
-            return (
-              <div key={log.id} className="border-b border-gray-100 dark:border-white/[0.06] last:border-b-0">
-                {/* Summary row */}
+          {!isLoading &&
+            logs.map((log) => {
+              const isExpanded = expandedId === log.id;
+              return (
                 <div
-                  className="grid grid-cols-[2fr_1fr_3fr_2fr_2fr_auto] items-center px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors cursor-pointer"
-                  onClick={() => setExpandedId(isExpanded ? null : log.id)}
+                  key={log.id}
+                  className="border-b border-gray-100 dark:border-white/[0.06] last:border-b-0"
                 >
-                  <span className="text-sm font-medium text-gray-800 dark:text-white truncate pr-3">
-                    {log.agentName}
-                  </span>
-                  <span><ActionBadge action={log.action} /></span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400 truncate pr-3">{log.details}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400 truncate pr-3">{log.user}</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 pr-2">
-                    {log.timestamp.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}
-                  </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : log.id); }}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-colors"
+                  {/* Summary row */}
+                  <div
+                    className="grid grid-cols-[2fr_1fr_3fr_2fr_2fr_auto] items-center px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors cursor-pointer"
+                    onClick={() => setExpandedId(isExpanded ? null : log.id)}
                   >
-                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-
-                {/* Expanded detail */}
-                {isExpanded && (
-                  <div className="px-5 py-4 bg-gray-50/60 dark:bg-white/[0.015] border-t border-gray-100 dark:border-white/[0.06]">
-                    <LogDetail log={log} />
+                    <span className="text-sm font-medium text-gray-800 dark:text-white truncate pr-3">
+                      {log.agentName}
+                    </span>
+                    <span>
+                      <ActionBadge action={log.action} />
+                    </span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate pr-3">
+                      {log.details}
+                    </span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate pr-3">
+                      {log.user}
+                    </span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 pr-2">
+                      {log.timestamp.toLocaleString('es-MX', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedId(isExpanded ? null : log.id);
+                      }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-colors"
+                    >
+                      {isExpanded ? (
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                   </div>
-                )}
-              </div>
-            );
-          })}
+
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <div className="px-5 py-4 bg-gray-50/60 dark:bg-white/[0.015] border-t border-gray-100 dark:border-white/[0.06]">
+                      <LogDetail log={log} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
 
         {/* Pagination footer */}
         {!isLoading && logs.length > 0 && (
           <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/60 dark:bg-white/[0.01]">
-            <span className="text-xs text-gray-400 dark:text-gray-500">Página {page}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              Página {page}
+            </span>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={goPrev}
