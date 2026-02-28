@@ -6,6 +6,7 @@ from app.routers import (
     chat_router,
     conversation_router,
     document_router,
+    execution_trace_router,
     log_router,
     message_router,
     tool_router,
@@ -34,6 +35,7 @@ def create_app() -> FastAPI:
     app.include_router(chat_router, prefix="/api")
     app.include_router(conversation_router, prefix="/api")
     app.include_router(document_router, prefix="/api")
+    app.include_router(execution_trace_router, prefix="/api")
     app.include_router(log_router, prefix="/api")
     app.include_router(message_router, prefix="/api")
     app.include_router(tool_router, prefix="/api")

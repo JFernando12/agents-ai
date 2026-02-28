@@ -47,6 +47,7 @@ TABLE_NAMES = {
     "product":             os.getenv("PRODUCT_TABLE",            "ai-product"),
     "account":             os.getenv("ACCOUNT_TABLE",            "ai-account"),
     "user":                os.getenv("USER_TABLE",               "ai-user"),
+    "execution_trace":     os.getenv("EXECUTION_TRACE_TABLE",    "ai-execution-trace"),
 }
 
 # Default billing / throughput for every table
@@ -390,6 +391,43 @@ TABLES = [
                 "IndexName": "account_id-index",
                 "KeySchema": [
                     {"AttributeName": "account_id", "KeyType": "HASH"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+        ],
+        "BillingMode": BILLING_MODE,
+    },
+    # ------------------------------------------------------------------
+    # ai-execution-trace  (agent execution traces)
+    # PK: id (S)
+    # GSI account_id-created_at-index  →  account_id (S) + created_at (N)
+    # GSI agent_id-created_at-index    →  agent_id (S)   + created_at (N)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["execution_trace"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id",         "AttributeType": "S"},
+            {"AttributeName": "account_id", "AttributeType": "S"},
+            {"AttributeName": "agent_id",   "AttributeType": "S"},
+            {"AttributeName": "created_at", "AttributeType": "N"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "account_id-created_at-index",
+                "KeySchema": [
+                    {"AttributeName": "account_id", "KeyType": "HASH"},
+                    {"AttributeName": "created_at",  "KeyType": "RANGE"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+            {
+                "IndexName": "agent_id-created_at-index",
+                "KeySchema": [
+                    {"AttributeName": "agent_id",   "KeyType": "HASH"},
+                    {"AttributeName": "created_at",  "KeyType": "RANGE"},
                 ],
                 "Projection": {"ProjectionType": "ALL"},
             },

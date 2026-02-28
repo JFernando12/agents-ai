@@ -140,6 +140,40 @@ export interface LastKey {
   created_at: string;
 }
 
+// ── Execution traces ─────────────────────────────────────────────────────────
+
+export interface ToolCallTrace {
+  tool_name: string;
+  tool_use_id: string;
+  input: Record<string, unknown>;
+  output: string | null;
+  success: boolean;
+  error: string | null;
+  iteration: number;
+}
+
+export interface ExecutionTrace {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  user: string;
+  account_id: string;
+  conversation_id: string | null;
+  user_message: string;
+  final_response: string;
+  tool_calls: ToolCallTrace[];
+  total_iterations: number;
+  duration_ms: number;
+  was_answered: boolean;
+  created_at: string;
+}
+
+export interface ExecutionTracesResponse {
+  items: ExecutionTrace[];
+  lastKey: Record<string, string> | null;
+  hasMore: boolean;
+}
+
 export interface Unanswered {
   id: string;
   question: string;

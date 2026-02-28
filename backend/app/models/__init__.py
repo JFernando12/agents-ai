@@ -1,5 +1,6 @@
 from .agent import Agent, AgentCreate, AgentUpdate, AgentTool, ImprovePromptRequest
 from .chat import ChatRequest
+from .execution import AgentConfig, AgentResponse, ToolCallTrace, ExecutionTraceCreate, ExecutionTrace, ExecutionTracesResponse
 from .document import Document, DocumentUpdate, DocumentUpload
 from .conversation import Conversation, Message, ConversationCreate
 from .log import Log, CreateLog, LogsResponse
@@ -60,4 +61,10 @@ __all__ = [
     "UnansweredCommentRequest",
     "UnansweredComment",
     "UnansweredCommentCreate",
+    "AgentConfig",
+    "AgentResponse",
+    "ToolCallTrace",
+    "ExecutionTraceCreate",
+    "ExecutionTrace",
+    "ExecutionTracesResponse",
 ]

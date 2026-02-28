@@ -37,6 +37,7 @@ class Environment(BaseSettings):
     tool_table: str = 'ai-tool'
     account_table: str = 'ai-account'
     user_table: str = 'ai-user'
+    execution_trace_table: str = 'ai-execution-trace'
 
     class Config:
         env_file = ".env"

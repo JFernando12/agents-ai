@@ -81,6 +81,7 @@ class ChatService:
             messages=messages,
             attached_text=extracted_text or None,
             context=chat_data.context or None,
+            account_id=user.account_id,
         )
         answer = agent_response.response
         used_contexts = agent_response.contexts

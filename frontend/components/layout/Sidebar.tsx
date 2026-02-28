@@ -16,6 +16,7 @@ import {
   Users,
   LogOut,
   Building2,
+  Activity,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -23,6 +24,7 @@ const navItems = [
   { href: '/agents', label: 'Centro de Agentes', icon: Bot },
   { href: '/unanswered', label: 'Escalaciones', icon: HelpCircle },
   { href: '/tools', label: 'Herramientas', icon: Wrench },
+  { href: '/execution-logs', label: 'Ejecuciones', icon: Activity },
   { href: '/changelog', label: 'Log de Cambios', icon: ScrollText },
 ];
 
