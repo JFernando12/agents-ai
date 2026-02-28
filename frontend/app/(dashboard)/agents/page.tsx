@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { Agent } from '@/types';
 import AgentList from '@/components/agents/AgentList';
 import { Plus } from 'lucide-react';
-import { useCreateAgent, useDeleteAgent } from '@/lib/hooks/useAgents';
+import {
+  useCreateAgent,
+  useDeleteAgent,
+  useAgents,
+} from '@/lib/hooks/useAgents';
 import ModalDelete from '@/components/ui/ModalDelete';
 import ModalCreateAgent from '@/components/agents/ModalCreateAgent';
 
@@ -15,6 +19,7 @@ export default function AgentsPage() {
 
   const createAgent = useCreateAgent();
   const deleteAgent = useDeleteAgent();
+  const { data: agents } = useAgents();
 
   const handleSaveCreate = async (newAgent: Omit<Agent, 'id'>) => {
     await createAgent.mutateAsync(newAgent);
@@ -56,17 +61,17 @@ export default function AgentsPage() {
           </button>
         </div>
         {/* Column header */}
-        <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-100 dark:border-white/[0.05] flex-shrink-0 bg-gray-50/60 dark:bg-white/[0.01]">
-          <div className="w-9 flex-shrink-0" />
-          <span className="flex-1 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+        <div className="flex items-center gap-3 px-5 py-2 border-b border-gray-100 dark:border-white/[0.05] flex-shrink-0 bg-gray-50/60 dark:bg-white/[0.01]">
+          <div className="w-8 flex-shrink-0" />
+          <span className="flex-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
             Agente
           </span>
-          <span className="hidden sm:block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider w-24 text-right">
+          <span className="hidden sm:block text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider w-24 text-center flex-shrink-0">
             Modelo
           </span>
-          <div className="w-20 flex-shrink-0" />
+          <div className="w-[82px] flex-shrink-0" />
         </div>
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className="flex-1 overflow-y-auto py-2">
           <AgentList onDelete={handleDelete} />
         </div>
       </div>

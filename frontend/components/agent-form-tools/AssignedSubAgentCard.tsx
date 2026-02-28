@@ -1,8 +1,7 @@
 'use client';
 
-import { Link2Off } from 'lucide-react';
+import { Link2Off, Bot } from 'lucide-react';
 import { Agent } from '@/types';
-import { AgentIcon } from '@/components/agents/AgentIcon';
 
 interface AssignedSubAgentCardProps {
   agent: Agent;
@@ -27,9 +26,9 @@ export function AssignedSubAgentCard({
         {/* Info */}
         <div className="flex items-center gap-3 min-w-0">
           {/* Agent icon */}
-          <span className="flex-shrink-0">
-            <AgentIcon name={agent.icon} className="w-5 h-5" />
-          </span>
+          <div className="w-7 h-7 rounded-md bg-indigo-100 dark:bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+            <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-gray-800 truncate">
               {agent.name}

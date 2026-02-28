@@ -1,8 +1,7 @@
 'use client';
 
-import { Search, X, Check } from 'lucide-react';
+import { Search, X, Check, Bot } from 'lucide-react';
 import { Agent } from '@/types';
-import { AgentIcon } from '@/components/agents/AgentIcon';
 
 interface SubAgentPickerProps {
   agents: Agent[];
@@ -106,9 +105,9 @@ export function SubAgentPicker({
                 </span>
 
                 {/* Agent icon */}
-                <span className="flex-shrink-0">
-                  <AgentIcon name={agent.icon} className="w-6 h-6" />
-                </span>
+                <div className="w-7 h-7 rounded-md bg-indigo-100 dark:bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                </div>
 
                 {/* Info */}
                 <div className="min-w-0">

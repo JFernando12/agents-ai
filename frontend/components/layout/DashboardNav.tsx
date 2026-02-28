@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/agents", label: "Centro de Agentes" },
-  { href: "/unanswered", label: "Sin Respuesta" },
-  { href: "/tools", label: "Herramientas" },
-  { href: "/changelog", label: "Log de Cambios" },
+  { href: '/agents', label: 'Centro de Agentes' },
+  { href: '/unanswered', label: 'Escalaciones' },
+  { href: '/tools', label: 'Herramientas' },
+  { href: '/changelog', label: 'Log de Cambios' },
 ];
 
 export default function DashboardNav() {

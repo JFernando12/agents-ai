@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react';
 
 const navItems = [
   { href: '/agents', label: 'Centro de Agentes', icon: Bot },
-  { href: '/unanswered', label: 'Sin Respuesta', icon: HelpCircle },
+  { href: '/unanswered', label: 'Escalaciones', icon: HelpCircle },
   { href: '/tools', label: 'Herramientas', icon: Wrench },
   { href: '/changelog', label: 'Log de Cambios', icon: ScrollText },
 ];
@@ -33,9 +33,9 @@ export default function AppSidebar() {
   const isDark = resolvedTheme === 'dark';
 
   return (
-    <aside className="w-58 flex-shrink-0 h-screen flex flex-col bg-white dark:bg-[#111111] border-r border-gray-200 dark:border-white/[0.06] transition-colors duration-300">
+    <aside className="w-58 flex-shrink-0 h-screen flex flex-col bg-white dark:bg-[#111111] shadow-[1px_0_0_0_rgb(0,0,0,0.06)] dark:shadow-[1px_0_0_0_rgb(255,255,255,0.06)] transition-colors duration-300">
       {/* Logo */}
-      <div className="h-14 flex items-center px-5 border-b border-gray-100 dark:border-white/[0.06]">
+      <div className="h-14 flex items-center px-5 shadow-[0_1px_0_0_rgb(0,0,0,0.06)] dark:shadow-[0_1px_0_0_rgb(255,255,255,0.06)]">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm">
             <Sparkles className="w-4 h-4 text-white" strokeWidth={2} />
@@ -78,7 +78,7 @@ export default function AppSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 pb-4 pt-3 border-t border-gray-100 dark:border-white/[0.06] space-y-0.5">
+      <div className="px-3 pb-4 pt-3 shadow-[0_-1px_0_0_rgb(0,0,0,0.06)] dark:shadow-[0_-1px_0_0_rgb(255,255,255,0.06)] space-y-0.5">
         {/* Theme toggle */}
         {mounted && (
           <button

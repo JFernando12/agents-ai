@@ -11,7 +11,6 @@ import AgentFormSources from '@/components/agents/AgentFormSources';
 import AgentFormIntegration from '@/components/agents/AgentFormIntegration';
 import AgentFormQuestions from '@/components/agents/AgentFormQuestions';
 import AgentFormTools from '@/components/agents/AgentFormTools';
-import { AgentIcon } from '@/components/agents/AgentIcon';
 
 type EditTab = 'general' | 'fuentes' | 'tools' | 'integracion' | 'preguntas';
 
@@ -101,11 +100,8 @@ export default function EditAgentPage({
           </button>
           <span className="text-gray-200 dark:text-gray-700">/</span>
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="w-6 h-6 rounded-md bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
-              <AgentIcon
-                name={agentData.icon}
-                className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"
-              />
+            <div className="w-6 h-6 rounded-md bg-indigo-100 dark:bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+              <Bot className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
               {agentData.name}
