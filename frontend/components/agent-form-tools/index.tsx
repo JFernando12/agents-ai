@@ -312,34 +312,33 @@ export default function AgentFormTools({
   // ── Render list ───────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 p-2 mb-4">
+    <div className="space-y-4 mb-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-gray-800">
-            Capacidades Adicionales
-          </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Capacidades asignadas a este agente.{' '}
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            Capacidades
             {assignedToolIds.length > 0 && (
-              <span className="font-medium text-gray-900">
-                {assignedToolIds.length} asignada
-                {assignedToolIds.length !== 1 ? 's' : ''}.
+              <span className="ml-1.5 px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-bold">
+                {assignedToolIds.length}
               </span>
             )}
+          </h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            Capacidades asignadas a este agente
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
             type="button"
             onClick={() => {
               setShowCatalogPicker(true);
               setCatalogSearch('');
             }}
-            className="flex items-center gap-1 px-3 py-2 border border-indigo-600 text-gray-900 rounded-lg hover:bg-gray-50 text-sm"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-indigo-500/60 text-indigo-700 dark:text-indigo-300 dark:border-indigo-500/40 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/[0.08] transition-colors"
           >
-            <Library className="w-4 h-4" />
-            Agregar existente
+            <Library className="w-3.5 h-3.5" />
+            Agregar
           </button>
           <button
             type="button"
@@ -348,10 +347,11 @@ export default function AgentFormTools({
               setParseDocs('');
               setParseError(null);
             }}
-            className="flex items-center gap-1 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 text-sm"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-gray-200 dark:border-white/[0.08] text-gray-500 dark:text-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
+            title="Auto-completar desde documentación"
           >
-            <Sparkles className="w-4 h-4" />
-            Auto-completar
+            <Sparkles className="w-3.5 h-3.5" />
+            IA
           </button>
           <button
             type="button"
@@ -359,9 +359,9 @@ export default function AgentFormTools({
               setForm(emptyForm());
               setMode('create');
             }}
-            className="flex items-center gap-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Nueva
           </button>
         </div>
@@ -392,9 +392,9 @@ export default function AgentFormTools({
 
       {/* Empty state */}
       {!isLoading && !isFetching && assignedToolIds.length === 0 && (
-        <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
-          No hay capacidades asignadas. Usa <strong>Agregar existente</strong>{' '}
-          para buscar en el catálogo, o <strong>Nueva</strong> para crear una.
+        <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/[0.08] px-6 py-5 text-center text-xs text-gray-400 dark:text-gray-500">
+          No hay capacidades asignadas. Usa <strong>Agregar</strong> para buscar
+          en el catálogo, o <strong>Nueva</strong> para crear una.
         </div>
       )}
 
@@ -403,7 +403,7 @@ export default function AgentFormTools({
         !isFetching &&
         assignedToolIds.length > 0 &&
         assignedGrouped.size === 0 && (
-          <div className="rounded-lg border border-dashed border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
+          <div className="rounded-lg border border-orange-200 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/[0.06] px-4 py-3 text-xs text-orange-700 dark:text-orange-400">
             Las capacidades asignadas no se encontraron en el catálogo. Puede
             que hayan sido eliminadas.
             <button
@@ -427,21 +427,21 @@ export default function AgentFormTools({
             return (
               <div key={productId} className="space-y-3">
                 <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                  <span className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     {product?.name ?? 'Sin producto'}
                   </span>
                   {product?.description && (
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
                       — {product.description}
                     </span>
                   )}
-                  <div className="flex-1 h-px bg-gray-200" />
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-white/[0.08]" />
                 </div>
 
                 {sectionGroups.map(({ section, tools: sectionTools }) => (
                   <div key={section} className="space-y-2">
                     {section && (
-                      <p className="text-xs font-medium text-gray-500 pl-1 ml-1 border-l-2 border-gray-300">
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 pl-1 ml-1 border-l-2 border-gray-300 dark:border-white/[0.12]">
                         {section}
                       </p>
                     )}
@@ -487,21 +487,20 @@ export default function AgentFormTools({
       />
 
       {/* ── Sub-agents section ─────────────────────────────────────────────── */}
-      <div className="mt-6 pt-5 border-t border-gray-200 space-y-3">
+      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.06] space-y-3">
         {/* Sub-agents header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-gray-800">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
               Sub-agentes
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Agentes que este agente puede invocar como herramienta.{' '}
               {assignedSubAgentIds.length > 0 && (
-                <span className="font-medium text-gray-900">
-                  {assignedSubAgentIds.length} asignado
-                  {assignedSubAgentIds.length !== 1 ? 's' : ''}.
+                <span className="ml-1.5 px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-full text-[10px] font-bold">
+                  {assignedSubAgentIds.length}
                 </span>
               )}
+            </h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              Agentes que este agente puede invocar
             </p>
           </div>
           <button
@@ -510,19 +509,18 @@ export default function AgentFormTools({
               setShowSubAgentPicker(true);
               setSubAgentSearch('');
             }}
-            className="flex items-center gap-1 px-3 py-2 border border-indigo-600 text-gray-900 rounded-lg hover:bg-gray-50 text-sm"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-indigo-500/60 text-indigo-700 dark:text-indigo-300 dark:border-indigo-500/40 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/[0.08] flex-shrink-0 transition-colors"
           >
-            <Bot className="w-4 h-4" />
-            Agregar sub-agente
+            <Bot className="w-3.5 h-3.5" />
+            Agregar
           </button>
         </div>
 
         {/* Empty state */}
         {assignedSubAgentIds.length === 0 && (
-          <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
-            No hay sub-agentes asignados. Usa{' '}
-            <strong>Agregar sub-agente</strong> para seleccionar un agente a
-            delegar.
+          <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/[0.08] px-6 py-5 text-center text-xs text-gray-400 dark:text-gray-500">
+            No hay sub-agentes asignados. Usa <strong>Agregar</strong> para
+            seleccionar un agente a delegar.
           </div>
         )}
 
@@ -551,7 +549,7 @@ export default function AgentFormTools({
         {/* Fallback: assigned sub-agent IDs not found */}
         {assignedSubAgentIds.length > 0 &&
           assignedSubAgentObjects.length === 0 && (
-            <div className="rounded-lg border border-dashed border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
+            <div className="rounded-lg border border-orange-200 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-500/[0.06] px-4 py-3 text-xs text-orange-700 dark:text-orange-400">
               Los sub-agentes asignados no se encontraron. Puede que hayan sido
               eliminados.
               <button

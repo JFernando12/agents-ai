@@ -36,15 +36,27 @@ export default function UnansweredPage() {
     );
   }
 
+  const selectClass = "px-2.5 py-1.5 text-sm bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] text-gray-700 dark:text-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-colors";
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full gap-4">
+      {/* Page header */}
+      <div className="flex-shrink-0 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Sin Respuesta</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Preguntas que los agentes no pudieron responder.
+          </p>
+        </div>
+      </div>
+
       {/* Filters */}
-      <div className="bg-white dark:bg-[#18181B] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.08] mb-3 flex-shrink-0">
+      <div className="bg-white dark:bg-[#18181B] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.08] flex-shrink-0">
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={filters.status || ''}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+            className={selectClass}
           >
             <option value="">Estado: Todos</option>
             <option value="pending">Pendiente</option>
@@ -56,7 +68,7 @@ export default function UnansweredPage() {
           <select
             value={filters.agentId || ''}
             onChange={(e) => handleFilterChange('agentId', e.target.value)}
-            className="px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 max-w-[160px]"
+            className={`${selectClass} max-w-[160px]`}
           >
             <option value="">Agente: Todos</option>
             {agents.map((agent) => (
@@ -80,7 +92,7 @@ export default function UnansweredPage() {
                 e.target.value === '' ? undefined : e.target.value === 'true',
               )
             }
-            className="px-2.5 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
+            className={selectClass}
           >
             <option value="">Info: Todos</option>
             <option value="true">Con info</option>
@@ -92,7 +104,7 @@ export default function UnansweredPage() {
             filters.wasFedToAgent !== undefined) && (
             <button
               onClick={() => setFilters({})}
-              className="px-2 py-1.5 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              className="px-2 py-1.5 text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 dark:hover:text-red-400 rounded-lg transition-colors"
               title="Limpiar filtros"
             >
               ✕

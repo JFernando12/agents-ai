@@ -1,33 +1,113 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { LogEntry, LastKey } from '@/types';
+import { ScrollText, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import type { LogEntry, LastKey, Agent } from '@/types';
 import { useLogs } from '@/lib/hooks/useLogs';
-import LogDetailModal from '@/components/changelog/LogDetailModal';
 
-function getActionStyles(action: LogEntry['action']) {
-  switch (action) {
-    case 'creado':
-      return 'bg-green-100 text-green-800';
-    case 'editado':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'eliminado':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
+const fieldLabels: Record<keyof Agent, string> = {
+  id: 'ID',
+  name: 'Nombre',
+  description: 'Descripción',
+  icon: 'Icono',
+  customPrompt: 'Master Prompt',
+  model: 'Modelo',
+  temperature: 'Temperatura',
+  topK: 'Top K',
+  maxTokens: 'Max Tokens',
+  isPublic: 'Visibilidad',
+  tools: 'Herramientas',
+  sub_agents: 'Sub-agentes',
+  questions: 'Preguntas Frecuentes',
+};
+
+function ActionBadge({ action }: { action: LogEntry['action'] }) {
+  const styles: Record<string, string> = {
+    creado: 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400',
+    editado: 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+    eliminado: 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+  };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold capitalize tracking-wide ${styles[action] ?? 'bg-gray-100 text-gray-600 dark:bg-white/[0.06] dark:text-gray-400'}`}>
+      {action}
+    </span>
+  );
+}
+
+function renderValue(value: unknown) {
+  if (typeof value === 'boolean') {
+    return <span className="text-sm text-gray-700 dark:text-gray-300">{value ? 'Público' : 'Privado'}</span>;
   }
+  if (typeof value === 'string' && value.length > 100) {
+    return <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{value}</pre>;
+  }
+  return <span className="text-sm text-gray-700 dark:text-gray-300">{String(value ?? 'N/A')}</span>;
+}
+
+function LogDetail({ log }: { log: LogEntry }) {
+  const { action, previousState, currentState } = log;
+
+  if (action === 'editado') {
+    if (!previousState || !currentState) return null;
+    const allKeys = Array.from(
+      new Set([...Object.keys(previousState), ...Object.keys(currentState)])
+    ) as (keyof Agent)[];
+    const changedKeys = allKeys.filter(
+      (key) => JSON.stringify(previousState[key]) !== JSON.stringify(currentState[key])
+    );
+    if (changedKeys.length === 0) {
+      return <p className="text-sm text-gray-500 dark:text-gray-400 py-2">No se detectaron cambios en los campos.</p>;
+    }
+    return (
+      <div className="space-y-2.5">
+        {changedKeys.map((key) => (
+          <div key={key} className="rounded-lg border border-gray-100 dark:border-white/[0.07] overflow-hidden">
+            <div className="px-3 py-1.5 bg-gray-50 dark:bg-white/[0.03] border-b border-gray-100 dark:border-white/[0.07]">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {fieldLabels[key] || key}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-gray-100 dark:divide-white/[0.06]">
+              <div className="p-3 bg-red-50/60 dark:bg-red-500/[0.04]">
+                <p className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wide mb-1.5">Antes</p>
+                {renderValue(previousState[key])}
+              </div>
+              <div className="p-3 bg-green-50/60 dark:bg-green-500/[0.04]">
+                <p className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wide mb-1.5">Después</p>
+                {renderValue(currentState[key])}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const state = action === 'creado' ? currentState : previousState;
+  if (!state) return <p className="text-sm text-gray-500 dark:text-gray-400 py-2">No hay datos disponibles.</p>;
+  return (
+    <div className="divide-y divide-gray-100 dark:divide-white/[0.06]">
+      {(Object.keys(state) as (keyof Agent)[]).map((key) => (
+        <div key={key} className="flex items-start gap-4 py-2">
+          <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide w-28 flex-shrink-0 pt-0.5">
+            {fieldLabels[key] || key}
+          </span>
+          <div className="flex-1 min-w-0">{renderValue(state[key])}</div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function ChangelogPage() {
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState(10);
   const [lastKey, setLastKey] = useState<LastKey | null>(null);
   const [nextKey, setNextKey] = useState<LastKey | null>(null);
   const [history, setHistory] = useState<(LastKey | null)[]>([]);
   const [page, setPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const { data } = useLogs(limit, lastKey);
+  const { data, isLoading } = useLogs(limit, lastKey);
 
   const logs = data?.items ?? [];
   const hasMore = data?.hasMore ?? false;
@@ -41,6 +121,7 @@ export default function ChangelogPage() {
     setLastKey(null);
     setHistory([]);
     setPage(1);
+    setExpandedId(null);
   };
 
   const goNext = () => {
@@ -48,6 +129,7 @@ export default function ChangelogPage() {
     setHistory((prev) => (prev.length < page ? [...prev, lastKey] : prev));
     setLastKey(nextKey);
     setPage((p) => p + 1);
+    setExpandedId(null);
   };
 
   const goPrev = () => {
@@ -55,149 +137,123 @@ export default function ChangelogPage() {
     const newPage = page - 1;
     setLastKey(newPage === 1 ? null : history[newPage - 2]);
     setPage(newPage);
+    setExpandedId(null);
   };
-
-  const handleViewDetails = (log: LogEntry) => {
-    setSelectedLog(log);
-    setIsModalOpen(true);
-  };
-
-  const totalKnownPages = page + (hasMore ? 1 : 0);
-  const maxPages = totalKnownPages + (hasMore ? 1 : 0);
-  let start = Math.max(1, page - 1);
-  let end = Math.min(maxPages, start + 2);
-  start = Math.max(1, end - 2);
 
   return (
-    <>
-      <div className="bg-white dark:bg-[#18181B] rounded-xl border border-gray-200 dark:border-white/[0.08] shadow-sm p-6 h-full flex flex-col">
-        <div className="flex justify-between items-center flex-shrink-0 mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Log de Cambios
-          </h1>
-          <div>
-            <label className="text-gray-600 dark:text-gray-400 mr-2 text-sm">
-              Registros por página:
-            </label>
-            <select
-              className="text-gray-700 dark:text-gray-300 dark:bg-[#27272A] p-[5px] border border-gray-300 dark:border-white/[0.08] rounded-md text-sm"
-              value={limit}
-              onChange={handleLimitChange}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-            </select>
-          </div>
+    <div className="h-full flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Log de Cambios</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Historial de acciones realizadas sobre los agentes.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500 dark:text-gray-400">Por página:</label>
+          <select
+            className="text-sm bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] text-gray-900 dark:text-white px-2.5 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-colors"
+            value={limit}
+            onChange={handleLimitChange}
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Content card */}
+      <div className="flex-1 min-h-0 bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.08] rounded-xl overflow-hidden flex flex-col">
+
+        {/* Table header */}
+        <div className="flex-shrink-0 grid grid-cols-[2fr_1fr_3fr_2fr_2fr_auto] px-5 py-2.5 border-b border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-white/[0.02]">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Agente</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Acción</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Detalles</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Usuario</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Fecha</span>
+          <span className="w-8" />
         </div>
 
-        {logs.length === 0 ? (
-          <p className="text-gray-500">No hay cambios registrados todavía.</p>
-        ) : (
-          <div className="flex-1 overflow-auto">
-            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 table-fixed">
-              <thead className="text-xs text-gray-600 dark:text-gray-500 uppercase bg-gray-50 dark:bg-white/[0.04]">
-                <tr>
-                  <th className="px-6 py-3 w-[20%]">Agente</th>
-                  <th className="px-6 py-3 w-[10%]">Acción</th>
-                  <th className="px-6 py-3 w-[25%]">Detalles</th>
-                  <th className="px-6 py-3 w-[20%]">Usuario</th>
-                  <th className="px-6 py-3 w-[25%]">Fecha y Hora</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="bg-white dark:bg-transparent border-b border-gray-100 dark:border-white/[0.06] hover:bg-gray-50 dark:hover:bg-white/[0.03]"
-                  >
-                    <th
-                      scope="row"
-                      className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
-                    >
-                      {log.agentName}
-                    </th>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getActionStyles(log.action)}`}
-                      >
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-700">
-                      <button
-                        onClick={() => handleViewDetails(log)}
-                        className="text-blue-600 hover:underline hover:text-blue-800 transition-colors text-left"
-                      >
-                        {log.details}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">{log.user}</td>
-                    <td className="px-6 py-4">
-                      {log.timestamp.toLocaleString('es-MX', {
-                        dateStyle: 'long',
-                        timeStyle: 'short',
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Rows */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {isLoading && (
+            <div className="flex items-center justify-center py-16 text-sm text-gray-400 dark:text-gray-500">
+              Cargando registros...
+            </div>
+          )}
 
-            <div className="mt-4 flex justify-end items-center gap-2">
+          {!isLoading && logs.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/[0.05] flex items-center justify-center">
+                <ScrollText className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">No hay cambios registrados todavía.</p>
+            </div>
+          )}
+
+          {!isLoading && logs.map((log) => {
+            const isExpanded = expandedId === log.id;
+            return (
+              <div key={log.id} className="border-b border-gray-100 dark:border-white/[0.06] last:border-b-0">
+                {/* Summary row */}
+                <div
+                  className="grid grid-cols-[2fr_1fr_3fr_2fr_2fr_auto] items-center px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors cursor-pointer"
+                  onClick={() => setExpandedId(isExpanded ? null : log.id)}
+                >
+                  <span className="text-sm font-medium text-gray-800 dark:text-white truncate pr-3">
+                    {log.agentName}
+                  </span>
+                  <span><ActionBadge action={log.action} /></span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 truncate pr-3">{log.details}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 truncate pr-3">{log.user}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 pr-2">
+                    {log.timestamp.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : log.id); }}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-colors"
+                  >
+                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {/* Expanded detail */}
+                {isExpanded && (
+                  <div className="px-5 py-4 bg-gray-50/60 dark:bg-white/[0.015] border-t border-gray-100 dark:border-white/[0.06]">
+                    <LogDetail log={log} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Pagination footer */}
+        {!isLoading && logs.length > 0 && (
+          <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/60 dark:bg-white/[0.01]">
+            <span className="text-xs text-gray-400 dark:text-gray-500">Página {page}</span>
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={goPrev}
                 disabled={page === 1}
-                className="px-2 py-1 text-sm rounded bg-[#00a63e] text-white disabled:opacity-40"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                ◀
+                <ChevronLeft className="w-3.5 h-3.5" /> Anterior
               </button>
-              <div className="flex gap-1">
-                {Array.from({ length: end - start + 1 }).map((_, i) => {
-                  const pageNumber = start + i;
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => {
-                        if (pageNumber === page) return;
-                        setLastKey(
-                          pageNumber === 1
-                            ? null
-                            : (history[pageNumber - 3] ?? null),
-                        );
-                        setPage(pageNumber);
-                      }}
-                      className={`px-2 py-1 text-sm rounded ${
-                        page === pageNumber
-                          ? 'bg-[#00a63e] text-white'
-                          : 'bg-gray-200 text-black'
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
-              </div>
               <button
                 onClick={goNext}
                 disabled={!hasMore}
-                className="px-2 py-1 text-sm rounded bg-[#00a63e] text-white disabled:opacity-40"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                ▶
+                Siguiente <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         )}
       </div>
-
-      <LogDetailModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedLog(null);
-        }}
-        logEntry={selectedLog}
-      />
-    </>
+    </div>
   );
 }

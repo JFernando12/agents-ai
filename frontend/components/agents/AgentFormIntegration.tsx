@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ApiIcon, CopyIcon } from '../ui/icons';
+import { Copy, Check, Plug } from 'lucide-react';
 
 interface AgentFormIntegrationProps {
   agentId?: string;
@@ -7,7 +7,7 @@ interface AgentFormIntegrationProps {
 
 const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
 
   const handleCopy = (key: string, text: string) => {
@@ -80,238 +80,296 @@ const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
   );
 
   return (
-    <div className="space-y-6 text-gray-800 max-w-4xl">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start space-x-4">
-        <ApiIcon className="w-8 h-8 text-blue-600 flex-shrink-0 mt-1" />
+    <div className="space-y-6 max-w-3xl">
+      {/* Info banner */}
+      <div className="flex items-start gap-3 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-500/[0.08] border border-indigo-100 dark:border-indigo-500/20">
+        <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Plug className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+        </div>
         <div>
-          <h3 className="text-xl font-bold text-blue-800">
+          <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">
             Integración de API
-          </h3>
-          <p className="text-blue-700 text-sm">
+          </p>
+          <p className="text-sm text-indigo-700 dark:text-indigo-400 mt-0.5">
             Integra este agente en tus aplicaciones usando nuestra API REST.
-            Envía mensajes y recibe respuestas potenciadas por IA. Puedes pasar
-            contexto adicional para personalizar las respuestas.
+            Puedes pasar contexto adicional para personalizar las respuestas.
           </p>
         </div>
       </div>
 
       {/* Endpoint */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h4 className="text-lg font-semibold">Endpoint</h4>
-          <button
-            type="button"
-            onClick={() => handleCopy('endpoint', endpoint)}
-            className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <CopyIcon className="w-4 h-4" />
-            <span>{copiedStates['endpoint'] ? 'Copiado!' : 'Copiar'}</span>
-          </button>
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Endpoint
+          </p>
+          <CopyButton
+            label="endpoint"
+            text={endpoint}
+            copiedStates={copiedStates}
+            onCopy={handleCopy}
+          />
         </div>
-        <div className="bg-gray-900 text-white rounded-lg p-4 font-mono text-sm">
-          <span className="text-green-400 font-bold mr-4">POST</span>
-          <span>{endpoint}</span>
+        <div className="bg-gray-950 rounded-xl px-4 py-3 font-mono text-sm flex items-center gap-3">
+          <span className="text-emerald-400 font-bold text-xs tracking-wide">
+            POST
+          </span>
+          <span className="text-gray-300">{endpoint}</span>
         </div>
-      </div>
+      </section>
 
-      {/* Headers */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h4 className="text-lg font-semibold">Headers — Con API Key</h4>
-          <button
-            type="button"
-            onClick={() => handleCopy('headers', headersWithApiKey)}
-            className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <CopyIcon className="w-4 h-4" />
-            <span>{copiedStates['headers'] ? 'Copiado!' : 'Copiar'}</span>
-          </button>
+      {/* Headers – API Key */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Headers — Con API Key
+          </p>
+          <CopyButton
+            label="headers"
+            text={headersWithApiKey}
+            copiedStates={copiedStates}
+            onCopy={handleCopy}
+          />
         </div>
-        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-950 text-gray-300 rounded-xl px-4 py-3 text-sm whitespace-pre-wrap overflow-x-auto">
           <code>{headersWithApiKey}</code>
         </pre>
-      </div>
+      </section>
 
-      {/* Headers with JWT (alternative) */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h4 className="text-lg font-semibold">Headers — Con JWT propio</h4>
-          <button
-            type="button"
-            onClick={() => handleCopy('headersJwt', headersWithJwt)}
-            className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <CopyIcon className="w-4 h-4" />
-            <span>{copiedStates['headersJwt'] ? 'Copiado!' : 'Copiar'}</span>
-          </button>
+      {/* Headers – JWT */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Headers — Con JWT propio
+          </p>
+          <CopyButton
+            label="headersJwt"
+            text={headersWithJwt}
+            copiedStates={copiedStates}
+            onCopy={handleCopy}
+          />
         </div>
-        <p className="text-sm text-gray-500 mb-2">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
           Si tu sistema genera JWT firmados con el mismo secret, úsalos con los
-          campos <code className="bg-gray-100 px-1 rounded">id</code>,{' '}
-          <code className="bg-gray-100 px-1 rounded">email</code> y{' '}
-          <code className="bg-gray-100 px-1 rounded">name</code> en el payload.
+          campos{' '}
+          <code className="bg-gray-100 dark:bg-white/[0.07] px-1 rounded text-gray-700 dark:text-gray-300">
+            id
+          </code>
+          ,{' '}
+          <code className="bg-gray-100 dark:bg-white/[0.07] px-1 rounded text-gray-700 dark:text-gray-300">
+            email
+          </code>{' '}
+          y{' '}
+          <code className="bg-gray-100 dark:bg-white/[0.07] px-1 rounded text-gray-700 dark:text-gray-300">
+            name
+          </code>{' '}
+          en el payload.
         </p>
-        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-950 text-gray-300 rounded-xl px-4 py-3 text-sm whitespace-pre-wrap overflow-x-auto">
           <code>{headersWithJwt}</code>
         </pre>
-      </div>
+      </section>
 
-      {/* Request body - normal */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h4 className="text-lg font-semibold">Body — Chat simple</h4>
-          <button
-            type="button"
-            onClick={() => handleCopy('request', requestExample)}
-            className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <CopyIcon className="w-4 h-4" />
-            <span>{copiedStates['request'] ? 'Copiado!' : 'Copiar'}</span>
-          </button>
+      {/* Request – Chat simple */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Body — Chat simple
+          </p>
+          <CopyButton
+            label="request"
+            text={requestExample}
+            copiedStates={copiedStates}
+            onCopy={handleCopy}
+          />
         </div>
-        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-950 text-gray-300 rounded-xl px-4 py-3 text-sm whitespace-pre-wrap overflow-x-auto">
           <code>{requestExample}</code>
         </pre>
-      </div>
+      </section>
 
-      {/* Request body - conversation */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h4 className="text-lg font-semibold">
+      {/* Request – Conversation */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
             Body — Con historial de conversación
-          </h4>
-          <button
-            type="button"
-            onClick={() =>
-              handleCopy('requestConversation', requestConversationExample)
-            }
-            className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <CopyIcon className="w-4 h-4" />
-            <span>
-              {copiedStates['requestConversation'] ? 'Copiado!' : 'Copiar'}
-            </span>
-          </button>
+          </p>
+          <CopyButton
+            label="requestConversation"
+            text={requestConversationExample}
+            copiedStates={copiedStates}
+            onCopy={handleCopy}
+          />
         </div>
-        <p className="text-sm text-gray-500 mb-2">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
           Envía{' '}
-          <code className="bg-gray-100 px-1 rounded">
+          <code className="bg-gray-100 dark:bg-white/[0.07] px-1 rounded text-gray-700 dark:text-gray-300">
             conversation_id: null
           </code>{' '}
           para crear una nueva conversación. La respuesta incluirá el{' '}
-          <code className="bg-gray-100 px-1 rounded">conversation_id</code> para
-          usarlo en los siguientes mensajes.
+          <code className="bg-gray-100 dark:bg-white/[0.07] px-1 rounded text-gray-700 dark:text-gray-300">
+            conversation_id
+          </code>{' '}
+          para los siguientes mensajes.
         </p>
-        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-950 text-gray-300 rounded-xl px-4 py-3 text-sm whitespace-pre-wrap overflow-x-auto">
           <code>{requestConversationExample}</code>
         </pre>
-      </div>
+      </section>
 
       {/* Parameters table */}
-      <div>
-        <h4 className="text-lg font-semibold mb-2">Parámetros del body</h4>
-        <div className="bg-gray-50 rounded-lg border overflow-hidden">
+      <section>
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+          Parámetros del body
+        </p>
+        <div className="border border-gray-200 dark:border-white/[0.08] rounded-xl overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 text-left">
-              <tr>
-                <th className="p-3 font-medium text-gray-600">PARÁMETRO</th>
-                <th className="p-3 font-medium text-gray-600">TIPO</th>
-                <th className="p-3 font-medium text-gray-600">REQUERIDO</th>
-                <th className="p-3 font-medium text-gray-600">DESCRIPCIÓN</th>
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.02]">
+                <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Parámetro
+                </th>
+                <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Tipo
+                </th>
+                <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Req.
+                </th>
+                <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Descripción
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y">
-              <tr className="bg-white">
-                <td className="p-3 font-mono">message</td>
-                <td className="p-3">string</td>
-                <td className="p-3 text-green-600 font-semibold">Sí</td>
-                <td className="p-3">Texto del mensaje del usuario</td>
-              </tr>
-              <tr className="bg-white">
-                <td className="p-3 font-mono">agent_id</td>
-                <td className="p-3">string</td>
-                <td className="p-3 text-green-600 font-semibold">Sí</td>
-                <td className="p-3">ID del agente (pre-completado abajo)</td>
-              </tr>
-              <tr className="bg-white">
-                <td className="p-3 font-mono">type</td>
-                <td className="p-3">string</td>
-                <td className="p-3 text-gray-400">No</td>
-                <td className="p-3">
-                  <code className="bg-gray-100 px-1 rounded">normal</code>{' '}
-                  (default) o{' '}
-                  <code className="bg-gray-100 px-1 rounded">conversation</code>{' '}
-                  para mantener historial
-                </td>
-              </tr>
-              <tr className="bg-white">
-                <td className="p-3 font-mono">conversation_id</td>
-                <td className="p-3">string | null</td>
-                <td className="p-3 text-gray-400">No</td>
-                <td className="p-3">
-                  ID de conversación existente. Enviar{' '}
-                  <code className="bg-gray-100 px-1 rounded">null</code> para
-                  crear una nueva (solo con{' '}
-                  <code className="bg-gray-100 px-1 rounded">
-                    type: conversation
-                  </code>
-                  )
-                </td>
-              </tr>
-              <tr className="bg-white">
-                <td className="p-3 font-mono">context</td>
-                <td className="p-3">object | null</td>
-                <td className="p-3 text-gray-400">No</td>
-                <td className="p-3">
-                  Datos adicionales en clave-valor que se inyectan en el system
-                  prompt del agente. Útil para pasar información del usuario,
-                  sesión o página actual.
-                </td>
-              </tr>
+            <tbody className="divide-y divide-gray-100 dark:divide-white/[0.06]">
+              {[
+                {
+                  param: 'message',
+                  type: 'string',
+                  req: true,
+                  desc: 'Texto del mensaje del usuario',
+                },
+                {
+                  param: 'agent_id',
+                  type: 'string',
+                  req: true,
+                  desc: 'ID del agente (pre-completado abajo)',
+                },
+                {
+                  param: 'type',
+                  type: 'string',
+                  req: false,
+                  desc: 'normal (default) o conversation para mantener historial',
+                },
+                {
+                  param: 'conversation_id',
+                  type: 'string | null',
+                  req: false,
+                  desc: 'ID de conversación existente. null para crear una nueva (solo con type: conversation)',
+                },
+                {
+                  param: 'context',
+                  type: 'object | null',
+                  req: false,
+                  desc: 'Datos clave-valor inyectados en el system prompt. Útil para pasar info del usuario o sesión.',
+                },
+              ].map(({ param, type, req, desc }) => (
+                <tr
+                  key={param}
+                  className="bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
+                >
+                  <td className="px-4 py-3 font-mono text-xs text-gray-800 dark:text-gray-300">
+                    {param}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-indigo-600 dark:text-indigo-400">
+                    {type}
+                  </td>
+                  <td className="px-4 py-3 text-xs font-semibold">
+                    {req ? (
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        Sí
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">No</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                    {desc}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      {/* Response example */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h4 className="text-lg font-semibold">Respuesta</h4>
-          <button
-            type="button"
-            onClick={() => handleCopy('response', responseExample)}
-            className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <CopyIcon className="w-4 h-4" />
-            <span>{copiedStates['response'] ? 'Copiado!' : 'Copiar'}</span>
-          </button>
+      {/* Response */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Respuesta
+          </p>
+          <CopyButton
+            label="response"
+            text={responseExample}
+            copiedStates={copiedStates}
+            onCopy={handleCopy}
+          />
         </div>
-        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-950 text-gray-300 rounded-xl px-4 py-3 text-sm whitespace-pre-wrap overflow-x-auto">
           <code>{responseExample}</code>
         </pre>
-      </div>
+      </section>
 
       {/* Agent ID */}
       {agentId && (
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="text-lg font-semibold">Agent ID</h4>
-            <button
-              type="button"
-              onClick={() => handleCopy('agentId', agentId)}
-              className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900"
-            >
-              <CopyIcon className="w-4 h-4" />
-              <span>{copiedStates['agentId'] ? 'Copiado!' : 'Copiar'}</span>
-            </button>
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Agent ID
+            </p>
+            <CopyButton
+              label="agentId"
+              text={agentId}
+              copiedStates={copiedStates}
+              onCopy={handleCopy}
+            />
           </div>
-          <div className="bg-gray-900 text-white rounded-lg p-4 font-mono text-sm">
+          <div className="bg-gray-950 text-gray-300 rounded-xl px-4 py-3 font-mono text-sm">
             {agentId}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
 };
+
+// Helper component
+function CopyButton({
+  label,
+  text,
+  copiedStates,
+  onCopy,
+}: {
+  label: string;
+  text: string;
+  copiedStates: Record<string, boolean>;
+  onCopy: (key: string, text: string) => void;
+}) {
+  const copied = copiedStates[label];
+  return (
+    <button
+      type="button"
+      onClick={() => onCopy(label, text)}
+      className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+    >
+      {copied ? (
+        <Check className="w-3.5 h-3.5 text-emerald-500" />
+      ) : (
+        <Copy className="w-3.5 h-3.5" />
+      )}
+      {copied ? 'Copiado' : 'Copiar'}
+    </button>
+  );
+}
 
 export default AgentFormIntegration;

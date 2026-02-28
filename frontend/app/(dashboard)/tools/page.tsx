@@ -48,9 +48,11 @@ const PARAM_TYPES = [
 ];
 
 const labelClass =
-  'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
+  'block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1.5';
 const formControlClass =
-  'w-full px-3 py-2 border border-gray-300 dark:border-white/[0.1] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 dark:text-gray-200 dark:bg-[#27272A] text-sm';
+  'w-full px-3 py-2 text-sm bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors';
+const selectClass =
+  'w-full px-3 py-2 text-sm bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/[0.08] rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors';
 
 interface Param {
   name: string;
@@ -114,16 +116,18 @@ function toSlug(s: string): string {
 
 function MethodBadge({ method }: { method: string }) {
   const colorMap: Record<string, string> = {
-    GET: 'bg-green-100 text-green-700',
-    POST: 'bg-blue-100 text-blue-700',
-    PUT: 'bg-yellow-100 text-yellow-700',
-    PATCH: 'bg-yellow-100 text-yellow-700',
-    DELETE: 'bg-red-100 text-red-700',
+    GET: 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400',
+    POST: 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+    PUT: 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+    PATCH:
+      'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+    DELETE: 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400',
   };
   return (
     <span
-      className={`text-xs font-bold px-2 py-0.5 rounded font-mono ${
-        colorMap[method] ?? 'bg-gray-100 text-gray-600'
+      className={`inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded font-mono tracking-wide ${
+        colorMap[method] ??
+        'bg-gray-100 text-gray-600 dark:bg-white/[0.06] dark:text-gray-400'
       }`}
     >
       {method}
@@ -478,9 +482,19 @@ export default function ToolsPage() {
   const isMutatingProduct = createProduct.isPending || updateProduct.isPending;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full gap-4">
+      {/* Page header */}
+      <div className="flex-shrink-0 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Herramientas</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Gestiona las capacidades y productos disponibles para tus agentes.
+          </p>
+        </div>
+      </div>
+
       {/* Inner tabs */}
-      <div className="flex-shrink-0 flex space-x-1 mb-4">
+      <div className="flex-shrink-0 flex space-x-1">
         <button
           onClick={() => setActiveTab('catalog')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -490,7 +504,7 @@ export default function ToolsPage() {
           }`}
         >
           <Wrench className="w-4 h-4" />
-          Catálogo de Capacidades
+          Capacidades
         </button>
         <button
           onClick={() => setActiveTab('products')}
@@ -503,7 +517,7 @@ export default function ToolsPage() {
           <Package className="w-4 h-4" />
           Productos
           {(products ?? []).length > 0 && (
-            <span className="ml-1 bg-gray-200 text-gray-700 text-xs px-1.5 py-0.5 rounded-full">
+            <span className="ml-1 bg-gray-200 dark:bg-white/[0.08] text-gray-600 dark:text-gray-400 text-xs px-1.5 py-0.5 rounded-full">
               {(products ?? []).length}
             </span>
           )}
@@ -515,9 +529,9 @@ export default function ToolsPage() {
         {activeTab === 'catalog' && (
           <div className="space-y-4 pb-6">
             {(toolMode === 'create' || toolMode === 'edit') && (
-              <div className="space-y-4 bg-white border border-gray-200 rounded-xl p-5">
+              <div className="space-y-4 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-gray-800">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                     {toolMode === 'create'
                       ? 'Nueva Capacidad'
                       : 'Editar Capacidad'}
@@ -525,9 +539,9 @@ export default function ToolsPage() {
                   <button
                     type="button"
                     onClick={handleCancelTool}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -535,7 +549,7 @@ export default function ToolsPage() {
                   <div>
                     <label className={labelClass}>Producto *</label>
                     <select
-                      className={`${formControlClass} bg-white`}
+                      className={selectClass}
                       value={toolForm.product_id}
                       onChange={(e) =>
                         setToolForm((p) => ({
@@ -552,7 +566,7 @@ export default function ToolsPage() {
                       ))}
                     </select>
                     {(products ?? []).length === 0 && (
-                      <p className="text-xs text-amber-600 mt-1">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                         Crea un producto primero en la pestaña
                         &quot;Productos&quot;.
                       </p>
@@ -634,7 +648,7 @@ export default function ToolsPage() {
                   <div className="col-span-1">
                     <label className={labelClass}>Método</label>
                     <select
-                      className={`${formControlClass} bg-white`}
+                      className={selectClass}
                       value={toolForm.method}
                       onChange={(e) =>
                         setToolForm((p) => ({
@@ -664,7 +678,7 @@ export default function ToolsPage() {
                   </div>
                 </div>
 
-                <div className="border-t pt-3">
+                <div className="border-t border-gray-100 dark:border-white/[0.06] pt-3">
                   <label className={labelClass}>Headers (opcional)</label>
                   <div className="space-y-2">
                     {toolForm.headerRows.map((row, i) => (
@@ -711,26 +725,26 @@ export default function ToolsPage() {
                           headerRows: [...p.headerRows, { key: '', value: '' }],
                         }))
                       }
-                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                      className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1"
                     >
                       <Plus className="w-3 h-3" /> Agregar header
                     </button>
                   </div>
                 </div>
 
-                <div className="border-t pt-3">
+                <div className="border-t border-gray-100 dark:border-white/[0.06] pt-3">
                   <div className="flex items-center justify-between mb-2">
                     <label className={labelClass + ' mb-0'}>
                       Parámetros de entrada
                     </label>
-                    <div className="flex bg-gray-100 rounded-md p-0.5 text-xs">
+                    <div className="flex bg-gray-100 dark:bg-white/[0.06] rounded-md p-0.5 text-xs">
                       <button
                         type="button"
                         onClick={switchToBuilder}
                         className={`px-3 py-1 rounded-md transition-colors ${
                           toolForm.schemaMode === 'builder'
-                            ? 'bg-white shadow text-gray-800 font-medium'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-white dark:bg-white/[0.12] shadow text-gray-800 dark:text-white font-medium'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                         }`}
                       >
                         Builder
@@ -740,8 +754,8 @@ export default function ToolsPage() {
                         onClick={switchToJson}
                         className={`px-3 py-1 rounded-md transition-colors ${
                           toolForm.schemaMode === 'json'
-                            ? 'bg-white shadow text-gray-800 font-medium'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-white dark:bg-white/[0.12] shadow text-gray-800 dark:text-white font-medium'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                         }`}
                       >
                         JSON
@@ -754,7 +768,7 @@ export default function ToolsPage() {
                       {toolForm.params.map((param, i) => (
                         <div
                           key={i}
-                          className="grid grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded-lg"
+                          className="grid grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] p-2 rounded-lg"
                         >
                           <input
                             type="text"
@@ -766,7 +780,7 @@ export default function ToolsPage() {
                             }
                           />
                           <select
-                            className={`${formControlClass} bg-white col-span-2`}
+                            className={`${selectClass} col-span-2`}
                             value={param.type}
                             onChange={(e) =>
                               handleParamChange(i, 'type', e.target.value)
@@ -837,7 +851,7 @@ export default function ToolsPage() {
                             ],
                           }))
                         }
-                        className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1"
                       >
                         <Plus className="w-3 h-3" /> Agregar parámetro
                       </button>
@@ -863,11 +877,11 @@ export default function ToolsPage() {
                   )}
                 </div>
 
-                <div className="flex justify-end gap-3 border-t pt-3">
+                <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-white/[0.06] pt-3">
                   <button
                     type="button"
                     onClick={handleCancelTool}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm"
+                    className="px-3.5 py-1.5 text-sm bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] transition-colors"
                   >
                     Cancelar
                   </button>
@@ -881,7 +895,7 @@ export default function ToolsPage() {
                       !toolForm.url ||
                       !toolForm.product_id
                     }
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-3.5 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                   >
                     {isMutatingTool && (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -895,12 +909,11 @@ export default function ToolsPage() {
             {toolMode === 'list' && (
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Catálogo de Capacidades
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Capacidades
                   </h2>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Todas las capacidades disponibles agrupadas por producto y
-                    sección.
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Todas las capacidades disponibles agrupadas por producto.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -911,9 +924,9 @@ export default function ToolsPage() {
                       setParseDocs('');
                       setParseError(null);
                     }}
-                    className="flex items-center gap-1 px-3 py-2 border border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-indigo-500/40 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-xs font-medium transition-colors"
                   >
-                    <Sparkles className="w-4 h-4" /> Auto-completar
+                    <Sparkles className="w-3.5 h-3.5" /> Auto-completar
                   </button>
                   <button
                     type="button"
@@ -921,22 +934,23 @@ export default function ToolsPage() {
                       setToolForm(emptyToolForm());
                       setToolMode('create');
                     }}
-                    className="flex items-center gap-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors"
                   >
-                    <Plus className="w-4 h-4" /> Nueva Capacidad
+                    <Plus className="w-3.5 h-3.5" /> Nueva Capacidad
                   </button>
                 </div>
               </div>
             )}
 
             {showParseDrawer && toolMode === 'list' && (
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+              <div className="rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/[0.04] p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4" /> Auto-completar con IA
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-500" />{' '}
+                      Auto-completar con IA
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       Pega la documentación de la API (texto libre, cURL,
                       Swagger, Postman…) y la IA rellenará el formulario
                       automáticamente.
@@ -945,14 +959,14 @@ export default function ToolsPage() {
                   <button
                     type="button"
                     onClick={() => setShowParseDrawer(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
                 <textarea
-                  rows={6}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-white/[0.1] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 dark:text-gray-200 dark:bg-[#27272A] text-sm bg-white placeholder-gray-400 dark:placeholder-gray-500"
+                  rows={5}
+                  className={`${formControlClass} font-mono text-xs`}
                   placeholder={`Ejemplo:\ncurl -X POST https://api.ejemplo.com/tickets \\\n  -H "Authorization: Bearer TOKEN" \\\n  -d '{"titulo": "...", "descripcion": "..."}'`}
                   value={parseDocs}
                   onChange={(e) => {
@@ -961,13 +975,15 @@ export default function ToolsPage() {
                   }}
                 />
                 {parseError && (
-                  <p className="text-xs text-red-600">{parseError}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {parseError}
+                  </p>
                 )}
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setShowParseDrawer(false)}
-                    className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+                    className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] text-gray-700 dark:text-gray-300 transition-colors"
                   >
                     Cancelar
                   </button>
@@ -975,16 +991,17 @@ export default function ToolsPage() {
                     type="button"
                     onClick={handleParseDocs}
                     disabled={isParsing || !parseDocs.trim()}
-                    className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
                   >
                     {isParsing ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />{' '}
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />{' '}
                         Analizando...
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-4 h-4" /> Completar formulario
+                        <Sparkles className="w-3.5 h-3.5" /> Completar
+                        formulario
                       </>
                     )}
                   </button>
@@ -993,18 +1010,27 @@ export default function ToolsPage() {
             )}
 
             {loadingTools && (
-              <div className="flex items-center gap-2 text-gray-500 text-sm py-6">
+              <div className="flex items-center gap-2 text-gray-400 text-sm py-6">
                 <Loader2 className="w-4 h-4 animate-spin" /> Cargando
-                catálogo...
+                capacidades...
               </div>
             )}
 
             {!loadingTools &&
               (tools ?? []).length === 0 &&
               toolMode === 'list' && (
-                <div className="rounded-lg border border-dashed border-gray-200 p-8 text-center text-sm text-gray-400">
-                  No hay capacidades en el catálogo. Haz clic en{' '}
-                  <strong>Nueva Capacidad</strong> para agregar una.
+                <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/[0.08] p-10 text-center">
+                  <Wrench className="w-7 h-7 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No hay capacidades registradas.
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    Haz clic en{' '}
+                    <strong className="text-gray-600 dark:text-gray-300">
+                      Nueva Capacidad
+                    </strong>{' '}
+                    para agregar una.
+                  </p>
                 </div>
               )}
 
@@ -1016,42 +1042,42 @@ export default function ToolsPage() {
                   return (
                     <div key={productId} className="space-y-3">
                       <div className="flex items-center gap-2 pt-1">
-                        <span className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                        <span className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                           {product?.name ?? 'Sin producto'}
                         </span>
                         {product?.description && (
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
                             — {product.description}
                           </span>
                         )}
-                        <div className="flex-1 h-px bg-gray-200" />
+                        <div className="flex-1 h-px bg-gray-100 dark:bg-white/[0.06]" />
                       </div>
 
                       {sectionGroups.map(({ section, tools: sectionTools }) => (
                         <div key={section} className="space-y-2">
                           {section && (
-                            <p className="text-xs font-medium text-gray-500 pl-1 ml-1 border-l-2 border-gray-300">
+                            <p className="text-xs font-medium text-gray-400 dark:text-gray-500 pl-2 ml-1 border-l-2 border-gray-200 dark:border-white/[0.1]">
                               {section}
                             </p>
                           )}
                           {sectionTools.map((tool) => (
                             <div
                               key={tool.id}
-                              className="border border-gray-200 rounded-lg overflow-hidden"
+                              className="border border-gray-200 dark:border-white/[0.07] rounded-lg overflow-hidden"
                             >
-                              <div className="flex items-center justify-between px-4 py-3 bg-white">
+                              <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-white/[0.02] hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors">
                                 <div className="flex items-center gap-3 min-w-0">
                                   <MethodBadge method={tool.method} />
                                   <div className="min-w-0">
-                                    <p className="text-sm font-medium text-gray-800 truncate">
+                                    <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
                                       {tool.display_name}
                                     </p>
-                                    <p className="text-xs text-gray-400 font-mono truncate">
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 font-mono truncate">
                                       {tool.name}
                                     </p>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                                <div className="flex items-center gap-0.5 flex-shrink-0 ml-2">
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -1061,53 +1087,53 @@ export default function ToolsPage() {
                                           : tool.id,
                                       )
                                     }
-                                    className="p-1.5 rounded hover:bg-gray-100 text-gray-400"
+                                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 transition-colors"
                                   >
                                     {expandedToolId === tool.id ? (
-                                      <ChevronUp className="w-4 h-4" />
+                                      <ChevronUp className="w-3.5 h-3.5" />
                                     ) : (
-                                      <ChevronDown className="w-4 h-4" />
+                                      <ChevronDown className="w-3.5 h-3.5" />
                                     )}
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleEditTool(tool)}
-                                    className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+                                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                                   >
-                                    <Pencil className="w-4 h-4" />
+                                    <Pencil className="w-3.5 h-3.5" />
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => setToolToDelete(tool.id)}
                                     disabled={deleteTool.isPending}
-                                    className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600"
+                                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                                   >
                                     {deleteTool.isPending ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                     ) : (
-                                      <Trash2 className="w-4 h-4" />
+                                      <Trash2 className="w-3.5 h-3.5" />
                                     )}
                                   </button>
                                 </div>
                               </div>
 
                               {expandedToolId === tool.id && (
-                                <div className="border-t border-gray-100 bg-gray-50 px-4 py-3 space-y-2 text-xs">
-                                  <p className="text-gray-600">
+                                <div className="border-t border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-white/[0.02] px-4 py-3 space-y-2 text-xs">
+                                  <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
                                     {tool.description}
                                   </p>
-                                  <div className="flex gap-1 items-center">
-                                    <span className="text-gray-400 font-medium">
+                                  <div className="flex gap-1.5 items-center">
+                                    <span className="text-gray-400 dark:text-gray-500 font-medium">
                                       URL:
                                     </span>
-                                    <span className="font-mono text-gray-700 truncate">
+                                    <span className="font-mono text-gray-600 dark:text-gray-300 truncate">
                                       {tool.url}
                                     </span>
                                   </div>
                                   {tool.headers &&
                                     Object.keys(tool.headers).length > 0 && (
                                       <div>
-                                        <span className="text-gray-400 font-medium">
+                                        <span className="text-gray-400 dark:text-gray-500 font-medium">
                                           Headers:
                                         </span>
                                         <div className="mt-1 space-y-0.5">
@@ -1115,13 +1141,13 @@ export default function ToolsPage() {
                                             ([k, v]) => (
                                               <div
                                                 key={k}
-                                                className="font-mono text-gray-600"
+                                                className="font-mono text-gray-500 dark:text-gray-400"
                                               >
-                                                <span className="text-blue-600">
+                                                <span className="text-indigo-500 dark:text-indigo-400">
                                                   {k}
                                                 </span>
                                                 :{' '}
-                                                <span className="text-gray-500">
+                                                <span className="text-gray-400 dark:text-gray-500">
                                                   {v}
                                                 </span>
                                               </div>
@@ -1134,10 +1160,10 @@ export default function ToolsPage() {
                                     Object.keys(tool.input_schema.properties)
                                       .length > 0 && (
                                       <div>
-                                        <span className="text-gray-400 font-medium">
+                                        <span className="text-gray-400 dark:text-gray-500 font-medium">
                                           Parámetros:
                                         </span>
-                                        <div className="mt-1 flex flex-wrap gap-1">
+                                        <div className="mt-1.5 flex flex-wrap gap-1.5">
                                           {Object.entries(
                                             tool.input_schema.properties,
                                           ).map(([name, prop]) => (
@@ -1147,18 +1173,18 @@ export default function ToolsPage() {
                                                 tool.input_schema.required?.includes(
                                                   name,
                                                 )
-                                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                  : 'bg-gray-100 text-gray-600'
+                                                  ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20'
+                                                  : 'bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-gray-400'
                                               }`}
                                             >
                                               {name}
-                                              <span className="text-gray-400">
+                                              <span className="text-gray-400 dark:text-gray-500">
                                                 :{prop.type}
                                               </span>
                                               {tool.input_schema.required?.includes(
                                                 name,
                                               ) && (
-                                                <span className="text-blue-400 text-[10px]">
+                                                <span className="text-indigo-400 dark:text-indigo-400 text-[10px]">
                                                   req
                                                 </span>
                                               )}
@@ -1184,9 +1210,9 @@ export default function ToolsPage() {
         {activeTab === 'products' && (
           <div className="space-y-4 pb-6">
             {(productMode === 'create' || productMode === 'edit') && (
-              <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+              <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-gray-800">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                     {productMode === 'create'
                       ? 'Nuevo Producto'
                       : 'Editar Producto'}
@@ -1194,9 +1220,9 @@ export default function ToolsPage() {
                   <button
                     type="button"
                     onClick={handleCancelProduct}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -1254,11 +1280,11 @@ export default function ToolsPage() {
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 border-t pt-3">
+                <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-white/[0.06] pt-3">
                   <button
                     type="button"
                     onClick={handleCancelProduct}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm"
+                    className="px-3.5 py-1.5 text-sm bg-gray-100 dark:bg-white/[0.06] text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] transition-colors"
                   >
                     Cancelar
                   </button>
@@ -1270,7 +1296,7 @@ export default function ToolsPage() {
                       !productForm.name ||
                       !productForm.slug
                     }
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-3.5 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                   >
                     {isMutatingProduct && (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1284,12 +1310,12 @@ export default function ToolsPage() {
             {productMode === 'list' && (
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                     Productos
                   </h2>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Los productos agrupan y categorizan las capacidades del
-                    catálogo.
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Los productos agrupan y categorizan las capacidades
+                    disponibles.
                   </p>
                 </div>
                 <button
@@ -1298,15 +1324,15 @@ export default function ToolsPage() {
                     setProductForm(emptyProductForm());
                     setProductMode('create');
                   }}
-                  className="flex items-center gap-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-medium transition-colors"
                 >
-                  <Plus className="w-4 h-4" /> Nuevo Producto
+                  <Plus className="w-3.5 h-3.5" /> Nuevo Producto
                 </button>
               </div>
             )}
 
             {loadingProducts && (
-              <div className="flex items-center gap-2 text-gray-500 text-sm py-6">
+              <div className="flex items-center gap-2 text-gray-400 text-sm py-6">
                 <Loader2 className="w-4 h-4 animate-spin" /> Cargando
                 productos...
               </div>
@@ -1315,9 +1341,18 @@ export default function ToolsPage() {
             {!loadingProducts &&
               (products ?? []).length === 0 &&
               productMode === 'list' && (
-                <div className="rounded-lg border border-dashed border-gray-200 p-8 text-center text-sm text-gray-400">
-                  No hay productos. Haz clic en <strong>Nuevo Producto</strong>{' '}
-                  para agregar uno.
+                <div className="rounded-xl border border-dashed border-gray-200 dark:border-white/[0.08] p-10 text-center">
+                  <Package className="w-7 h-7 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No hay productos.
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    Haz clic en{' '}
+                    <strong className="text-gray-600 dark:text-gray-300">
+                      Nuevo Producto
+                    </strong>{' '}
+                    para agregar uno.
+                  </p>
                 </div>
               )}
 
@@ -1330,41 +1365,41 @@ export default function ToolsPage() {
                   return (
                     <div
                       key={product.id}
-                      className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-3"
+                      className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.07] rounded-xl p-4 flex flex-col gap-3 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
+                          <p className="text-sm font-semibold text-gray-800 dark:text-white truncate">
                             {product.name}
                           </p>
-                          <p className="text-xs text-gray-400 font-mono">
+                          <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">
                             {product.slug}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
                           <button
                             type="button"
                             onClick={() => handleEditProduct(product)}
-                            className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+                            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setProductToDelete(product.id)}
                             disabled={deleteProduct.isPending}
-                            className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600"
+                            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
                       {product.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                           {product.description}
                         </p>
                       )}
-                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                      <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
                         <Wrench className="w-3 h-3" />
                         <span>
                           {toolCount} capacidad{toolCount !== 1 ? 'es' : ''}
@@ -1373,9 +1408,9 @@ export default function ToolsPage() {
                           <button
                             type="button"
                             onClick={() => setActiveTab('catalog')}
-                            className="ml-2 text-blue-500 hover:text-blue-700 underline"
+                            className="ml-1 text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 underline transition-colors"
                           >
-                            Ver en catálogo
+                            Ver capacidades
                           </button>
                         )}
                       </div>
@@ -1393,7 +1428,7 @@ export default function ToolsPage() {
         onClose={() => setToolToDelete(null)}
         onSave={handleConfirmDeleteTool}
         isLoading={deleteTool.isPending}
-        message="¿Estás seguro de que quieres eliminar esta capacidad del catálogo? Se eliminará de todos los agentes que la tengan asignada."
+        message="¿Estás seguro de que quieres eliminar esta capacidad? Se eliminará de todos los agentes que la tengan asignada."
       />
       <ModalDelete
         isOpen={productToDelete !== null}

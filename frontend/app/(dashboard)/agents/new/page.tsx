@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import type { Agent, IconName } from '@/types';
+import type { Agent } from '@/types';
 import { useCreateAgent } from '@/lib/hooks/useAgents';
 import AgentFormGeneral from '@/components/agents/AgentFormGeneral';
 
@@ -27,22 +27,28 @@ export default function NewAgentPage() {
   const [agentData, setAgentData] = useState<Omit<Agent, 'id'>>(DEFAULT_AGENT);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     const isNumberField = ['temperature', 'topK', 'maxTokens'].includes(name);
     const isBooleanField = ['isPublic'].includes(name);
     setAgentData((prev) => ({
       ...prev,
-      [name]: isBooleanField ? value === 'true' : isNumberField ? Number(value) : value,
+      [name]: isBooleanField
+        ? value === 'true'
+        : isNumberField
+          ? Number(value)
+          : value,
     }));
   };
 
-  const handleIconSelect = (iconName: IconName) => {
-    setAgentData((prev) => ({ ...prev, icon: iconName }));
-  };
-
-  const handlePresetChange = (preset: { temperature: number; topK: number; maxTokens: number }) => {
+  const handlePresetChange = (preset: {
+    temperature: number;
+    topK: number;
+    maxTokens: number;
+  }) => {
     setAgentData((prev) => ({ ...prev, ...preset }));
   };
 
@@ -63,11 +69,11 @@ export default function NewAgentPage() {
           <ArrowLeft className="w-4 h-4" />
           Volver a agentes
         </button>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
           Nuevo agente
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Configura el nombre, descripción, icono y prompt del agente.
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Configura el nombre, descripción, prompt y parámetros del agente.
         </p>
       </div>
 
@@ -78,7 +84,6 @@ export default function NewAgentPage() {
             <AgentFormGeneral
               agent={agentData}
               handleChange={handleChange}
-              handleIconSelect={handleIconSelect}
               handlePresetChange={handlePresetChange}
             />
           </div>
@@ -97,7 +102,9 @@ export default function NewAgentPage() {
               disabled={createAgent.isPending || !agentData.name.trim()}
               className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {createAgent.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              {createAgent.isPending && (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              )}
               {createAgent.isPending ? 'Creando...' : 'Crear agente'}
             </button>
           </div>

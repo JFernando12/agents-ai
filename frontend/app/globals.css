@@ -75,3 +75,29 @@ body {
 .dark * {
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
+
+/* Hide scrollbar thumb until hover — used on form panels */
+.custom-scrollbar {
+  scrollbar-color: transparent transparent;
+}
+
+.custom-scrollbar:hover {
+  scrollbar-color: #D1D5DB transparent;
+}
+
+.dark .custom-scrollbar:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+}
+
+.dark .custom-scrollbar:hover::-webkit-scrollbar-thumb,
+.custom-scrollbar.dark:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}

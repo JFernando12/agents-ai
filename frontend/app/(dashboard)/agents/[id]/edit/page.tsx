@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Bot, Loader2, Settings, Database, Wrench, Plug, HelpCircle, Save } from 'lucide-react';
-import type { Agent, FrequestQuestion, IconName } from '@/types';
+import type { Agent, FrequestQuestion } from '@/types';
 import { useAgents, useUpdateAgent } from '@/lib/hooks/useAgents';
 import AgentChat from '@/components/agents/AgentChat';
 import AgentFormGeneral from '@/components/agents/AgentFormGeneral';
@@ -16,14 +16,18 @@ import { AgentIcon } from '@/components/agents/AgentIcon';
 type EditTab = 'general' | 'fuentes' | 'tools' | 'integracion' | 'preguntas';
 
 const TABS: { id: EditTab; label: string; icon: React.ElementType }[] = [
-  { id: 'general',     label: 'General',     icon: Settings   },
-  { id: 'fuentes',     label: 'Fuentes',     icon: Database   },
-  { id: 'tools',       label: 'Capacidades', icon: Wrench     },
-  { id: 'integracion', label: 'Integración', icon: Plug       },
-  { id: 'preguntas',   label: 'Preguntas',   icon: HelpCircle },
+  { id: 'general', label: 'General', icon: Settings },
+  { id: 'fuentes', label: 'Fuentes', icon: Database },
+  { id: 'tools', label: 'Capacidades', icon: Wrench },
+  { id: 'integracion', label: 'Integración', icon: Plug },
+  { id: 'preguntas', label: 'Preguntas', icon: HelpCircle },
 ];
 
-export default function EditAgentPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditAgentPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const { data: agents } = useAgents();
@@ -37,26 +41,40 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
     if (source && !agentData) setAgentData(source);
   }, [source]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
     const { name, value } = e.target;
     const isNum = ['temperature', 'topK', 'topP', 'maxTokens'].includes(name);
     const isBool = ['isPublic'].includes(name);
-    setAgentData((prev) => prev ? { ...prev, [name]: isBool ? value === 'true' : isNum ? Number(value) : value } : prev);
+    setAgentData((prev) =>
+      prev
+        ? {
+            ...prev,
+            [name]: isBool ? value === 'true' : isNum ? Number(value) : value,
+          }
+        : prev,
+    );
   };
-
-  const handleIconSelect = (iconName: IconName) =>
-    setAgentData((prev) => (prev ? { ...prev, icon: iconName } : prev));
 
   const handleQuestionsChange = (questions: FrequestQuestion[]) =>
     setAgentData((prev) => (prev ? { ...prev, questions } : prev));
 
-  const handlePresetChange = (preset: { temperature: number; topK: number; maxTokens: number }) =>
-    setAgentData((prev) => (prev ? { ...prev, ...preset } : prev));
+  const handlePresetChange = (preset: {
+    temperature: number;
+    topK: number;
+    maxTokens: number;
+  }) => setAgentData((prev) => (prev ? { ...prev, ...preset } : prev));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agentData) return;
-    await updateAgent.mutateAsync({ id: agentData.id, agentData: agentData as Omit<Agent, 'id'> });
+    await updateAgent.mutateAsync({
+      id: agentData.id,
+      agentData: agentData as Omit<Agent, 'id'>,
+    });
     router.push('/agents');
   };
 
@@ -70,7 +88,6 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="flex flex-col h-full gap-3">
-
       {/* ── Top bar ── */}
       <div className="flex-shrink-0 bg-white dark:bg-[#18181B] border border-gray-200 dark:border-white/[0.08] rounded-xl">
         {/* Row 1: breadcrumb + agent name + actions */}
@@ -85,9 +102,14 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
           <span className="text-gray-200 dark:text-gray-700">/</span>
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="w-6 h-6 rounded-md bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
-              <AgentIcon name={agentData.icon} className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <AgentIcon
+                name={agentData.icon}
+                className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"
+              />
             </div>
-            <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{agentData.name}</span>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {agentData.name}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
@@ -103,7 +125,11 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               disabled={updateAgent.isPending}
               className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
-              {updateAgent.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              {updateAgent.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
               {updateAgent.isPending ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
@@ -130,7 +156,6 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
 
       {/* ── Content ── */}
       <div className="flex-1 min-h-0 flex gap-3">
-
         {/* Form */}
         <div className="flex-1 min-w-0 bg-white dark:bg-[#18181B] border border-gray-200 dark:border-white/[0.08] rounded-xl overflow-hidden">
           <form
@@ -142,7 +167,6 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               <AgentFormGeneral
                 agent={agentData}
                 handleChange={handleChange}
-                handleIconSelect={handleIconSelect}
                 handlePresetChange={handlePresetChange}
               />
             )}
@@ -151,12 +175,20 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
               <AgentFormTools
                 agentId={agentData.id}
                 assignedTools={agentData.tools || []}
-                onToolsChange={(tools) => setAgentData((prev) => (prev ? { ...prev, tools } : prev))}
+                onToolsChange={(tools) =>
+                  setAgentData((prev) => (prev ? { ...prev, tools } : prev))
+                }
                 assignedSubAgents={agentData.sub_agents || []}
-                onSubAgentsChange={(sub_agents) => setAgentData((prev) => (prev ? { ...prev, sub_agents } : prev))}
+                onSubAgentsChange={(sub_agents) =>
+                  setAgentData((prev) =>
+                    prev ? { ...prev, sub_agents } : prev,
+                  )
+                }
               />
             )}
-            {activeTab === 'integracion' && <AgentFormIntegration agentId={agentData.id} />}
+            {activeTab === 'integracion' && (
+              <AgentFormIntegration agentId={agentData.id} />
+            )}
             {activeTab === 'preguntas' && (
               <AgentFormQuestions
                 questions={agentData.questions || []}
@@ -170,13 +202,14 @@ export default function EditAgentPage({ params }: { params: Promise<{ id: string
         <div className="w-[300px] flex-shrink-0 flex flex-col min-h-0 bg-white dark:bg-[#18181B] border border-gray-200 dark:border-white/[0.08] rounded-xl overflow-hidden">
           <div className="flex-shrink-0 px-4 py-2.5 border-b border-gray-100 dark:border-white/[0.06] flex items-center gap-2">
             <Bot className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Probar agente</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
+              Probar agente
+            </span>
           </div>
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <AgentChat agent={agentData} />
           </div>
         </div>
-
       </div>
     </div>
   );
