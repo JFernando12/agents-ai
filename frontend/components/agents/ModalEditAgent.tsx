@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Agent, FrequestQuestion, IconName } from '@/types';
 import { Loader2 } from 'lucide-react';
-import Modal from '../ui/Modal';
+import SlideOver from '../ui/SlideOver';
 import AgentChat from './AgentChat';
 import AgentFormGeneral from './AgentFormGeneral';
 import AgentFormSources from './AgentFormSources';
@@ -19,7 +19,13 @@ const TAB_LABELS: Record<EditTab, string> = {
   preguntas: 'Preguntas',
 };
 
-const TABS: EditTab[] = ['general', 'fuentes', 'tools', 'integracion', 'preguntas'];
+const TABS: EditTab[] = [
+  'general',
+  'fuentes',
+  'tools',
+  'integracion',
+  'preguntas',
+];
 
 interface ModalEditAgentProps {
   isOpen: boolean;
@@ -47,17 +53,25 @@ const ModalEditAgent: React.FC<ModalEditAgentProps> = ({
   }, [agent]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
-    const isNumberField = ['temperature', 'topK', 'topP', 'maxTokens'].includes(name);
+    const isNumberField = ['temperature', 'topK', 'topP', 'maxTokens'].includes(
+      name,
+    );
     const isBooleanField = ['isPublic'].includes(name);
 
     setAgentData((prev) =>
       prev
         ? {
             ...prev,
-            [name]: isBooleanField ? value === 'true' : isNumberField ? Number(value) : value,
+            [name]: isBooleanField
+              ? value === 'true'
+              : isNumberField
+                ? Number(value)
+                : value,
           }
         : prev,
     );
@@ -89,25 +103,31 @@ const ModalEditAgent: React.FC<ModalEditAgentProps> = ({
   if (!agentData) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Editar Agente" size="full">
-      {/* Two-column layout: form on the left, chat panel on the right (fixed width) */}
-      <div className="flex flex-row gap-4 h-full w-full overflow-hidden">
+    <SlideOver
+      isOpen={isOpen}
+      onClose={onClose}
+      title={agentData.name}
+      subtitle="Editar configuración del agente"
+      width="xl"
+    >
+      {/* Two-column layout: form on the left, chat panel on the right */}
+      <div className="flex flex-row h-full min-h-0">
         {/* Left column: tabs + form */}
         <form
           onSubmit={handleSubmit}
           className="flex flex-col flex-1 min-w-0 min-h-0 h-full"
         >
           {/* Tabs */}
-          <div className="flex-shrink-0 flex flex-wrap gap-1 mb-3 border-b pb-2">
+          <div className="flex-shrink-0 flex flex-wrap gap-1 px-6 pt-4 pb-3 border-b border-gray-100 dark:border-white/[0.06]">
             {TABS.map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === tab
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
               >
                 {TAB_LABELS[tab]}
@@ -116,7 +136,7 @@ const ModalEditAgent: React.FC<ModalEditAgentProps> = ({
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 custom-scrollbar">
             {activeTab === 'general' && (
               <AgentFormGeneral
                 agent={agentData}
@@ -153,31 +173,38 @@ const ModalEditAgent: React.FC<ModalEditAgentProps> = ({
           </div>
 
           {/* Footer buttons */}
-          <div className="flex-shrink-0 pt-2 border-t border-gray-200 flex justify-end gap-2 mt-2">
+          <div className="flex-shrink-0 flex justify-end gap-2 px-6 py-4 border-t border-gray-100 dark:border-white/[0.06]">
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-sm bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/[0.06] rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
+              className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isLoading ? 'Guardando...' : 'Guardar Cambios'}
+              {isLoading ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
         </form>
 
-        {/* Right column: chat test panel — fixed width so it never shifts */}
-        <div className="w-[400px] flex-shrink-0 border border-gray-200 rounded-lg p-4 flex flex-col min-h-0">
-          <AgentChat agent={agentData} />
+        {/* Right column: chat test panel */}
+        <div className="w-[360px] flex-shrink-0 border-l border-gray-100 dark:border-white/[0.06] flex flex-col min-h-0">
+          <div className="px-4 pt-4 pb-2 flex-shrink-0">
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              Probar agente
+            </p>
+          </div>
+          <div className="flex-1 min-h-0 px-4 pb-4">
+            <AgentChat agent={agentData} />
+          </div>
         </div>
       </div>
-    </Modal>
+    </SlideOver>
   );
 };
 

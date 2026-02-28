@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Agent, IconName } from '@/types';
 import { Loader2 } from 'lucide-react';
-import Modal from '../ui/Modal';
+import SlideOver from '../ui/SlideOver';
 import AgentFormGeneral from './AgentFormGeneral';
 
 const DEFAULT_AGENT: Omit<Agent, 'id'> = {
@@ -75,12 +75,15 @@ const ModalCreateAgent: React.FC<ModalCreateAgentProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Crear Nuevo Agente">
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-4 w-full max-w-2xl"
-      >
-        <div className="overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar">
+    <SlideOver
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Nuevo agente"
+      subtitle="Configura el nombre, descripción, icono y prompt del agente"
+      width="md"
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar">
           <AgentFormGeneral
             agent={agentData}
             handleChange={handleChange}
@@ -88,25 +91,25 @@ const ModalCreateAgent: React.FC<ModalCreateAgentProps> = ({
             handlePresetChange={handlePresetChange}
           />
         </div>
-        <div className="flex justify-end gap-2 border-t pt-3">
+        <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-white/[0.06] px-6 py-4 flex-shrink-0">
           <button
             type="button"
             onClick={handleClose}
-            className="px-3 py-1.5 text-sm bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/[0.06] rounded-lg hover:bg-gray-200 dark:hover:bg-white/[0.1] transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
+            className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isLoading ? 'Creando...' : 'Crear Agente'}
+            {isLoading ? 'Creando...' : 'Crear agente'}
           </button>
         </div>
       </form>
-    </Modal>
+    </SlideOver>
   );
 };
 
