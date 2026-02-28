@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState } from "react";
-import { PencilIcon, UploadIcon } from "./icons";
+import { PencilIcon, UploadIcon } from "../ui/icons";
 import { Agent } from "@/types";
 import { useDocuments, useUploadDocument } from "@/lib/hooks/useDocuments";
 import { Loader2 } from "lucide-react";
-import DocumentItem from "./DocumentItem";
+import DocumentItem from "../ui/DocumentItem";
 
 interface AgentFormSourcesProps {
   agent: Agent | null;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import type { Agent } from "@/types";
 import { AgentIcon } from "./AgentIcon";
-import { PlusIcon, PencilIcon, TrashIcon } from "./icons";
+import { PlusIcon, PencilIcon, TrashIcon } from "../ui/icons";
 
 interface AgentCardProps {
   agent: Agent;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ApiIcon, CopyIcon } from './icons';
+import { ApiIcon, CopyIcon } from '../ui/icons';
 
 interface AgentFormIntegrationProps {
   agentId?: string;

@@ -2,7 +2,7 @@
 
 import { Search, X, Check } from 'lucide-react';
 import { Agent } from '@/types';
-import { AgentIcon } from '@/components/AgentIcon';
+import { AgentIcon } from '@/components/agents/AgentIcon';
 
 interface SubAgentPickerProps {
   agents: Agent[];

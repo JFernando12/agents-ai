@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Agent, IconName } from '@/types';
 import { Loader2 } from 'lucide-react';
-import Modal from './Modal';
+import Modal from '../ui/Modal';
 import AgentFormGeneral from './AgentFormGeneral';
 
 const DEFAULT_AGENT: Omit<Agent, 'id'> = {

@@ -18,7 +18,7 @@ import {
 import { useAllProducts } from '@/lib/hooks/useProducts';
 import { useAgents } from '@/lib/hooks/useAgents';
 import { apiTools } from '@/lib/api/tools';
-import ModalDelete from '../ModalDelete';
+import ModalDelete from '../ui/ModalDelete';
 import { ToolFormState } from './types';
 import {
   emptyForm,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@/contexts/UserContext';
-import { CpaVisionIcon } from './icons';
+import { CpaVisionIcon } from '../ui/icons';
 
 const Header: React.FC = () => {
   const { user } = useUser();

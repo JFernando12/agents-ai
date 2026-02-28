@@ -1,7 +1,7 @@
 import { Agent, IconName } from '@/types';
 import { AgentIcon } from './AgentIcon';
-import { CpaVisionIconBlack } from './icons';
-import Tooltip from './Tooltip';
+import { CpaVisionIconBlack } from '../ui/icons';
+import Tooltip from '../ui/Tooltip';
 import { apiAgents } from '@/lib/api/agents';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';

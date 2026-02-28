@@ -10,8 +10,8 @@ import {
     ChevronDownIcon, 
     ChevronRightIcon, 
     CogIcon 
-} from './icons';
-import { AgentIcon } from './AgentIcon';
+} from '../ui/icons';
+import { AgentIcon } from '../agents/AgentIcon';
 
 interface SidebarProps {
     agents: Agent[];

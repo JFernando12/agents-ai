@@ -14,7 +14,7 @@ import {
   DefaultIcon,
   CPAMemberIcon,
   RepseIcon,
-} from './icons';
+} from '../ui/icons';
 import type { IconName } from '@/types';
 
 interface AgentIconProps {

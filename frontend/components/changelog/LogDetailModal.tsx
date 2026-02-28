@@ -1,6 +1,6 @@
 import React from 'react';
 import type { LogEntry, Agent } from '@/types';
-import Modal from './Modal';
+import Modal from '../ui/Modal';
 
 interface LogDetailModalProps {
   isOpen: boolean;

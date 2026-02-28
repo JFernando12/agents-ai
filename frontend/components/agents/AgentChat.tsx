@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Agent, Message } from '@/types';
-import { SendIcon } from './icons';
+import { SendIcon } from '../ui/icons';
 import { apiChat } from '@/lib/api/chat';
 
 interface AgentChatProps {

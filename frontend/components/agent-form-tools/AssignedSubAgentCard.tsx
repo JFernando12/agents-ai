@@ -2,7 +2,7 @@
 
 import { Link2Off } from 'lucide-react';
 import { Agent } from '@/types';
-import { AgentIcon } from '@/components/AgentIcon';
+import { AgentIcon } from '@/components/agents/AgentIcon';
 
 interface AssignedSubAgentCardProps {
   agent: Agent;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Agent, FrequestQuestion, IconName } from '@/types';
 import { Loader2 } from 'lucide-react';
-import Modal from './Modal';
+import Modal from '../ui/Modal';
 import AgentChat from './AgentChat';
 import AgentFormGeneral from './AgentFormGeneral';
 import AgentFormSources from './AgentFormSources';
