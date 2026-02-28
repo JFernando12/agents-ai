@@ -83,7 +83,7 @@ export default function UnansweredQuestionItem({
   };
 
   return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
+    <div className="border border-gray-200 dark:border-white/[0.08] rounded-xl p-4 hover:shadow-sm transition-shadow bg-white dark:bg-[#18181B]">
       <div
         className="flex items-start justify-between cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}

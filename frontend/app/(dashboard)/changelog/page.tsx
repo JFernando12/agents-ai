@@ -70,15 +70,17 @@ export default function ChangelogPage() {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-lg p-6 h-full flex flex-col">
-        <div className="flex justify-between items-center flex-shrink-0">
-          <h1 className="text-4xl text-[#232A37] uppercase font-oswald mb-6">
+      <div className="bg-white dark:bg-[#18181B] rounded-xl border border-gray-200 dark:border-white/[0.08] shadow-sm p-6 h-full flex flex-col">
+        <div className="flex justify-between items-center flex-shrink-0 mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Log de Cambios
           </h1>
           <div>
-            <label className="text-[#232A37] mr-2">Registros por página:</label>
+            <label className="text-gray-600 dark:text-gray-400 mr-2 text-sm">
+              Registros por página:
+            </label>
             <select
-              className="text-[#232A37] p-[5px] border rounded-md text-sm"
+              className="text-gray-700 dark:text-gray-300 dark:bg-[#27272A] p-[5px] border border-gray-300 dark:border-white/[0.08] rounded-md text-sm"
               value={limit}
               onChange={handleLimitChange}
             >
@@ -93,8 +95,8 @@ export default function ChangelogPage() {
           <p className="text-gray-500">No hay cambios registrados todavía.</p>
         ) : (
           <div className="flex-1 overflow-auto">
-            <table className="w-full text-sm text-left text-gray-500 table-fixed">
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 table-fixed">
+              <thead className="text-xs text-gray-600 dark:text-gray-500 uppercase bg-gray-50 dark:bg-white/[0.04]">
                 <tr>
                   <th className="px-6 py-3 w-[20%]">Agente</th>
                   <th className="px-6 py-3 w-[10%]">Acción</th>
@@ -107,7 +109,7 @@ export default function ChangelogPage() {
                 {logs.map((log) => (
                   <tr
                     key={log.id}
-                    className="bg-white border-b hover:bg-gray-50"
+                    className="bg-white dark:bg-transparent border-b border-gray-100 dark:border-white/[0.06] hover:bg-gray-50 dark:hover:bg-white/[0.03]"
                   >
                     <th
                       scope="row"

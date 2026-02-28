@@ -1,10 +1,9 @@
 import { Agent, IconName } from '@/types';
 import { AgentIcon } from './AgentIcon';
-import { CpaVisionIconBlack } from '../ui/icons';
 import Tooltip from '../ui/Tooltip';
 import { apiAgents } from '@/lib/api/agents';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { useModels } from '@/lib/hooks/useAgents';
 
 const iconNames: IconName[] = [
@@ -98,7 +97,7 @@ const AgentFormGeneral = ({
   const labelFlexClass =
     'flex items-center text-sm font-medium text-gray-700 mb-1';
   const formControlClass =
-    'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#232A37] text-gray-700';
+    'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700';
 
   return (
     <div className="space-y-4 mb-4 p-2">
@@ -139,7 +138,7 @@ const AgentFormGeneral = ({
               onClick={() => handleIconSelect(icon)}
               className={`p-2 rounded-md flex justify-center items-center transition-colors ${
                 agent.icon === icon
-                  ? 'bg-[#232A37] text-white'
+                  ? 'bg-indigo-600 text-white'
                   : 'bg-gray-100 hover:bg-gray-200'
               }`}
             >
@@ -167,7 +166,7 @@ const AgentFormGeneral = ({
             {isImprovingPrompt ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <CpaVisionIconBlack className="w-5 h-5 text-black" />
+              <Sparkles className="w-5 h-5 text-indigo-500" />
             )}
             <span className="text-xs font-semibold">
               {isImprovingPrompt ? 'Mejorando...' : 'Mejorar'}
@@ -217,7 +216,7 @@ const AgentFormGeneral = ({
               key={preset.id}
               type="button"
               onClick={() => handlePresetChange(preset.config)}
-              className="p-3 border border-gray-300 rounded-lg hover:border-[#232A37] hover:shadow-sm transition-all text-left bg-white"
+              className="p-3 border border-gray-300 rounded-lg hover:border-indigo-400 hover:shadow-sm transition-all text-left bg-white"
             >
               <div className="font-medium text-gray-900 mb-1">
                 {preset.name}

@@ -127,7 +127,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
                   onClick={() => setActiveTab(tab)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
                     activeTab === tab
-                      ? 'bg-[#232A37] text-white'
+                      ? 'bg-indigo-600 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >

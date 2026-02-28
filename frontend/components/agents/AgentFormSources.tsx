@@ -11,18 +11,18 @@ interface AgentFormSourcesProps {
 
 const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 const formControlClass =
-  "w-full px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#232A37] text-gray-700 text-sm";
+  'w-full px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm';
 
 const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
-  const [activeTab, setActiveTab] = useState<"subir" | "detalle">("subir");
-  const [documentTab, setDocumentTab] = useState<"interno" | "oficial">(
-    "interno"
+  const [activeTab, setActiveTab] = useState<'subir' | 'detalle'>('subir');
+  const [documentTab, setDocumentTab] = useState<'interno' | 'oficial'>(
+    'interno',
   );
   const [selectedFuenteId, setSelectedFuenteId] = useState<string | null>(null);
   const [newFileData, setNewFileData] = useState<{
     file: File;
     name: string;
-    category: "oficial" | "interno";
+    category: 'oficial' | 'interno';
     medio: string;
     link: string;
   } | null>(null);
@@ -39,10 +39,10 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
   const filteredDocuments = useMemo(() => {
     return (
       documents?.filter((doc) => {
-        if (documentTab === "oficial") {
-          return doc.category === "oficial";
+        if (documentTab === 'oficial') {
+          return doc.category === 'oficial';
         }
-        return doc.category !== "oficial";
+        return doc.category !== 'oficial';
       }) || []
     );
   }, [documents, documentTab]);
@@ -55,9 +55,9 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
     setNewFileData({
       file,
       name: file.name,
-      category: "interno",
-      medio: "",
-      link: "",
+      category: 'interno',
+      medio: '',
+      link: '',
     });
   };
 
@@ -78,41 +78,41 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
 
   const handleSelectFuente = (fuenteId: string) => {
     setSelectedFuenteId(fuenteId);
-    setActiveTab("detalle");
+    setActiveTab('detalle');
   };
 
   return (
     <div className="flex-1 mb-4 min-h-0 flex flex-col h-full overflow-hidden">
       <div className="flex gap-4 flex-1 min-h-0 overflow-hidden">
         <div className="w-1/2 flex flex-col min-h-0 h-full overflow-hidden">
-          <div className="bg-[#232A37] text-white p-4 rounded-lg flex flex-col flex-1 min-h-0 h-full overflow-hidden">
+          <div className="bg-gray-900 text-gray-100 p-4 rounded-lg flex flex-col flex-1 min-h-0 h-full overflow-hidden">
             {/* Document Category Tabs */}
             <div className="flex gap-6 mb-3">
               <button
                 type="button"
-                onClick={() => setDocumentTab("interno")}
+                onClick={() => setDocumentTab('interno')}
                 className={`pb-2 px-1 text-sm font-medium transition-all duration-200 relative ${
-                  documentTab === "interno"
-                    ? "text-white"
-                    : "text-gray-400 hover:text-gray-200"
+                  documentTab === 'interno'
+                    ? 'text-white'
+                    : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
                 Documentos Internos
-                {documentTab === "interno" && (
+                {documentTab === 'interno' && (
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"></span>
                 )}
               </button>
               <button
                 type="button"
-                onClick={() => setDocumentTab("oficial")}
+                onClick={() => setDocumentTab('oficial')}
                 className={`pb-2 px-1 text-sm font-medium transition-all duration-200 relative ${
-                  documentTab === "oficial"
-                    ? "text-white"
-                    : "text-gray-400 hover:text-gray-200"
+                  documentTab === 'oficial'
+                    ? 'text-white'
+                    : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
                 Documentos Oficiales
-                {documentTab === "oficial" && (
+                {documentTab === 'oficial' && (
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"></span>
                 )}
               </button>
@@ -137,9 +137,9 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
                 ))
               ) : (
                 <div className="text-gray-400 text-sm text-center py-4">
-                  {documentTab === "oficial"
-                    ? "No hay documentos oficiales disponibles"
-                    : "No hay documentos internos disponibles"}
+                  {documentTab === 'oficial'
+                    ? 'No hay documentos oficiales disponibles'
+                    : 'No hay documentos internos disponibles'}
                 </div>
               )}
             </div>
@@ -150,11 +150,11 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
           <div className="gap-2 pb-2 flex">
             <button
               type="button"
-              onClick={() => setActiveTab("subir")}
+              onClick={() => setActiveTab('subir')}
               className={`pb-1 px-2 text-sm font-medium transition-colors ${
-                activeTab === "subir"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
+                activeTab === 'subir'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Subir Documento
@@ -162,11 +162,11 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
             {selectedFuente && (
               <button
                 type="button"
-                onClick={() => setActiveTab("detalle")}
+                onClick={() => setActiveTab('detalle')}
                 className={`pb-1 px-2 text-sm font-medium transition-colors ${
-                  activeTab === "detalle"
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
+                  activeTab === 'detalle'
+                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 Detalle de la Fuente
@@ -175,7 +175,7 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
           </div>
 
           {/* Cargar Nuevo Documento */}
-          {!newFileData && activeTab === "subir" && (
+          {!newFileData && activeTab === 'subir' && (
             <div>
               <div
                 className="bg-white border-2 border-dashed border-gray-300 rounded-lg flex flex-col justify-center items-center text-center p-4 cursor-pointer hover:border-gray-400 transition-colors"
@@ -199,7 +199,7 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
           )}
 
           {/* Formulario Nuevo Documento */}
-          {newFileData && activeTab === "subir" && (
+          {newFileData && activeTab === 'subir' && (
             <div className="flex justify-center items-center border border-gray-300 rounded-lg w-full">
               <div className="bg-white rounded-lg p-4 w-full">
                 <div className="space-y-2 w-full">
@@ -211,7 +211,7 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
                       className={formControlClass}
                       onChange={(e) =>
                         setNewFileData((d) =>
-                          d ? { ...d, name: e.target.value } : null
+                          d ? { ...d, name: e.target.value } : null,
                         )
                       }
                     />
@@ -224,12 +224,12 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
                           type="radio"
                           name="category"
                           value="interno"
-                          checked={newFileData.category === "interno"}
+                          checked={newFileData.category === 'interno'}
                           onChange={(e) =>
                             setNewFileData((d) =>
                               d
                                 ? { ...d, category: e.target.value as any }
-                                : null
+                                : null,
                             )
                           }
                           className="mr-1"
@@ -241,12 +241,12 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
                           type="radio"
                           name="category"
                           value="oficial"
-                          checked={newFileData.category === "oficial"}
+                          checked={newFileData.category === 'oficial'}
                           onChange={(e) =>
                             setNewFileData((d) =>
                               d
                                 ? { ...d, category: e.target.value as any }
-                                : null
+                                : null,
                             )
                           }
                           className="mr-1"
@@ -262,7 +262,7 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
                       value={newFileData.medio}
                       onChange={(e) =>
                         setNewFileData((d) =>
-                          d ? { ...d, medio: e.target.value } : null
+                          d ? { ...d, medio: e.target.value } : null,
                         )
                       }
                       className={formControlClass}
@@ -275,7 +275,7 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
                       value={newFileData.link}
                       onChange={(e) =>
                         setNewFileData((d) =>
-                          d ? { ...d, link: e.target.value } : null
+                          d ? { ...d, link: e.target.value } : null,
                         )
                       }
                       className={formControlClass}
@@ -298,8 +298,8 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
                         <Loader2 className="h-4 w-4 animate-spin" />
                       )}
                       {uploadDocument.isPending
-                        ? "Subiendo Archivo..."
-                        : "Subir Archivo"}
+                        ? 'Subiendo Archivo...'
+                        : 'Subir Archivo'}
                     </button>
                   </div>
                 </div>
@@ -308,7 +308,7 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
           )}
 
           {/* Detalles de la Fuente Seleccionada */}
-          {selectedFuente && activeTab === "detalle" && (
+          {selectedFuente && activeTab === 'detalle' && (
             <div className="bg-[#F4F5FA] rounded-lg p-4 w-full flex-shrink-0 relative">
               <button
                 type="button"

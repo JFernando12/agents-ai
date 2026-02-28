@@ -39,7 +39,7 @@ export default function UnansweredPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Filters */}
-      <div className="bg-white px-3 py-2 rounded-lg border mb-3 flex-shrink-0">
+      <div className="bg-white dark:bg-[#18181B] px-3 py-2 rounded-lg border border-gray-200 dark:border-white/[0.08] mb-3 flex-shrink-0">
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={filters.status || ''}

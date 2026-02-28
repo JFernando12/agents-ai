@@ -23,7 +23,7 @@ export function ParseDocsDrawer({
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-semibold text-[#232A37] flex items-center gap-1.5">
+          <p className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
             <Sparkles className="w-4 h-4" />
             Auto-completar con IA
           </p>
@@ -43,7 +43,7 @@ export function ParseDocsDrawer({
 
       <textarea
         rows={6}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#232A37] text-gray-700 text-sm bg-white placeholder-gray-400"
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-700 text-sm bg-white placeholder-gray-400"
         placeholder={`Ejemplo:\ncurl -X POST https://api.ejemplo.com/tickets \\\n  -H "Authorization: Bearer TOKEN" \\\n  -d '{"titulo": "...", "descripcion": "..."}'`}
         value={parseDocs}
         onChange={(e) => onDocsChange(e.target.value)}
@@ -63,7 +63,7 @@ export function ParseDocsDrawer({
           type="button"
           onClick={onParse}
           disabled={isParsing || !parseDocs.trim()}
-          className="px-3 py-1.5 text-sm bg-[#232A37] text-white rounded-lg hover:bg-[#1a2030] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+          className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
         >
           {isParsing ? (
             <>
@@ -79,3 +79,4 @@ export function ParseDocsDrawer({
     </div>
   );
 }
+

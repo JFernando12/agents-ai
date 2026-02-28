@@ -47,9 +47,10 @@ const PARAM_TYPES = [
   'object',
 ];
 
-const labelClass = 'block text-sm font-medium text-gray-700 mb-1';
+const labelClass =
+  'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
 const formControlClass =
-  'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#232A37] text-gray-700 text-sm';
+  'w-full px-3 py-2 border border-gray-300 dark:border-white/[0.1] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 dark:text-gray-200 dark:bg-[#27272A] text-sm';
 
 interface Param {
   name: string;
@@ -484,8 +485,8 @@ export default function ToolsPage() {
           onClick={() => setActiveTab('catalog')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'catalog'
-              ? 'bg-[#232A37] text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/[0.08]'
           }`}
         >
           <Wrench className="w-4 h-4" />
@@ -495,8 +496,8 @@ export default function ToolsPage() {
           onClick={() => setActiveTab('products')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             activeTab === 'products'
-              ? 'bg-[#232A37] text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/[0.08]'
           }`}
         >
           <Package className="w-4 h-4" />
@@ -802,7 +803,7 @@ export default function ToolsPage() {
                                   e.target.checked,
                                 )
                               }
-                              className="w-4 h-4 text-[#232A37]"
+                              className="w-4 h-4 text-indigo-500 dark:text-indigo-400"
                             />
                             <span className="text-xs text-gray-400">req</span>
                           </div>
@@ -880,7 +881,7 @@ export default function ToolsPage() {
                       !toolForm.url ||
                       !toolForm.product_id
                     }
-                    className="px-4 py-2 bg-[#232A37] text-white rounded-lg hover:bg-[#1a2030] text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isMutatingTool && (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -910,7 +911,7 @@ export default function ToolsPage() {
                       setParseDocs('');
                       setParseError(null);
                     }}
-                    className="flex items-center gap-1 px-3 py-2 border border-[#232A37] text-[#232A37] rounded-lg hover:bg-gray-50 text-sm"
+                    className="flex items-center gap-1 px-3 py-2 border border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-sm"
                   >
                     <Sparkles className="w-4 h-4" /> Auto-completar
                   </button>
@@ -920,7 +921,7 @@ export default function ToolsPage() {
                       setToolForm(emptyToolForm());
                       setToolMode('create');
                     }}
-                    className="flex items-center gap-1 px-3 py-2 bg-[#232A37] text-white rounded-lg hover:bg-[#1a2030] text-sm"
+                    className="flex items-center gap-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
                   >
                     <Plus className="w-4 h-4" /> Nueva Capacidad
                   </button>
@@ -932,7 +933,7 @@ export default function ToolsPage() {
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-[#232A37] flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4" /> Auto-completar con IA
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">
@@ -951,7 +952,7 @@ export default function ToolsPage() {
                 </div>
                 <textarea
                   rows={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#232A37] text-gray-700 text-sm bg-white placeholder-gray-400"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-white/[0.1] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700 dark:text-gray-200 dark:bg-[#27272A] text-sm bg-white placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder={`Ejemplo:\ncurl -X POST https://api.ejemplo.com/tickets \\\n  -H "Authorization: Bearer TOKEN" \\\n  -d '{"titulo": "...", "descripcion": "..."}'`}
                   value={parseDocs}
                   onChange={(e) => {
@@ -974,7 +975,7 @@ export default function ToolsPage() {
                     type="button"
                     onClick={handleParseDocs}
                     disabled={isParsing || !parseDocs.trim()}
-                    className="px-3 py-1.5 text-sm bg-[#232A37] text-white rounded-lg hover:bg-[#1a2030] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   >
                     {isParsing ? (
                       <>
@@ -1269,7 +1270,7 @@ export default function ToolsPage() {
                       !productForm.name ||
                       !productForm.slug
                     }
-                    className="px-4 py-2 bg-[#232A37] text-white rounded-lg hover:bg-[#1a2030] text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isMutatingProduct && (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1297,7 +1298,7 @@ export default function ToolsPage() {
                     setProductForm(emptyProductForm());
                     setProductMode('create');
                   }}
-                  className="flex items-center gap-1 px-3 py-2 bg-[#232A37] text-white rounded-lg hover:bg-[#1a2030] text-sm"
+                  className="flex items-center gap-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
                 >
                   <Plus className="w-4 h-4" /> Nuevo Producto
                 </button>

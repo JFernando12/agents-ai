@@ -9,7 +9,7 @@ interface AgentFormQuestionsProps {
 
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1';
 const formControlClass =
-  'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#232A37] text-gray-700';
+  'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700';
 
 const AgentFormQuestions = ({
   questions,
@@ -80,7 +80,7 @@ const AgentFormQuestions = ({
             onClick={handleAddQuestion}
             // disabled={!newQuestion.trim()}
             disabled={!newQuestion.question.trim()}
-            className="px-4 py-2 bg-[#232A37] text-white rounded-lg hover:bg-[#1a1f2a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Agregar

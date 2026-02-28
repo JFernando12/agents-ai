@@ -1,97 +1,115 @@
+'use client';
 
-import React, { useState } from 'react';
-import type { Agent } from '@/types';
-import { 
-    MenuIcon, 
-    SearchIcon, 
-    PencilAltIcon, 
-    FolderAddIcon, 
-    ChevronUpIcon, 
-    ChevronDownIcon, 
-    ChevronRightIcon, 
-    CogIcon 
-} from '../ui/icons';
-import { AgentIcon } from '../agents/AgentIcon';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
+import { useUser } from '@/contexts/UserContext';
+import {
+  Bot,
+  HelpCircle,
+  Wrench,
+  ScrollText,
+  Sun,
+  Moon,
+  Sparkles,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-interface SidebarProps {
-    agents: Agent[];
-}
+const navItems = [
+  { href: '/agents', label: 'Centro de Agentes', icon: Bot },
+  { href: '/unanswered', label: 'Sin Respuesta', icon: HelpCircle },
+  { href: '/tools', label: 'Herramientas', icon: Wrench },
+  { href: '/changelog', label: 'Log de Cambios', icon: ScrollText },
+];
 
-const Sidebar: React.FC<SidebarProps> = ({ agents }) => {
-    const [isSpecializedOpen, setIsSpecializedOpen] = useState(true);
-    const [isGroupersOpen, setIsGroupersOpen] = useState(false);
+export default function AppSidebar() {
+  const pathname = usePathname();
+  const { resolvedTheme, setTheme } = useTheme();
+  const { user } = useUser();
+  const [mounted, setMounted] = useState(false);
 
-    return (
-        <div className="w-72 bg-[#232A37] text-gray-300 flex flex-col h-full p-4">
-            <div className="flex justify-between items-center mb-6">
-                <button className="p-1 hover:bg-gray-700 rounded"><MenuIcon className="w-6 h-6" /></button>
-                <button className="p-1 hover:bg-gray-700 rounded"><SearchIcon className="w-6 h-6" /></button>
-            </div>
-            
-            <div className="flex flex-col space-y-3 mb-6">
-                <button className="flex items-center space-x-3 px-2 py-2 text-left hover:bg-gray-700 rounded-md">
-                    <PencilAltIcon className="w-5 h-5" />
-                    <span>Nuevo Chat</span>
-                </button>
-                <button className="flex items-center space-x-3 px-2 py-2 text-left hover:bg-gray-700 rounded-md">
-                    <FolderAddIcon className="w-5 h-5" />
-                    <span>Nuevo Agrupador</span>
-                </button>
-            </div>
-            
-            <div className="flex-grow overflow-y-auto pr-2">
-                <div className="mb-4">
-                    <button onClick={() => setIsSpecializedOpen(!isSpecializedOpen)} className="flex justify-between items-center w-full text-sm font-bold text-[#8A91A0] mb-2">
-                        <span>ESPECIALIZADOS</span>
-                        <span className="p-1 bg-gray-700 rounded-full">
-                           {isSpecializedOpen ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                        </span>
-                    </button>
-                    {isSpecializedOpen && (
-                        <div className="flex flex-col space-y-1">
-                            {agents.map(agent => (
-                                <button key={agent.id} className="flex items-center space-x-3 px-2 py-2 text-left hover:bg-gray-700 rounded-md w-full">
-                                    {/* Fix: Removed non-existent 'color' prop. AgentIcon now uses a default color. */}
-                                    <AgentIcon name={agent.icon} className="w-5 h-5 flex-shrink-0" />
-                                    <span className="truncate">{agent.name}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
+  useEffect(() => setMounted(true), []);
 
-                <div className="mb-4">
-                    <button onClick={() => setIsGroupersOpen(!isGroupersOpen)} className="flex justify-between items-center w-full text-sm font-bold text-[#8A91A0] mb-2">
-                        <span>AGRUPADORES</span>
-                        <ChevronRightIcon className={`w-4 h-4 transition-transform ${isGroupersOpen ? 'rotate-90' : ''}`} />
-                    </button>
-                    {isGroupersOpen && (
-                         <div className="flex flex-col space-y-1">
-                            {['Grupo 5', 'Grupo 4', 'Grupo 3'].map(group => (
-                                <button key={group} className="px-2 py-2 text-left hover:bg-gray-700 rounded-md w-full">{group}</button>
-                            ))}
-                        </div>
-                    )}
-                </div>
+  const isDark = resolvedTheme === 'dark';
 
-                <div className="mb-4">
-                    <h3 className="text-sm font-bold text-[#8A91A0] mb-2">CHATS RECIENTES</h3>
-                    <div className="flex flex-col space-y-1">
-                        {['Chat 5', 'Chat 4', 'Chat 3', 'Chat 2', 'Chat 1'].map(chat => (
-                             <button key={chat} className="px-2 py-2 text-left hover:bg-gray-700 rounded-md w-full truncate">{chat}</button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-auto">
-                <button className="flex items-center space-x-3 px-2 py-2 text-left hover:bg-gray-700 rounded-md w-full">
-                    <CogIcon className="w-6 h-6" />
-                    <span>Configuración</span>
-                </button>
-            </div>
+  return (
+    <aside className="w-58 flex-shrink-0 h-screen flex flex-col bg-white dark:bg-[#111111] border-r border-gray-200 dark:border-white/[0.06] transition-colors duration-300">
+      {/* Logo */}
+      <div className="h-14 flex items-center px-5 border-b border-gray-100 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm">
+            <Sparkles className="w-4 h-4 text-white" strokeWidth={2} />
+          </div>
+          <span className="font-semibold text-[15px] text-gray-900 dark:text-white tracking-tight select-none">
+            Agents AI
+          </span>
         </div>
-    );
-};
+      </div>
 
-export default Sidebar;
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <p className="px-3 pb-2 text-[11px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-wider select-none">
+          Principal
+        </p>
+        {navItems.map(({ href, label, icon: Icon }) => {
+          const isActive = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                isActive
+                  ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-gray-100'
+              }`}
+            >
+              <Icon
+                className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                  isActive
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                }`}
+                strokeWidth={isActive ? 2.5 : 2}
+              />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-3 pb-4 pt-3 border-t border-gray-100 dark:border-white/[0.06] space-y-0.5">
+        {/* Theme toggle */}
+        {mounted && (
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            className="group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-gray-100 w-full transition-all duration-150"
+          >
+            {isDark ? (
+              <Sun
+                className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 flex-shrink-0"
+                strokeWidth={2}
+              />
+            ) : (
+              <Moon
+                className="w-4 h-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0"
+                strokeWidth={2}
+              />
+            )}
+            <span>{isDark ? 'Modo claro' : 'Modo oscuro'}</span>
+          </button>
+        )}
+
+        {/* User */}
+        <div className="flex items-center gap-3 px-3 py-2">
+          <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          </div>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+            {user?.name ?? 'Usuario'}
+          </span>
+        </div>
+      </div>
+    </aside>
+  );
+}

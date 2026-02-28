@@ -108,7 +108,7 @@ const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
             <span>{copiedStates['endpoint'] ? 'Copiado!' : 'Copiar'}</span>
           </button>
         </div>
-        <div className="bg-[#232A37] text-white rounded-lg p-4 font-mono text-sm">
+        <div className="bg-gray-900 text-white rounded-lg p-4 font-mono text-sm">
           <span className="text-green-400 font-bold mr-4">POST</span>
           <span>{endpoint}</span>
         </div>
@@ -127,7 +127,7 @@ const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
             <span>{copiedStates['headers'] ? 'Copiado!' : 'Copiar'}</span>
           </button>
         </div>
-        <pre className="bg-[#232A37] text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
           <code>{headersWithApiKey}</code>
         </pre>
       </div>
@@ -151,7 +151,7 @@ const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
           <code className="bg-gray-100 px-1 rounded">email</code> y{' '}
           <code className="bg-gray-100 px-1 rounded">name</code> en el payload.
         </p>
-        <pre className="bg-[#232A37] text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
           <code>{headersWithJwt}</code>
         </pre>
       </div>
@@ -169,7 +169,7 @@ const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
             <span>{copiedStates['request'] ? 'Copiado!' : 'Copiar'}</span>
           </button>
         </div>
-        <pre className="bg-[#232A37] text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
           <code>{requestExample}</code>
         </pre>
       </div>
@@ -202,7 +202,7 @@ const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
           <code className="bg-gray-100 px-1 rounded">conversation_id</code> para
           usarlo en los siguientes mensajes.
         </p>
-        <pre className="bg-[#232A37] text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
           <code>{requestConversationExample}</code>
         </pre>
       </div>
@@ -286,7 +286,7 @@ const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
             <span>{copiedStates['response'] ? 'Copiado!' : 'Copiar'}</span>
           </button>
         </div>
-        <pre className="bg-[#232A37] text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
+        <pre className="bg-gray-900 text-white rounded-lg p-4 text-sm whitespace-pre-wrap">
           <code>{responseExample}</code>
         </pre>
       </div>
@@ -305,7 +305,7 @@ const AgentFormIntegration = ({ agentId }: AgentFormIntegrationProps) => {
               <span>{copiedStates['agentId'] ? 'Copiado!' : 'Copiar'}</span>
             </button>
           </div>
-          <div className="bg-[#232A37] text-white rounded-lg p-4 font-mono text-sm">
+          <div className="bg-gray-900 text-white rounded-lg p-4 font-mono text-sm">
             {agentId}
           </div>
         </div>

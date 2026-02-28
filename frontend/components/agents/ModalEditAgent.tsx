@@ -106,7 +106,7 @@ const ModalEditAgent: React.FC<ModalEditAgentProps> = ({
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? 'bg-[#232A37] text-white'
+                    ? 'bg-indigo-600 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >

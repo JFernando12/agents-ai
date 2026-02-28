@@ -4,20 +4,21 @@ import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import { UserProvider } from "@/contexts/UserContext";
 import AutoAuth from '@/components/auth/AutoAuth';
+import ThemeProvider from '@/providers/ThemeProvider';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "CPA Vision IA",
-  description: "Plataforma de gestión de agentes de IA",
+  title: 'Agents AI',
+  description: 'Plataforma de gestión de agentes de IA',
 };
 
 export default function RootLayout({
@@ -26,15 +27,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <UserProvider>
-          <QueryProvider>
-            <AutoAuth>{children}</AutoAuth>
-          </QueryProvider>
-        </UserProvider>
+        <ThemeProvider>
+          <UserProvider>
+            <QueryProvider>
+              <AutoAuth>{children}</AutoAuth>
+            </QueryProvider>
+          </UserProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

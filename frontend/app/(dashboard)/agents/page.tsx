@@ -61,13 +61,15 @@ export default function AgentsPage() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg h-full flex flex-col">
-      <div className="px-6 py-4 flex-shrink-0">
+    <div className="bg-white dark:bg-[#18181B] rounded-xl border border-gray-200 dark:border-white/[0.08] shadow-sm h-full flex flex-col">
+      <div className="px-6 py-5 flex-shrink-0">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl text-gray-600">Todos los agentes</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Todos los agentes
+          </h2>
           <button
             onClick={handleCreate}
-            className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm"
           >
             <PlusIcon className="w-5 h-5 mr-2" />
             Crear Nuevo Agente

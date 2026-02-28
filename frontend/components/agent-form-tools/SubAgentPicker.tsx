@@ -67,7 +67,7 @@ export function SubAgentPicker({
               placeholder="Buscar por nombre o descripción..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#232A37]"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
         </div>
@@ -90,7 +90,7 @@ export function SubAgentPicker({
                 onClick={() => onToggle(agent.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors ${
                   isAssigned
-                    ? 'border-[#232A37] bg-[#232A37]/5'
+                    ? 'border-indigo-600 bg-indigo-600/5'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -98,7 +98,7 @@ export function SubAgentPicker({
                 <span
                   className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                     isAssigned
-                      ? 'bg-[#232A37] border-[#232A37] text-white'
+                      ? 'bg-indigo-600 border-indigo-600 text-white'
                       : 'border-gray-300'
                   }`}
                 >
@@ -136,7 +136,7 @@ export function SubAgentPicker({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-[#232A37] text-white rounded-lg text-sm hover:bg-[#1a2030]"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
           >
             Listo
           </button>
@@ -145,3 +145,4 @@ export function SubAgentPicker({
     </div>
   );
 }
+

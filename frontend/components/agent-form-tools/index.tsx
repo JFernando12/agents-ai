@@ -322,7 +322,7 @@ export default function AgentFormTools({
           <p className="text-xs text-gray-500 mt-0.5">
             Capacidades asignadas a este agente.{' '}
             {assignedToolIds.length > 0 && (
-              <span className="font-medium text-[#232A37]">
+              <span className="font-medium text-gray-900">
                 {assignedToolIds.length} asignada
                 {assignedToolIds.length !== 1 ? 's' : ''}.
               </span>
@@ -336,7 +336,7 @@ export default function AgentFormTools({
               setShowCatalogPicker(true);
               setCatalogSearch('');
             }}
-            className="flex items-center gap-1 px-3 py-2 border border-[#232A37] text-[#232A37] rounded-lg hover:bg-gray-50 text-sm"
+            className="flex items-center gap-1 px-3 py-2 border border-indigo-600 text-gray-900 rounded-lg hover:bg-gray-50 text-sm"
           >
             <Library className="w-4 h-4" />
             Agregar existente
@@ -359,7 +359,7 @@ export default function AgentFormTools({
               setForm(emptyForm());
               setMode('create');
             }}
-            className="flex items-center gap-1 px-3 py-2 bg-[#232A37] text-white rounded-lg hover:bg-[#1a2030] text-sm"
+            className="flex items-center gap-1 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
           >
             <Plus className="w-4 h-4" />
             Nueva
@@ -497,7 +497,7 @@ export default function AgentFormTools({
             <p className="text-xs text-gray-500 mt-0.5">
               Agentes que este agente puede invocar como herramienta.{' '}
               {assignedSubAgentIds.length > 0 && (
-                <span className="font-medium text-[#232A37]">
+                <span className="font-medium text-gray-900">
                   {assignedSubAgentIds.length} asignado
                   {assignedSubAgentIds.length !== 1 ? 's' : ''}.
                 </span>
@@ -510,7 +510,7 @@ export default function AgentFormTools({
               setShowSubAgentPicker(true);
               setSubAgentSearch('');
             }}
-            className="flex items-center gap-1 px-3 py-2 border border-[#232A37] text-[#232A37] rounded-lg hover:bg-gray-50 text-sm"
+            className="flex items-center gap-1 px-3 py-2 border border-indigo-600 text-gray-900 rounded-lg hover:bg-gray-50 text-sm"
           >
             <Bot className="w-4 h-4" />
             Agregar sub-agente
@@ -594,3 +594,4 @@ export default function AgentFormTools({
     </div>
   );
 }
+

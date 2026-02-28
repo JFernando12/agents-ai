@@ -1,8 +1,28 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode for next-themes */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F6F9FC;
+  --foreground: #111827;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #E5E7EB;
+  --card-bg: #ffffff;
+  --card-border: #E5E7EB;
+  --accent: #6366F1;
+  --accent-hover: #EEF2FF;
+}
+
+.dark {
+  --background: #0A0A0A;
+  --foreground: #F9FAFB;
+  --sidebar-bg: #111111;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --card-bg: #18181B;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --accent: #818CF8;
+  --accent-hover: rgba(129, 140, 248, 0.12);
 }
 
 @theme inline {
@@ -12,57 +32,46 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Estilos personalizados para el scrollbar */
-/* Para navegadores Webkit (Chrome, Safari, Edge) */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #D1D5DB;
   border-radius: 10px;
-  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #9CA3AF;
 }
 
-/* Para Firefox */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f1f1f1;
+  scrollbar-color: #D1D5DB transparent;
 }
 
-/* Scrollbar más sutil para áreas específicas (opcional) */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+.dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }

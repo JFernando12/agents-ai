@@ -56,38 +56,40 @@ const Tooltip: React.FC<TooltipProps> = ({ text }) => {
           onMouseLeave={() => setVisible(false)}
           onFocus={() => setVisible(true)}
           onBlur={() => setVisible(false)}
-          className="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs font-bold flex items-center justify-center leading-none focus:outline-none focus:ring-1 focus:ring-[#232A37] transition-colors"
+          className="w-4 h-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs font-bold flex items-center justify-center leading-none focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors"
         >
           ?
         </button>
       </span>
-      {visible && typeof window !== 'undefined' && createPortal(
-        <div
-          role="tooltip"
-          style={{
-            position: 'fixed',
-            top: `${position.top}px`,
-            left: `${position.left}px`,
-            transform: above ? 'translateY(-100%)' : 'none'
-          }}
-          className="z-[9999] w-60 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none leading-relaxed"
-        >
-          {text}
-          <span
-            className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${
-              above
-                ? 'bottom-[-8px] border-t-gray-900'
-                : 'top-[-8px] border-b-gray-900'
-            }`}
+      {visible &&
+        typeof window !== 'undefined' &&
+        createPortal(
+          <div
+            role="tooltip"
             style={{
-              left: buttonRef.current 
-                ? `${buttonRef.current.getBoundingClientRect().left + buttonRef.current.getBoundingClientRect().width / 2 - position.left}px`
-                : '50%'
+              position: 'fixed',
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+              transform: above ? 'translateY(-100%)' : 'none',
             }}
-          />
-        </div>,
-        document.body
-      )}
+            className="z-[9999] w-60 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none leading-relaxed"
+          >
+            {text}
+            <span
+              className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${
+                above
+                  ? 'bottom-[-8px] border-t-gray-900'
+                  : 'top-[-8px] border-b-gray-900'
+              }`}
+              style={{
+                left: buttonRef.current
+                  ? `${buttonRef.current.getBoundingClientRect().left + buttonRef.current.getBoundingClientRect().width / 2 - position.left}px`
+                  : '50%',
+              }}
+            />
+          </div>,
+          document.body,
+        )}
     </>
   );
 };

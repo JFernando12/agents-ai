@@ -26,7 +26,7 @@ const Modal: React.FC<ModalProps> = ({
             : 'max-h-[90vh] w-auto max-w-2xl'
         }`}
       >
-        <div className="p-3 bg-[#232A37] flex justify-center items-center flex-shrink-0 relative min-h-fit">
+        <div className="p-3 bg-indigo-600 flex justify-center items-center flex-shrink-0 relative min-h-fit">
           <h2 className="text-xl font-bold text-white font-oswald uppercase">
             {title}
           </h2>
