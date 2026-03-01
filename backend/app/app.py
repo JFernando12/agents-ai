@@ -14,6 +14,7 @@ from app.routers import (
     auth_router,
     account_router,
     rag_trace_router,
+    eval_set_router,
 )
 
 def create_app() -> FastAPI:
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
     app.include_router(tool_router, prefix="/api")
     app.include_router(unanswered_router, prefix="/api")
     app.include_router(rag_trace_router, prefix="/api")
+    app.include_router(eval_set_router, prefix="/api")
 
     @app.get("/health")
     def health():

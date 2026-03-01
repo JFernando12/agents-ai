@@ -276,3 +276,77 @@ export interface RAGMetrics {
   avg_context_precision: number | null;
   evaluated_traces: number;
 }
+
+// ---------------------------------------------------------------------------
+// Eval Sets
+// ---------------------------------------------------------------------------
+
+export interface EvalSetItem {
+  id: string;
+  question: string;
+  expected_answer?: string | null;
+  notes?: string | null;
+}
+
+export interface EvalSet {
+  id: string;
+  agent_id: string;
+  name: string;
+  description?: string | null;
+  items: EvalSetItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvalSetCreate {
+  agent_id: string;
+  name: string;
+  description?: string | null;
+  items: EvalSetItem[];
+}
+
+export interface EvalRunResult {
+  item_id: string;
+  question: string;
+  expected_answer?: string | null;
+  answer?: string | null;
+  rewritten_query?: string | null;
+  chunks_used?: number | null;
+  faithfulness?: number | null;
+  answer_relevance?: number | null;
+  context_precision?: number | null;
+  answer_correctness?: number | null;
+  latency_ms?: number | null;
+  error?: string | null;
+}
+
+export type EvalRunStatus = 'pending' | 'running' | 'completed' | 'failed';
+
+export interface EvalRun {
+  id: string;
+  eval_set_id: string;
+  agent_id: string;
+  eval_set_name?: string | null;
+  status: EvalRunStatus;
+  rag_config_snapshot?: Record<string, unknown> | null;
+  results: EvalRunResult[];
+  created_at: string;
+  completed_at?: string | null;
+  error?: string | null;
+}
+
+export interface EvalRunSummary {
+  id: string;
+  eval_set_id: string;
+  eval_set_name?: string | null;
+  agent_id: string;
+  status: EvalRunStatus;
+  total_items: number;
+  completed_items: number;
+  avg_faithfulness?: number | null;
+  avg_answer_relevance?: number | null;
+  avg_context_precision?: number | null;
+  avg_answer_correctness?: number | null;
+  created_at: string;
+  completed_at?: string | null;
+}

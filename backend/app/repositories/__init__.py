@@ -9,6 +9,7 @@ from .tool_repository import tool_repository
 from .account_repository import account_repository
 from .user_repository import user_repository
 from .rag_trace_repository import rag_trace_repository
+from .eval_set_repository import eval_set_repository
 
 __all__ = [
     "agent_repository",
@@ -22,4 +23,5 @@ __all__ = [
     "account_repository",
     "user_repository",
     "rag_trace_repository",
+    "eval_set_repository",
 ]

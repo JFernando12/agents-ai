@@ -1,4 +1,5 @@
 from .agent import Agent, AgentCreate, AgentUpdate, AgentTool, ImprovePromptRequest, RAGConfig
+from .eval_set import EvalSet, EvalSetCreate, EvalSetItem, EvalRun, EvalRunCreate, EvalRunResult, EvalRunSummary
 from .rag_trace import RAGTrace, RAGTraceCreate, RAGTracesResponse, RAGMetrics
 from .chat import ChatRequest
 from .execution import AgentConfig, AgentResponse, ToolCallTrace, ExecutionTraceCreate, ExecutionTrace, ExecutionTracesResponse
@@ -73,4 +74,11 @@ __all__ = [
     "RAGTraceCreate",
     "RAGTracesResponse",
     "RAGMetrics",
+    "EvalSet",
+    "EvalSetCreate",
+    "EvalSetItem",
+    "EvalRun",
+    "EvalRunCreate",
+    "EvalRunResult",
+    "EvalRunSummary",
 ]

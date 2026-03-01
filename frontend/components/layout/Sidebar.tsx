@@ -18,6 +18,7 @@ import {
   Building2,
   Activity,
   DatabaseZap,
+  FlaskConical,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -27,6 +28,7 @@ const navItems = [
   { href: '/tools', label: 'Herramientas', icon: Wrench },
   { href: '/execution-logs', label: 'Ejecuciones', icon: Activity },
   { href: '/rag-traces', label: 'RAG Analytics', icon: DatabaseZap },
+  { href: '/eval-sets', label: 'Eval Sets', icon: FlaskConical },
   { href: '/changelog', label: 'Log de Cambios', icon: ScrollText },
 ];
 

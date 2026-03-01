@@ -49,6 +49,8 @@ TABLE_NAMES = {
     "user":                os.getenv("USER_TABLE",               "ai-user"),
     "execution_trace":     os.getenv("EXECUTION_TRACE_TABLE",    "ai-execution-trace"),
     "rag_trace":           os.getenv("RAG_TRACE_TABLE",          "ai-rag-trace"),
+    "eval_set":            os.getenv("EVAL_SET_TABLE",            "ai-eval-set"),
+    "eval_run":            os.getenv("EVAL_RUN_TABLE",            "ai-eval-run"),
 }
 
 # Default billing / throughput for every table
@@ -456,6 +458,58 @@ TABLES = [
                 "KeySchema": [
                     {"AttributeName": "agent_id",   "KeyType": "HASH"},
                     {"AttributeName": "created_at",  "KeyType": "RANGE"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+        ],
+        "BillingMode": BILLING_MODE,
+    },
+
+    # ------------------------------------------------------------------
+    # ai-eval-set  (evaluation question sets)
+    # PK: id (S)
+    # GSI agent_id-index  →  agent_id (S)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["eval_set"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id",       "AttributeType": "S"},
+            {"AttributeName": "agent_id", "AttributeType": "S"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "agent_id-index",
+                "KeySchema": [
+                    {"AttributeName": "agent_id", "KeyType": "HASH"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+        ],
+        "BillingMode": BILLING_MODE,
+    },
+
+    # ------------------------------------------------------------------
+    # ai-eval-run  (evaluation run executions)
+    # PK: id (S)
+    # GSI eval_set_id-index  →  eval_set_id (S)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["eval_run"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id",          "AttributeType": "S"},
+            {"AttributeName": "eval_set_id", "AttributeType": "S"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "eval_set_id-index",
+                "KeySchema": [
+                    {"AttributeName": "eval_set_id", "KeyType": "HASH"},
                 ],
                 "Projection": {"ProjectionType": "ALL"},
             },

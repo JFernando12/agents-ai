@@ -39,6 +39,8 @@ class Environment(BaseSettings):
     user_table: str = 'ai-user'
     execution_trace_table: str = 'ai-execution-trace'
     rag_trace_table: str = 'ai-rag-trace'
+    eval_set_table: str = 'ai-eval-set'
+    eval_run_table: str = 'ai-eval-run'
 
     # RAG defaults (overridden per-agent via RAGConfig)
     rag_vector_bucket: str = 'sales-agent-ai-vectors'
