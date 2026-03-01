@@ -57,6 +57,8 @@ class RAGTraceRepository(BaseDynamoDBRepository):
             item["conversation_id"] = trace.conversation_id
         if trace.score_threshold is not None:
             item["score_threshold"] = Decimal(str(trace.score_threshold))
+        if trace.rewritten_query:
+            item["rewritten_query"] = trace.rewritten_query
 
         self.table.put_item(Item=item)
         return trace_id
@@ -86,6 +88,7 @@ class RAGTraceRepository(BaseDynamoDBRepository):
                 agent_id=r["agent_id"],
                 conversation_id=r.get("conversation_id"),
                 query=r["query"],
+                rewritten_query=r.get("rewritten_query"),
                 chunks_retrieved=r["chunks_retrieved"],
                 chunks_used=r["chunks_used"],
                 avg_score=r["avg_score"],

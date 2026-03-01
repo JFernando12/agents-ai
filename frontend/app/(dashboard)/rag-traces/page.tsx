@@ -123,8 +123,12 @@ function TraceRow({ trace }: { trace: RAGTrace }) {
       >
         {/* Query */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-800 dark:text-gray-100 truncate">{trace.query}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(trace.created_at)}</p>
+          <p className="text-sm text-gray-800 dark:text-gray-100 truncate">
+            {trace.query}
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            {formatDate(trace.created_at)}
+          </p>
         </div>
 
         {/* Chunks */}
@@ -132,20 +136,28 @@ function TraceRow({ trace }: { trace: RAGTrace }) {
           <p className="text-[11px] text-gray-400 dark:text-gray-500">Chunks</p>
           <p className="text-sm font-semibold text-gray-800 dark:text-white">
             {trace.chunks_used}
-            <span className="text-gray-400 font-normal">/{trace.chunks_retrieved}</span>
+            <span className="text-gray-400 font-normal">
+              /{trace.chunks_retrieved}
+            </span>
           </p>
         </div>
 
         {/* Score */}
         <div className="text-center w-20 flex-shrink-0">
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-0.5">Score</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-0.5">
+            Score
+          </p>
           <ScoreBadge value={trace.avg_score} />
         </div>
 
         {/* Latency */}
         <div className="text-center w-20 flex-shrink-0">
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">Latencia</p>
-          <p className={`text-sm font-semibold ${trace.latency_ms > 2000 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-white'}`}>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+            Latencia
+          </p>
+          <p
+            className={`text-sm font-semibold ${trace.latency_ms > 2000 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-white'}`}
+          >
             {trace.latency_ms < 1000
               ? `${trace.latency_ms}ms`
               : `${(trace.latency_ms / 1000).toFixed(1)}s`}
@@ -154,7 +166,11 @@ function TraceRow({ trace }: { trace: RAGTrace }) {
 
         {/* Expand */}
         <div className="flex-shrink-0 text-gray-400">
-          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {open ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
         </div>
       </button>
 
@@ -163,25 +179,37 @@ function TraceRow({ trace }: { trace: RAGTrace }) {
         <div className="px-5 pb-4 space-y-3 bg-gray-50/60 dark:bg-white/[0.02]">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
             <div>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Score máx.</p>
-              <p className={`text-sm font-semibold mt-0.5 ${scoreColor(trace.max_score)}`}>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                Score máx.
+              </p>
+              <p
+                className={`text-sm font-semibold mt-0.5 ${scoreColor(trace.max_score)}`}
+              >
                 {Math.round(trace.max_score * 100)}%
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Score mín.</p>
-              <p className={`text-sm font-semibold mt-0.5 ${scoreColor(trace.min_score)}`}>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                Score mín.
+              </p>
+              <p
+                className={`text-sm font-semibold mt-0.5 ${scoreColor(trace.min_score)}`}
+              >
                 {Math.round(trace.min_score * 100)}%
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Top-K solicitado</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                Top-K solicitado
+              </p>
               <p className="text-sm font-semibold mt-0.5 text-gray-800 dark:text-white">
                 {trace.top_k_requested}
               </p>
             </div>
             <div>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Score threshold</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                Score threshold
+              </p>
               <p className="text-sm font-semibold mt-0.5 text-gray-800 dark:text-white">
                 {trace.score_threshold != null
                   ? `${Math.round(trace.score_threshold * 100)}%`
@@ -192,7 +220,9 @@ function TraceRow({ trace }: { trace: RAGTrace }) {
 
           {trace.documents_hit.length > 0 && (
             <div>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">Documentos usados</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">
+                Documentos usados
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {trace.documents_hit.map((doc) => (
                   <span
@@ -207,9 +237,24 @@ function TraceRow({ trace }: { trace: RAGTrace }) {
             </div>
           )}
 
+          {trace.rewritten_query && (
+            <div className="rounded-lg border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/60 dark:bg-indigo-500/[0.05] px-3.5 py-2.5">
+              <p className="text-[11px] text-indigo-500 dark:text-indigo-400 uppercase tracking-wide font-semibold mb-1">
+                Consulta reescrita
+              </p>
+              <p className="text-xs text-gray-700 dark:text-gray-300 italic">
+                {trace.rewritten_query}
+              </p>
+            </div>
+          )}
+
           <div>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Modelo embedding</p>
-            <p className="text-xs font-mono text-gray-600 dark:text-gray-300">{trace.embedding_model}</p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
+              Modelo embedding
+            </p>
+            <p className="text-xs font-mono text-gray-600 dark:text-gray-300">
+              {trace.embedding_model}
+            </p>
           </div>
         </div>
       )}

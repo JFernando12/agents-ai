@@ -22,9 +22,42 @@ bedrock_embed_client = boto3.client(
 
 _DEFAULT_RAG_CONFIG = RAGConfig()
 
+_REWRITE_PROMPT = """\
+You are a search query optimizer for a semantic knowledge base.
+Rewrite the user question into a concise, keyword-rich search query that maximizes recall.
+Rules:
+- Preserve all key entities, concepts and domain terms
+- Remove conversational filler and pronouns
+- Keep the result under 60 words
+- Reply with ONLY the rewritten query, no explanation
+
+User question: {question}
+
+Rewritten query:"""
+
 
 class RAGService:
     """Handles retrieval-augmented generation via S3 Vectors and Bedrock embeddings."""
+
+    def _rewrite_query(self, message: str, model_id: str) -> str:
+        """Use a small LLM to rewrite/expand the user query for better vector recall."""
+        try:
+            response = bedrock_embed_client.converse(
+                modelId=model_id,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [{"text": _REWRITE_PROMPT.format(question=message)}],
+                    }
+                ],
+                inferenceConfig={"maxTokens": 128, "temperature": 0.0},
+            )
+            rewritten = response["output"]["message"]["content"][0]["text"].strip()
+            print(f"[QUERY REWRITE] '{message}' -> '{rewritten}'")
+            return rewritten
+        except Exception as e:
+            print(f"[QUERY REWRITE] Failed, using original query: {e}")
+            return message
 
     def build_context(
         self,
@@ -41,9 +74,18 @@ class RAGService:
         start_ts = time.monotonic()
 
         try:
+            # ── Query Rewriting (Fase 2) ───────────────────────────────────────
+            rewritten_query: str | None = None
+            search_message = message
+            if cfg.query_rewriting_enabled:
+                rewritten = self._rewrite_query(message, cfg.query_rewriting_model)
+                if rewritten and rewritten != message:
+                    rewritten_query = rewritten
+                    search_message = rewritten
+
             embed_response = bedrock_embed_client.invoke_model(
                 modelId=cfg.embedding_model,
-                body=json.dumps({"inputText": message}),
+                body=json.dumps({"inputText": search_message}),
             )
             embedding = json.loads(embed_response["body"].read())["embedding"]
 
@@ -98,6 +140,7 @@ class RAGService:
 
             trace_data = {
                 "query": message,
+                "rewritten_query": rewritten_query,
                 "chunks_retrieved": len(vectors),
                 "chunks_used": len(used_contexts),
                 "avg_score": round(sum(scores) / len(scores), 4) if scores else 0.0,
@@ -123,6 +166,7 @@ class RAGService:
             print(f"[CONTEXT] Failed to build context for agent {agent_id}: {e}")
             return None, [], {
                 "query": message,
+                "rewritten_query": None,
                 "chunks_retrieved": 0,
                 "chunks_used": 0,
                 "avg_score": 0.0,

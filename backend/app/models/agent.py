@@ -21,6 +21,9 @@ class RAGConfig(BaseModel):
     chunk_overlap: int = Field(default=200, ge=0, le=1000)
     context_max_chars: int = Field(default=8000, ge=500, le=32000)
     search_type: Literal["semantic"] = "semantic"
+    # ── Query Rewriting (Fase 2) ───────────────────────────────────────────
+    query_rewriting_enabled: bool = False
+    query_rewriting_model: str = "amazon.nova-micro-v1:0"
 
 class Agent(BaseModel):
     id: str

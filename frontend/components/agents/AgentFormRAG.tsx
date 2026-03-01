@@ -9,13 +9,27 @@ const DEFAULT_RAG_CONFIG: RAGConfig = {
   chunk_overlap: 200,
   context_max_chars: 8000,
   search_type: 'semantic',
+  query_rewriting_enabled: false,
+  query_rewriting_model: 'amazon.nova-micro-v1:0',
 };
 
 const EMBEDDING_MODELS = [
   { value: 'amazon.titan-embed-text-v2:0', label: 'Amazon Titan Embed V2' },
   { value: 'amazon.titan-embed-text-v1', label: 'Amazon Titan Embed V1' },
   { value: 'cohere.embed-english-v3', label: 'Cohere Embed English V3' },
-  { value: 'cohere.embed-multilingual-v3', label: 'Cohere Embed Multilingual V3' },
+  {
+    value: 'cohere.embed-multilingual-v3',
+    label: 'Cohere Embed Multilingual V3',
+  },
+];
+
+const REWRITING_MODELS = [
+  { value: 'amazon.nova-micro-v1:0', label: 'Amazon Nova Micro (rápido)' },
+  { value: 'amazon.nova-lite-v1:0', label: 'Amazon Nova Lite' },
+  {
+    value: 'anthropic.claude-haiku-3-5-20241022-v1:0',
+    label: 'Claude Haiku 3.5',
+  },
 ];
 
 interface AgentFormRAGProps {
@@ -28,7 +42,10 @@ const label =
 const input =
   'w-full px-3 py-2 text-sm bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors';
 
-export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGProps) {
+export default function AgentFormRAG({
+  agent,
+  onRAGConfigChange,
+}: AgentFormRAGProps) {
   const cfg: RAGConfig = agent.ragConfig ?? DEFAULT_RAG_CONFIG;
 
   const update = (partial: Partial<RAGConfig>) => {
@@ -40,7 +57,9 @@ export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGP
       {/* Enable / Disable */}
       <section className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.02]">
         <div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-white">Base de conocimientos</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-white">
+            Base de conocimientos
+          </p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             Activa o desactiva el RAG para este agente
           </p>
@@ -99,14 +118,18 @@ export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGP
                   value={cfg.top_k}
                   onChange={(e) => update({ top_k: Number(e.target.value) })}
                 />
-                <p className="text-xs text-gray-400 mt-1">Chunks a recuperar por consulta</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Chunks a recuperar por consulta
+                </p>
               </div>
 
               {/* Score threshold */}
               <div>
                 <label className={label}>
                   Score mínimo{' '}
-                  <span className="text-gray-400 normal-case font-normal">(opcional)</span>
+                  <span className="text-gray-400 normal-case font-normal">
+                    (opcional)
+                  </span>
                 </label>
                 <input
                   type="number"
@@ -118,7 +141,8 @@ export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGP
                   value={cfg.score_threshold ?? ''}
                   onChange={(e) =>
                     update({
-                      score_threshold: e.target.value === '' ? null : Number(e.target.value),
+                      score_threshold:
+                        e.target.value === '' ? null : Number(e.target.value),
                     })
                   }
                 />
@@ -130,7 +154,9 @@ export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGP
 
             {/* Context max chars */}
             <div>
-              <label className={label}>Longitud máx. de contexto (caracteres)</label>
+              <label className={label}>
+                Longitud máx. de contexto (caracteres)
+              </label>
               <input
                 type="number"
                 min={500}
@@ -138,7 +164,9 @@ export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGP
                 step={500}
                 className={input}
                 value={cfg.context_max_chars}
-                onChange={(e) => update({ context_max_chars: Number(e.target.value) })}
+                onChange={(e) =>
+                  update({ context_max_chars: Number(e.target.value) })
+                }
               />
               <p className="text-xs text-gray-400 mt-1">
                 Límite de caracteres del contexto combinado enviado al LLM
@@ -152,8 +180,8 @@ export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGP
               Chunking de documentos
             </h3>
             <p className="text-xs text-gray-400 -mt-2">
-              Estos valores se usan al procesar nuevos documentos. Cambiarlos no re-indexa los
-              documentos existentes.
+              Estos valores se usan al procesar nuevos documentos. Cambiarlos no
+              re-indexa los documentos existentes.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -165,7 +193,9 @@ export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGP
                   step={100}
                   className={input}
                   value={cfg.chunk_size}
-                  onChange={(e) => update({ chunk_size: Number(e.target.value) })}
+                  onChange={(e) =>
+                    update({ chunk_size: Number(e.target.value) })
+                  }
                 />
               </div>
               <div>
@@ -177,10 +207,77 @@ export default function AgentFormRAG({ agent, onRAGConfigChange }: AgentFormRAGP
                   step={50}
                   className={input}
                   value={cfg.chunk_overlap}
-                  onChange={(e) => update({ chunk_overlap: Number(e.target.value) })}
+                  onChange={(e) =>
+                    update({ chunk_overlap: Number(e.target.value) })
+                  }
                 />
               </div>
             </div>
+          </section>
+
+          {/* Query Rewriting */}
+          <section className="space-y-4">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Query Rewriting
+            </h3>
+
+            {/* Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.02]">
+              <div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-white">
+                  Reescritura de consultas
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Reformula la pregunta del usuario con un LLM antes de buscar
+                  en la KB para mejorar el recall
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  update({
+                    query_rewriting_enabled: !cfg.query_rewriting_enabled,
+                  })
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/40 ${
+                  cfg.query_rewriting_enabled
+                    ? 'bg-indigo-500'
+                    : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                    cfg.query_rewriting_enabled
+                      ? 'translate-x-6'
+                      : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Model selector — only shown when enabled */}
+            {cfg.query_rewriting_enabled && (
+              <div>
+                <label className={label}>Modelo de reescritura</label>
+                <select
+                  className={input}
+                  value={cfg.query_rewriting_model}
+                  onChange={(e) =>
+                    update({ query_rewriting_model: e.target.value })
+                  }
+                >
+                  {REWRITING_MODELS.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">
+                  Modelo ligero usado exclusivamente para reformular la
+                  consulta. Se recomienda el más rápido disponible.
+                </p>
+              </div>
+            )}
           </section>
         </>
       )}

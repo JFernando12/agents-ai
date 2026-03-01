@@ -6,6 +6,7 @@ class RAGTraceCreate(BaseModel):
     agent_id: str
     conversation_id: str | None = None
     query: str
+    rewritten_query: str | None = None
     chunks_retrieved: int
     chunks_used: int
     avg_score: float
@@ -23,6 +24,7 @@ class RAGTrace(BaseModel):
     agent_id: str
     conversation_id: str | None = None
     query: str
+    rewritten_query: str | None = None
     chunks_retrieved: int
     chunks_used: int
     avg_score: float

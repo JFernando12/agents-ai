@@ -41,6 +41,8 @@ export interface RAGConfig {
   chunk_overlap: number;
   context_max_chars: number;
   search_type: 'semantic';
+  query_rewriting_enabled: boolean;
+  query_rewriting_model: string;
 }
 
 export interface Agent {
@@ -228,6 +230,7 @@ export interface RAGTrace {
   agent_id: string;
   conversation_id: string | null;
   query: string;
+  rewritten_query: string | null;
   chunks_retrieved: number;
   chunks_used: number;
   avg_score: number;
