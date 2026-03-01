@@ -13,6 +13,7 @@ from app.routers import (
     unanswered_router,
     auth_router,
     account_router,
+    rag_trace_router,
 )
 
 def create_app() -> FastAPI:
@@ -40,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(message_router, prefix="/api")
     app.include_router(tool_router, prefix="/api")
     app.include_router(unanswered_router, prefix="/api")
+    app.include_router(rag_trace_router, prefix="/api")
 
     @app.get("/health")
     def health():

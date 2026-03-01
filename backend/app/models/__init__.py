@@ -1,4 +1,5 @@
-from .agent import Agent, AgentCreate, AgentUpdate, AgentTool, ImprovePromptRequest
+from .agent import Agent, AgentCreate, AgentUpdate, AgentTool, ImprovePromptRequest, RAGConfig
+from .rag_trace import RAGTrace, RAGTraceCreate, RAGTracesResponse, RAGMetrics
 from .chat import ChatRequest
 from .execution import AgentConfig, AgentResponse, ToolCallTrace, ExecutionTraceCreate, ExecutionTrace, ExecutionTracesResponse
 from .document import Document, DocumentUpdate, DocumentUpload
@@ -67,4 +68,9 @@ __all__ = [
     "ExecutionTraceCreate",
     "ExecutionTrace",
     "ExecutionTracesResponse",
+    "RAGConfig",
+    "RAGTrace",
+    "RAGTraceCreate",
+    "RAGTracesResponse",
+    "RAGMetrics",
 ]

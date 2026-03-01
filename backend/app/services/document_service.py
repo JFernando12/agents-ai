@@ -64,15 +64,16 @@ class DocumentService:
             return False
         
         processed_chunks = document.processed_chunks or 0
-        keys = []
-        for index in range(processed_chunks):
-            keys.append(f"{document_id}_{index}")
+        keys = [f"{document_id}_{index}" for index in range(processed_chunks)]
 
-        s3vectors_client.delete_vectors(
-            vectorBucketName='ai-agents',
-            indexName='ai-agents-index',
-            keys=keys
-        )
+        batch_size = 500
+        for i in range(0, len(keys), batch_size):
+            batch = keys[i:i + batch_size]
+            s3vectors_client.delete_vectors(
+                vectorBucketName='sales-agent-ai-vectors',
+                indexName='documents-index',
+                keys=batch
+            )
         
         removed_file = s3_service.delete_file(s3_key=document.s3_key)
         if not removed_file:

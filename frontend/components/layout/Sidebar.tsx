@@ -17,6 +17,7 @@ import {
   LogOut,
   Building2,
   Activity,
+  DatabaseZap,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/unanswered', label: 'Escalaciones', icon: HelpCircle },
   { href: '/tools', label: 'Herramientas', icon: Wrench },
   { href: '/execution-logs', label: 'Ejecuciones', icon: Activity },
+  { href: '/rag-traces', label: 'RAG Analytics', icon: DatabaseZap },
   { href: '/changelog', label: 'Log de Cambios', icon: ScrollText },
 ];
 

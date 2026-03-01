@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from app.config import env
 from app.models import Agent, AgentCreate, AgentUpdate
+from app.models.agent import RAGConfig
 from .base_dynamodb_repository import BaseDynamoDBRepository
 
 class AgentRepository(BaseDynamoDBRepository):
@@ -44,6 +45,7 @@ class AgentRepository(BaseDynamoDBRepository):
             'sub_agents': [t.model_dump() for t in agent_data.sub_agents] if agent_data.sub_agents else [],
             'questions': [q.model_dump() for q in agent_data.questions] if agent_data.questions else None,
             'metadata': agent_data.metadata,
+            'rag_config': agent_data.rag_config.model_dump() if agent_data.rag_config else None,
         }
         
         self.agent_table.put_item(Item=item)
@@ -76,7 +78,8 @@ class AgentRepository(BaseDynamoDBRepository):
                 tools=item.get('tools', []),
                 sub_agents=item.get('sub_agents', []),
                 questions=item.get('questions', []),
-                metadata=item['metadata']
+                metadata=item['metadata'],
+                rag_config=RAGConfig(**item['rag_config']) if item.get('rag_config') else None,
             )
         except Exception as e:
             print(f"Error getting agent by ID {agent_id}: {e}")
@@ -134,7 +137,8 @@ class AgentRepository(BaseDynamoDBRepository):
                 tools=item.get('tools', []),
                 sub_agents=item.get('sub_agents', []),
                 questions=item.get('questions', []),
-                metadata=item['metadata']
+                metadata=item['metadata'],
+                rag_config=RAGConfig(**item['rag_config']) if item.get('rag_config') else None,
             )
             agents.append(agent)
         
@@ -209,7 +213,11 @@ class AgentRepository(BaseDynamoDBRepository):
         if agent_data.metadata is not None:
             update_expression_parts.append("metadata = :metadata")
             expression_attribute_values[':metadata'] = agent_data.metadata
-        
+
+        if agent_data.rag_config is not None:
+            update_expression_parts.append("rag_config = :rag_config")
+            expression_attribute_values[':rag_config'] = agent_data.rag_config.model_dump()
+
         update_expression = "SET " + ", ".join(update_expression_parts)
         
         update_params = {

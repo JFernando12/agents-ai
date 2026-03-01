@@ -28,6 +28,7 @@ class ApiAgents extends ApiService {
       tools: service.tools || [],
       sub_agents: service.sub_agents || [],
       questions: service.questions || [],
+      ragConfig: service.rag_config ?? null,
     }));
     return formattedData;
   };
@@ -46,6 +47,7 @@ class ApiAgents extends ApiService {
       tools: agentData.tools || [],
       sub_agents: agentData.sub_agents || [],
       questions: agentData.questions || [],
+      rag_config: agentData.ragConfig ?? null,
     };
 
     const response = await this.api.post('/agents', bodyFormatted);
@@ -90,6 +92,7 @@ class ApiAgents extends ApiService {
       tools: agentData.tools || [],
       sub_agents: agentData.sub_agents || [],
       questions: agentData.questions || [],
+      rag_config: agentData.ragConfig ?? null,
     };
 
     const response = await this.api.put(`/agents/${id}`, bodyFormatted);

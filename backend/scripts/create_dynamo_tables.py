@@ -48,6 +48,7 @@ TABLE_NAMES = {
     "account":             os.getenv("ACCOUNT_TABLE",            "ai-account"),
     "user":                os.getenv("USER_TABLE",               "ai-user"),
     "execution_trace":     os.getenv("EXECUTION_TRACE_TABLE",    "ai-execution-trace"),
+    "rag_trace":           os.getenv("RAG_TRACE_TABLE",          "ai-rag-trace"),
 }
 
 # Default billing / throughput for every table
@@ -434,11 +435,34 @@ TABLES = [
         ],
         "BillingMode": BILLING_MODE,
     },
+    # ------------------------------------------------------------------
+    # ai-rag-trace  (RAG retrieval traces per agent)
+    # PK: id (S)
+    # GSI agent_id-created_at-index  →  agent_id (S) + created_at (N)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["rag_trace"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id",         "AttributeType": "S"},
+            {"AttributeName": "agent_id",   "AttributeType": "S"},
+            {"AttributeName": "created_at", "AttributeType": "N"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "agent_id-created_at-index",
+                "KeySchema": [
+                    {"AttributeName": "agent_id",   "KeyType": "HASH"},
+                    {"AttributeName": "created_at",  "KeyType": "RANGE"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+        ],
+        "BillingMode": BILLING_MODE,
+    },
 ]
-
-# ---------------------------------------------------------------------------
-# Helper
-# ---------------------------------------------------------------------------
 
 def get_client():
     if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:

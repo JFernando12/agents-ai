@@ -9,6 +9,7 @@ from .tool_route import tool_router
 from .unanswered_route import unanswered_router
 from .auth_route import auth_router
 from .account_route import account_router
+from .rag_trace_route import rag_trace_router
 
 __all__ = [
     "agent_router",
@@ -22,4 +23,5 @@ __all__ = [
     "unanswered_router",
     "auth_router",
     "account_router",
+    "rag_trace_router",
 ]

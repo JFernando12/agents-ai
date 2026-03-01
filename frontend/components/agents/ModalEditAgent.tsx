@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Agent, FrequestQuestion, IconName } from '@/types';
+import type { Agent, FrequestQuestion, IconName, RAGConfig } from '@/types';
 import { Loader2 } from 'lucide-react';
 import SlideOver from '../ui/SlideOver';
 import AgentChat from './AgentChat';
@@ -8,13 +8,21 @@ import AgentFormSources from './AgentFormSources';
 import AgentFormIntegration from './AgentFormIntegration';
 import AgentFormQuestions from './AgentFormQuestions';
 import AgentFormTools from './AgentFormTools';
+import AgentFormRAG from './AgentFormRAG';
 
-type EditTab = 'general' | 'fuentes' | 'tools' | 'integracion' | 'preguntas';
+type EditTab =
+  | 'general'
+  | 'fuentes'
+  | 'tools'
+  | 'rag'
+  | 'integracion'
+  | 'preguntas';
 
 const TAB_LABELS: Record<EditTab, string> = {
   general: 'General',
   fuentes: 'Fuentes',
   tools: 'Capacidades',
+  rag: 'RAG',
   integracion: 'Integración',
   preguntas: 'Preguntas',
 };
@@ -23,6 +31,7 @@ const TABS: EditTab[] = [
   'general',
   'fuentes',
   'tools',
+  'rag',
   'integracion',
   'preguntas',
 ];
@@ -83,6 +92,10 @@ const ModalEditAgent: React.FC<ModalEditAgentProps> = ({
 
   const handleQuestionsChange = (questions: FrequestQuestion[]) => {
     setAgentData((prev) => (prev ? { ...prev, questions } : prev));
+  };
+
+  const handleRAGConfigChange = (ragConfig: RAGConfig) => {
+    setAgentData((prev) => (prev ? { ...prev, ragConfig } : prev));
   };
 
   const handlePresetChange = (preset: {
@@ -159,6 +172,12 @@ const ModalEditAgent: React.FC<ModalEditAgentProps> = ({
                     prev ? { ...prev, sub_agents } : prev,
                   )
                 }
+              />
+            )}
+            {activeTab === 'rag' && (
+              <AgentFormRAG
+                agent={agentData}
+                onRAGConfigChange={handleRAGConfigChange}
               />
             )}
             {activeTab === 'integracion' && (

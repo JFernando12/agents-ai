@@ -32,6 +32,17 @@ export interface AgentTool {
   enabled: boolean;
 }
 
+export interface RAGConfig {
+  enabled: boolean;
+  embedding_model: string;
+  top_k: number;
+  score_threshold: number | null;
+  chunk_size: number;
+  chunk_overlap: number;
+  context_max_chars: number;
+  search_type: 'semantic';
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -46,6 +57,7 @@ export interface Agent {
   tools?: AgentTool[];
   sub_agents?: AgentTool[];
   questions?: FrequestQuestion[];
+  ragConfig?: RAGConfig;
 }
 
 export interface Tool {
@@ -95,11 +107,14 @@ export interface ToolUpdate {
   input_schema?: ToolInputSchema;
 }
 
+export type DocumentStatus = 'pending' | 'processing' | 'processed' | 'failed';
+
 export type Fuente = {
   id: string;
   name: string;
   active: boolean;
   lastUpdated: string;
+  status: DocumentStatus;
 };
 
 export interface LogEntry {
@@ -204,4 +219,43 @@ export interface UnansweredFilters {
   wasFedToAgent?: boolean;
   startDate?: string;
   endDate?: string;
+}
+
+// ── RAG traces ───────────────────────────────────────────────────────────────
+
+export interface RAGTrace {
+  id: string;
+  agent_id: string;
+  conversation_id: string | null;
+  query: string;
+  chunks_retrieved: number;
+  chunks_used: number;
+  avg_score: number;
+  max_score: number;
+  min_score: number;
+  latency_ms: number;
+  embedding_model: string;
+  top_k_requested: number;
+  score_threshold: number | null;
+  documents_hit: string[];
+  created_at: string;
+}
+
+export interface RAGTracesResponse {
+  items: RAGTrace[];
+  last_key: Record<string, string> | null;
+  has_more: boolean;
+}
+
+export interface RAGMetrics {
+  agent_id: string;
+  total_queries: number;
+  queries_with_results: number;
+  queries_without_results: number;
+  hit_rate: number;
+  avg_chunks_retrieved: number;
+  avg_chunks_used: number;
+  avg_score: number;
+  avg_latency_ms: number;
+  top_documents: { document: string; hits: number }[];
 }

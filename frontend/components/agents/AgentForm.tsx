@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { Agent, FrequestQuestion, IconName } from '@/types';
+import type { Agent, FrequestQuestion, IconName, RAGConfig } from '@/types';
 import AgentChat from './AgentChat';
 import { Loader2 } from 'lucide-react';
 import AgentFormGeneral from './AgentFormGeneral';
@@ -7,6 +7,7 @@ import AgentFormSources from './AgentFormSources';
 import AgentFormIntegration from './AgentFormIntegration';
 import AgentFormQuestions from './AgentFormQuestions';
 import AgentFormTools from './AgentFormTools';
+import AgentFormRAG from './AgentFormRAG';
 
 interface AgentFormProps {
   agentToEdit: Agent | null;
@@ -37,7 +38,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
   });
 
   const [activeTab, setActiveTab] = useState<
-    'general' | 'fuentes' | 'integracion' | 'preguntas' | 'tools'
+    'general' | 'fuentes' | 'integracion' | 'preguntas' | 'tools' | 'rag'
   >('general');
 
   useEffect(() => {
@@ -88,6 +89,10 @@ const AgentForm: React.FC<AgentFormProps> = ({
     setAgentData((prev) => ({ ...prev, questions }));
   };
 
+  const handleRAGConfigChange = (ragConfig: RAGConfig) => {
+    setAgentData((prev) => ({ ...prev, ragConfig }));
+  };
+
   const handlePresetChange = (preset: {
     temperature: number;
     topK: number;
@@ -110,25 +115,32 @@ const AgentForm: React.FC<AgentFormProps> = ({
       {/* Configuracion */}
       <div className="flex flex-col min-h-0">
         <form onSubmit={handleSubmit} className="flex flex-col h-full flex-1">
-          {agentToEdit && (
-            <div className="flex-shrink-0 flex space-x-2 mb-2 border-b pb-2">
-              {(
-                [
-                  'general',
-                  'fuentes',
-                  'tools',
-                  'integracion',
-                  'preguntas',
-                ] as const
-              ).map((tab) => (
+          <div className="flex-shrink-0 flex space-x-2 mb-2 border-b pb-2">
+            {(
+              [
+                'general',
+                'fuentes',
+                'tools',
+                'rag',
+                'integracion',
+                'preguntas',
+              ] as const
+            ).map((tab) => {
+              const requiresExisting =
+                tab === 'fuentes' || tab === 'integracion';
+              const disabled = requiresExisting && !agentToEdit;
+              return (
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => !disabled && setActiveTab(tab)}
+                  disabled={disabled}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
                     activeTab === tab
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : disabled
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >
                   {tab === 'fuentes'
@@ -139,11 +151,13 @@ const AgentForm: React.FC<AgentFormProps> = ({
                         ? 'Preguntas'
                         : tab === 'tools'
                           ? 'Capacidades'
-                          : 'General'}
+                          : tab === 'rag'
+                            ? 'RAG'
+                            : 'General'}
                 </button>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
 
           {activeTab === 'general' && (
             <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar min-h-0">
@@ -184,6 +198,15 @@ const AgentForm: React.FC<AgentFormProps> = ({
               <AgentFormQuestions
                 questions={agentData.questions || []}
                 onQuestionsChange={handleQuestionsChange}
+              />
+            </div>
+          )}
+
+          {activeTab === 'rag' && (
+            <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar min-h-0">
+              <AgentFormRAG
+                agent={agentData}
+                onRAGConfigChange={handleRAGConfigChange}
               />
             </div>
           )}

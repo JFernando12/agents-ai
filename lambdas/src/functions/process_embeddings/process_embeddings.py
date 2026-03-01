@@ -1,15 +1,39 @@
 import boto3
 import json
+from decimal import Decimal
 
 from ...shared.services.pdf_service import pdf_service
 from ...shared.services.repositories import document_service
 from ...shared.enums import DocumentStatus
+from ...config.environment import env
 
 # S3 Vectors client for vector operations
-s3vectors_client = boto3.client("s3vectors", region_name="us-east-1")
+s3vectors_client = boto3.client("s3vectors", region_name=env.region)
 
 # Bedrock client for generating embeddings
-bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
+bedrock_runtime = boto3.client("bedrock-runtime", region_name=env.region)
+
+# DynamoDB resource for reading agent config
+_dynamodb = boto3.resource("dynamodb", region_name=env.region)
+_agent_table = _dynamodb.Table(env.agent_table)
+
+
+def _get_agent_rag_config(agent_id: str) -> dict:
+    """Fetch the agent's rag_config from DynamoDB. Returns empty dict if not configured."""
+    try:
+        response = _agent_table.get_item(Key={"id": agent_id})
+        item = response.get("Item", {})
+        raw = item.get("rag_config") or {}
+        # Convert Decimal values back to python native types
+        def _dec(v):
+            if isinstance(v, Decimal):
+                return int(v) if v % 1 == 0 else float(v)
+            return v
+        return {k: _dec(v) for k, v in raw.items()}
+    except Exception as e:
+        print(f"[RAG_CONFIG] Could not fetch agent config for {agent_id}: {e}")
+        return {}
+
 
 def chunk_text(text: str, chunk_size: int = 1500, chunk_overlap: int = 200) -> list[str]:
     chunks = []
@@ -37,7 +61,17 @@ def chunk_text(text: str, chunk_size: int = 1500, chunk_overlap: int = 200) -> l
 def process_embeddings(agent_id: str, file_name: str):
     pdf_key = f"{agent_id}/{file_name}.pdf"
     document = None
-    
+
+    # Load agent RAG config (falls back to env defaults if not configured)
+    rag_cfg = _get_agent_rag_config(agent_id)
+    chunk_size = rag_cfg.get("chunk_size", env.rag_default_chunk_size)
+    chunk_overlap = rag_cfg.get("chunk_overlap", env.rag_default_chunk_overlap)
+    embedding_model = rag_cfg.get("embedding_model", env.rag_default_embedding_model)
+    vector_bucket = env.rag_vector_bucket
+    vector_index = env.rag_vector_index
+
+    print(f"[RAG_CONFIG] agent={agent_id} chunk_size={chunk_size} chunk_overlap={chunk_overlap} model={embedding_model}")
+
     try:
         print(f"Starting S3 Vectors processing for agent_id: {agent_id}, file: {file_name}")
         
@@ -57,7 +91,7 @@ def process_embeddings(agent_id: str, file_name: str):
         
         print(f"Successfully extracted {len(text)} characters from PDF")
         
-        chunks = chunk_text(text)
+        chunks = chunk_text(text, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         clean_chunks = [chunk for chunk in chunks if chunk.strip()]
         
         print(f"Generated {len(chunks)} chunks, {len(clean_chunks)} non-empty chunks")
@@ -65,7 +99,7 @@ def process_embeddings(agent_id: str, file_name: str):
         embeddings = []
         for text in clean_chunks:
             response = bedrock_runtime.invoke_model(
-                modelId="amazon.titan-embed-text-v2:0",
+                modelId=embedding_model,
                 contentType="application/json",
                 accept="application/json",
                 body=json.dumps({"inputText": text})
@@ -89,7 +123,11 @@ def process_embeddings(agent_id: str, file_name: str):
                     "document_id": document.id,
                     "source": file_name,
                     "chunk_index": index,
-                    "source_text": source_text
+                    "source_text": source_text,
+                    # Snapshot of indexing config for reproducibility
+                    "embedding_model": embedding_model,
+                    "chunk_size": chunk_size,
+                    "chunk_overlap": chunk_overlap,
                 }
             }
             vectors.append(vector)
@@ -99,8 +137,8 @@ def process_embeddings(agent_id: str, file_name: str):
         for i in range(0, len(vectors), batch_size):
             batch = vectors[i:i + batch_size]
             s3vectors_client.put_vectors(
-                vectorBucketName="sales-agent-ai-vectors",   
-                indexName="documents-index",
+                vectorBucketName=vector_bucket,
+                indexName=vector_index,
                 vectors=batch
             )
         print(f"Successfully stored {len(vectors)} vectors in S3 Vectors")

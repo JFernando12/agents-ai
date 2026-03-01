@@ -20,6 +20,7 @@ class ApiDocuments extends ApiService {
     const formattedData = data.data.map((doc: any) => ({
       id: doc.id,
       name: doc.file_name,
+      status: doc.status,
       createdAt: new Date(doc.created_at).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',

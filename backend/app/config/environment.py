@@ -38,6 +38,14 @@ class Environment(BaseSettings):
     account_table: str = 'ai-account'
     user_table: str = 'ai-user'
     execution_trace_table: str = 'ai-execution-trace'
+    rag_trace_table: str = 'ai-rag-trace'
+
+    # RAG defaults (overridden per-agent via RAGConfig)
+    rag_vector_bucket: str = 'sales-agent-ai-vectors'
+    rag_vector_index: str = 'documents-index'
+    rag_default_top_k: int = 5
+    rag_default_chunk_size: int = 1500
+    rag_default_chunk_overlap: int = 200
 
     class Config:
         env_file = ".env"

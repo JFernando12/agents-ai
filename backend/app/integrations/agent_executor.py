@@ -9,7 +9,9 @@ from app.integrations.answer_analyzer import answer_analyzer
 from app.integrations.rag_service import rag_service
 from app.integrations.tools_integration import tools_integration
 from app.models import ToolResult
+from app.models.agent import RAGConfig
 from app.models.execution import AgentConfig, AgentResponse, ExecutionTraceCreate, ToolCallTrace
+from app.models.rag_trace import RAGTraceCreate
 from app.repositories import agent_repository, tool_repository
 
 class AgentExecutor:
@@ -175,14 +177,28 @@ class AgentExecutor:
         used_contexts: list,
         user: str | None,
         iteration: int,
+        rag_config: RAGConfig | None = None,
+        conversation_id: str | None = None,
     ) -> tuple[dict, ToolCallTrace]:
         print(f"[BEDROCK] Iteration {iteration}: Executing tool: {tool_name} with input: {tool_input}")
 
         if tool_name == "search_knowledge_base":
             query = tool_input.get("query", last_user_text)
             print(f"[RAG TOOL] Searching KB for: {query}")
-            rag_context, rag_contexts = rag_service.build_context(self.agent_id, query)
+            rag_context, rag_contexts, rag_trace_data = rag_service.build_context(self.agent_id, query, config=rag_config)
             used_contexts.extend(rag_contexts)
+
+            # Persist RAG trace asynchronously (non-blocking)
+            try:
+                from app.repositories.rag_trace_repository import rag_trace_repository
+                rag_trace_repository.save(RAGTraceCreate(
+                    agent_id=self.agent_id,
+                    conversation_id=conversation_id,
+                    **rag_trace_data,
+                ))
+            except Exception as _rag_err:
+                print(f"[RAG TRACE] Failed to save trace: {_rag_err}")
+
             result = ToolResult(
                 tool_name=tool_name,
                 success=True,
@@ -241,6 +257,8 @@ class AgentExecutor:
         last_user_text: str,
         used_contexts: list,
         user: str | None,
+        rag_config: RAGConfig | None = None,
+        conversation_id: str | None = None,
     ) -> tuple[dict, list, list[ToolCallTrace], int]:
         max_iterations = 5
         iteration = 0
@@ -272,6 +290,8 @@ class AgentExecutor:
                     used_contexts=used_contexts,
                     user=user,
                     iteration=iteration,
+                    rag_config=rag_config,
+                    conversation_id=conversation_id,
                 )
                 for b in tool_use_blocks
             ]
@@ -326,6 +346,7 @@ class AgentExecutor:
         attached_text: str | None = None,
         context: dict | None = None,
         account_id: str = "default",
+        conversation_id: str | None = None,
     ) -> AgentResponse:
         start_time = time.monotonic()
         agent_config = self._load_agent_config()
@@ -336,6 +357,7 @@ class AgentExecutor:
         max_tokens = agent_config.max_tokens or 1000
         top_k = agent_config.top_k or None
         tools = agent_config.tools or []
+        rag_config = agent_config.rag_config  # may be None → rag_service uses defaults
         enabled_tool_ids = [t.id for t in tools if t.enabled]
         enabled_sub_agent_ids = [t.id for t in (agent_config.sub_agents or []) if t.enabled]
 
@@ -369,6 +391,8 @@ class AgentExecutor:
             last_user_text=last_user_text,
             used_contexts=used_contexts,
             user=user,
+            rag_config=rag_config,
+            conversation_id=conversation_id,
         )
         final_answer = self._extract_final_answer(final_response, tool_results)
         duration_ms = int((time.monotonic() - start_time) * 1000)

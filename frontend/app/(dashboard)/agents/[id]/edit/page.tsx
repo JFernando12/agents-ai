@@ -2,8 +2,19 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Bot, Loader2, Settings, Database, Wrench, Plug, HelpCircle, Save } from 'lucide-react';
-import type { Agent, FrequestQuestion } from '@/types';
+import {
+  ArrowLeft,
+  Bot,
+  Loader2,
+  Settings,
+  Database,
+  Wrench,
+  Plug,
+  HelpCircle,
+  Save,
+  DatabaseZap,
+} from 'lucide-react';
+import type { Agent, FrequestQuestion, RAGConfig } from '@/types';
 import { useAgents, useUpdateAgent } from '@/lib/hooks/useAgents';
 import AgentChat from '@/components/agents/AgentChat';
 import AgentFormGeneral from '@/components/agents/AgentFormGeneral';
@@ -11,13 +22,21 @@ import AgentFormSources from '@/components/agents/AgentFormSources';
 import AgentFormIntegration from '@/components/agents/AgentFormIntegration';
 import AgentFormQuestions from '@/components/agents/AgentFormQuestions';
 import AgentFormTools from '@/components/agents/AgentFormTools';
+import AgentFormRAG from '@/components/agents/AgentFormRAG';
 
-type EditTab = 'general' | 'fuentes' | 'tools' | 'integracion' | 'preguntas';
+type EditTab =
+  | 'general'
+  | 'fuentes'
+  | 'tools'
+  | 'rag'
+  | 'integracion'
+  | 'preguntas';
 
 const TABS: { id: EditTab; label: string; icon: React.ElementType }[] = [
   { id: 'general', label: 'General', icon: Settings },
   { id: 'fuentes', label: 'Fuentes', icon: Database },
   { id: 'tools', label: 'Capacidades', icon: Wrench },
+  { id: 'rag', label: 'RAG', icon: DatabaseZap },
   { id: 'integracion', label: 'Integración', icon: Plug },
   { id: 'preguntas', label: 'Preguntas', icon: HelpCircle },
 ];
@@ -60,6 +79,9 @@ export default function EditAgentPage({
 
   const handleQuestionsChange = (questions: FrequestQuestion[]) =>
     setAgentData((prev) => (prev ? { ...prev, questions } : prev));
+
+  const handleRAGConfigChange = (ragConfig: RAGConfig) =>
+    setAgentData((prev) => (prev ? { ...prev, ragConfig } : prev));
 
   const handlePresetChange = (preset: {
     temperature: number;
@@ -180,6 +202,12 @@ export default function EditAgentPage({
                     prev ? { ...prev, sub_agents } : prev,
                   )
                 }
+              />
+            )}
+            {activeTab === 'rag' && (
+              <AgentFormRAG
+                agent={agentData}
+                onRAGConfigChange={handleRAGConfigChange}
               />
             )}
             {activeTab === 'integracion' && (
