@@ -31,12 +31,6 @@ function formatDate(iso: string): string {
   });
 }
 
-function scoreColor(score: number): string {
-  if (score >= 0.75) return 'text-green-600 dark:text-green-400';
-  if (score >= 0.5) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-red-500 dark:text-red-400';
-}
-
 function ScoreBadge({ value }: { value: number }) {
   const pct = Math.round(value * 100);
   const color =
