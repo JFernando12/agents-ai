@@ -1,0 +1,64 @@
+service: sales-agent-ai-lambdas
+
+provider:
+  name: aws
+  profile: jfernando12
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  runtime: python3.12
+  architecture: arm64
+  timeout: 29
+  environment:
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+          Resource: "arn:aws:s3:::${env:S3_BUCKET_NAME}/*"
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:UpdateItem
+          Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/*"
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - s3vectors:PutVectors
+          Resource: "arn:aws:s3vectors:${self:provider.region}:*:bucket/*/index/*"
+functions:
+  process-embeddings:
+    handler: src/functions/process_embeddings/main.handler
+    timeout: 900  # 15 minutes max timeout for processing large files
+    memorySize: 1024  # Increase memory for larger files if needed
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    events:
+      - s3:
+          bucket: ${env:S3_BUCKET_NAME}
+          existing: true
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .pdf
+
+plugins:
+  - serverless-offline
+
+package:
+  patterns:
+    - '!venv/**'
+    - '!.venv/**'
+    - '!node_modules/**'
+    - '!.serverless/**'
+    - '!.git/**'
+    - '!**/__pycache__/**'
+    - '!tests/**'
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    layer: true

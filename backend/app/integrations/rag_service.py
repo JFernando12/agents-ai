@@ -1,5 +1,4 @@
 import json
-
 import boto3
 
 from app.config import env
@@ -18,8 +17,6 @@ bedrock_embed_client = boto3.client(
     aws_access_key_id=env.aws_access_key_id,
     aws_secret_access_key=env.aws_secret_access_key,
 )
-
-
 class RAGService:
     """Handles retrieval-augmented generation via S3 Vectors and Bedrock embeddings."""
 
@@ -34,8 +31,8 @@ class RAGService:
             embedding = json.loads(embed_response["body"].read())["embedding"]
 
             vec_response = s3vectors_client.query_vectors(
-                vectorBucketName="ai-agents",
-                indexName="ai-agents-index",
+                vectorBucketName="sales-agent-ai-vectors",
+                indexName="documents-index",
                 queryVector={"float32": embedding},
                 topK=5,
                 filter={"agent_id": agent_id},

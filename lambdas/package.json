@@ -1,0 +1,16 @@
+{
+  "name": "ai-bot-services-python",
+  "version": "1.0.0",
+  "description": "Python-based conversational AI system for multi-service document management",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "remove": "serverless remove",
+    "logs": "serverless logs",
+    "test": "python -m pytest tests/",
+    "lint": "flake8 src/",
+    "format": "black src/"
+  },
+  "devDependencies": {
+    "serverless-offline": "^14.4.0"
+  }
+}
