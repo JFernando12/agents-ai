@@ -59,12 +59,16 @@ function ToolCallRow({ tc, index }: { tc: ToolCallTrace; index: number }) {
         </span>
         <div
           className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
-            tc.success ? 'bg-indigo-50 dark:bg-indigo-500/10' : 'bg-red-50 dark:bg-red-500/10'
+            tc.success
+              ? 'bg-indigo-50 dark:bg-indigo-500/10'
+              : 'bg-red-50 dark:bg-red-500/10'
           }`}
         >
           <Icon
             className={`w-3 h-3 ${
-              tc.success ? 'text-indigo-500 dark:text-indigo-400' : 'text-red-500 dark:text-red-400'
+              tc.success
+                ? 'text-indigo-500 dark:text-indigo-400'
+                : 'text-red-500 dark:text-red-400'
             }`}
           />
         </div>
@@ -79,7 +83,9 @@ function ToolCallRow({ tc, index }: { tc: ToolCallTrace; index: number }) {
           ) : (
             <XCircle className="w-3 h-3 text-red-400" />
           )}
-          <span className="text-[11px] text-gray-400 dark:text-gray-500">iter {tc.iteration}</span>
+          <span className="text-[11px] text-gray-400 dark:text-gray-500">
+            iter {tc.iteration}
+          </span>
           <ChevronRight
             className={`w-3.5 h-3.5 text-gray-300 dark:text-gray-600 transition-transform ${open ? 'rotate-90' : ''}`}
           />
@@ -101,7 +107,7 @@ function ToolCallRow({ tc, index }: { tc: ToolCallTrace; index: number }) {
               <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-1">
                 Output
               </p>
-              <pre className="text-[11px] text-gray-600 dark:text-gray-400 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/[0.06] rounded-md p-2.5 whitespace-pre-wrap break-all overflow-hidden max-h-40">
+              <pre className="text-[11px] text-gray-600 dark:text-gray-400 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/[0.06] rounded-md p-2.5 whitespace-pre-wrap break-all overflow-y-auto max-h-60">
                 {tc.output}
               </pre>
             </div>
