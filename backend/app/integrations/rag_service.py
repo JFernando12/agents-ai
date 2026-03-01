@@ -1,4 +1,6 @@
 import json
+import math
+import re
 import time
 import boto3
 
@@ -21,6 +23,42 @@ bedrock_embed_client = boto3.client(
 )
 
 _DEFAULT_RAG_CONFIG = RAGConfig()
+
+
+def _bm25_scores(query: str, texts: list[str], k1: float = 1.5, b: float = 0.75) -> list[float]:
+    """Compute local BM25 scores for *query* against a small candidate set."""
+
+    def _tokenize(text: str) -> list[str]:
+        return re.findall(r'\b\w+\b', text.lower())
+
+    query_terms = _tokenize(query)
+    if not query_terms:
+        return [0.0] * len(texts)
+
+    tokenized = [_tokenize(t) for t in texts]
+    N = len(tokenized)
+    avgdl = sum(len(d) for d in tokenized) / N if N else 1
+
+    df: dict[str, int] = {}
+    for doc in tokenized:
+        for term in set(doc):
+            df[term] = df.get(term, 0) + 1
+
+    scores: list[float] = []
+    for doc_tokens in tokenized:
+        doc_len = len(doc_tokens)
+        tf: dict[str, int] = {}
+        for t in doc_tokens:
+            tf[t] = tf.get(t, 0) + 1
+        score = 0.0
+        for term in query_terms:
+            if term not in df:
+                continue
+            idf = math.log((N - df[term] + 0.5) / (df[term] + 0.5) + 1)
+            freq = tf.get(term, 0)
+            score += idf * (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * doc_len / avgdl))
+        scores.append(score)
+    return scores
 
 _REWRITE_PROMPT = """\
 You are a search query optimizer for a semantic knowledge base.
@@ -89,11 +127,14 @@ class RAGService:
             )
             embedding = json.loads(embed_response["body"].read())["embedding"]
 
+            # Fetch extra candidates when hybrid search is on
+            fetch_k = cfg.top_k * 3 if cfg.hybrid_search_enabled else cfg.top_k
+
             vec_response = s3vectors_client.query_vectors(
                 vectorBucketName=env.rag_vector_bucket,
                 indexName=env.rag_vector_index,
                 queryVector={"float32": embedding},
-                topK=cfg.top_k,
+                topK=fetch_k,
                 filter={"agent_id": agent_id},
                 returnDistance=True,
                 returnMetadata=True,
@@ -101,6 +142,38 @@ class RAGService:
             vectors = vec_response.get("vectors", [])
             latency_ms = int((time.monotonic() - start_ts) * 1000)
             print(f"[CONTEXT] Agent {agent_id}: found {len(vectors)} relevant documents")
+
+            # ── Fase 5: Hybrid BM25 re-ranking ─────────────────────────────────────
+            if cfg.hybrid_search_enabled and vectors:
+                alpha = cfg.hybrid_alpha
+                texts = [
+                    doc.get("metadata", {}).get("source_text", "") for doc in vectors
+                ]
+                bm25_raw = _bm25_scores(search_message, texts)
+                max_bm25 = max(bm25_raw) or 1.0
+
+                # Semantic scores already 0–1 (converted from distance below in loop)
+                sem_scores = [
+                    round(1.0 - (doc.get("distance", 1.0) / 2.0), 4)
+                    for doc in vectors
+                ]
+                max_sem = max(sem_scores) or 1.0
+
+                combined = [
+                    alpha * (s / max_sem) + (1 - alpha) * (b / max_bm25)
+                    for s, b in zip(sem_scores, bm25_raw)
+                ]
+                # Sort by combined score desc, keep top_k
+                ranked = sorted(
+                    zip(combined, vectors), key=lambda x: x[0], reverse=True
+                )[: cfg.top_k]
+                # Inject combined score as synthetic distance so loop below works
+                vectors = []
+                for combined_score, doc in ranked:
+                    doc_copy = dict(doc)
+                    doc_copy["distance"] = round((1.0 - combined_score) * 2.0, 4)
+                    vectors.append(doc_copy)
+                print(f"[HYBRID] Re-ranked to {len(vectors)} chunks (alpha={alpha})")
 
             context_parts = []
             used_contexts = []
@@ -151,6 +224,7 @@ class RAGService:
                 "top_k_requested": cfg.top_k,
                 "score_threshold": cfg.score_threshold,
                 "documents_hit": documents_hit,
+                "hybrid_search_used": cfg.hybrid_search_enabled,
             }
 
             if context_parts:

@@ -43,6 +43,12 @@ export interface RAGConfig {
   search_type: 'semantic';
   query_rewriting_enabled: boolean;
   query_rewriting_model: string;
+  eval_enabled: boolean;
+  eval_model: string;
+  hybrid_search_enabled: boolean;
+  hybrid_alpha: number;
+  chunking_strategy: 'fixed' | 'semantic' | 'contextual';
+  contextual_retrieval_model: string;
 }
 
 export interface Agent {
@@ -242,6 +248,10 @@ export interface RAGTrace {
   score_threshold: number | null;
   documents_hit: string[];
   created_at: string;
+  faithfulness: number | null;
+  answer_relevance: number | null;
+  context_precision: number | null;
+  hybrid_search_used: boolean;
 }
 
 export interface RAGTracesResponse {
@@ -261,4 +271,8 @@ export interface RAGMetrics {
   avg_score: number;
   avg_latency_ms: number;
   top_documents: { document: string; hits: number }[];
+  avg_faithfulness: number | null;
+  avg_answer_relevance: number | null;
+  avg_context_precision: number | null;
+  evaluated_traces: number;
 }

@@ -24,6 +24,15 @@ class RAGConfig(BaseModel):
     # ── Query Rewriting (Fase 2) ───────────────────────────────────────────
     query_rewriting_enabled: bool = False
     query_rewriting_model: str = "amazon.nova-micro-v1:0"
+    # ── Answer Evaluation (Fase 4) ───────────────────────────────────────
+    eval_enabled: bool = False
+    eval_model: str = "amazon.nova-micro-v1:0"
+    # ── Hybrid Search (Fase 5) ────────────────────────────────────────────
+    hybrid_search_enabled: bool = False
+    hybrid_alpha: float = Field(default=0.7, ge=0.0, le=1.0)
+    # ── Adaptive Chunking (Fase 6) ───────────────────────────────────────
+    chunking_strategy: Literal["fixed", "semantic", "contextual"] = "fixed"
+    contextual_retrieval_model: str = "amazon.nova-micro-v1:0"
 
 class Agent(BaseModel):
     id: str

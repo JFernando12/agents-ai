@@ -175,6 +175,7 @@ class AgentExecutor:
         enabled_tool_ids: list[str],
         last_user_text: str,
         used_contexts: list,
+        rag_eval_records: list,
         user: str | None,
         iteration: int,
         rag_config: RAGConfig | None = None,
@@ -191,11 +192,17 @@ class AgentExecutor:
             # Persist RAG trace asynchronously (non-blocking)
             try:
                 from app.repositories.rag_trace_repository import rag_trace_repository
-                rag_trace_repository.save(RAGTraceCreate(
+                rag_trace_id = rag_trace_repository.save(RAGTraceCreate(
                     agent_id=self.agent_id,
                     conversation_id=conversation_id,
                     **rag_trace_data,
                 ))
+                # Store record for background evaluation after final answer
+                rag_eval_records.append({
+                    "trace_id": rag_trace_id,
+                    "query": query,
+                    "contexts": rag_contexts,
+                })
             except Exception as _rag_err:
                 print(f"[RAG TRACE] Failed to save trace: {_rag_err}")
 
@@ -256,6 +263,7 @@ class AgentExecutor:
         enabled_tool_ids: list[str],
         last_user_text: str,
         used_contexts: list,
+        rag_eval_records: list,
         user: str | None,
         rag_config: RAGConfig | None = None,
         conversation_id: str | None = None,
@@ -288,6 +296,7 @@ class AgentExecutor:
                     enabled_tool_ids=enabled_tool_ids,
                     last_user_text=last_user_text,
                     used_contexts=used_contexts,
+                    rag_eval_records=rag_eval_records,
                     user=user,
                     iteration=iteration,
                     rag_config=rag_config,
@@ -366,6 +375,7 @@ class AgentExecutor:
             messages[-1]["text"] if messages else "",
         )
         used_contexts: list = []
+        rag_eval_records: list = []
 
         model_id = self._resolve_model_id(model)
         full_system_prompt = self._build_system_prompt(system_prompt, context)
@@ -390,12 +400,44 @@ class AgentExecutor:
             enabled_tool_ids=enabled_tool_ids,
             last_user_text=last_user_text,
             used_contexts=used_contexts,
+            rag_eval_records=rag_eval_records,
             user=user,
             rag_config=rag_config,
             conversation_id=conversation_id,
         )
         final_answer = self._extract_final_answer(final_response, tool_results)
         duration_ms = int((time.monotonic() - start_time) * 1000)
+
+        # ── Fase 4: background RAG evaluation ──────────────────────────────────
+        if rag_config and rag_config.eval_enabled and rag_eval_records:
+            import threading
+            from app.integrations.answer_evaluator_rag import rag_evaluator
+            from app.repositories.rag_trace_repository import rag_trace_repository as _rtr
+
+            def _run_eval(records: list, answer: str, question: str, model_id: str) -> None:
+                for rec in records:
+                    try:
+                        scores = rag_evaluator.evaluate(
+                            query=rec["query"],
+                            contexts=rec["contexts"],
+                            answer=answer,
+                            model_id=model_id,
+                        )
+                        _rtr.update_eval_scores(
+                            trace_id=rec["trace_id"],
+                            faithfulness=scores.get("faithfulness"),
+                            answer_relevance=scores.get("answer_relevance"),
+                            context_precision=scores.get("context_precision"),
+                        )
+                    except Exception as _e:
+                        print(f"[RAG EVAL] Background eval failed for trace {rec['trace_id']}: {_e}")
+
+            threading.Thread(
+                target=_run_eval,
+                args=(rag_eval_records, final_answer, messages[-1]["text"], rag_config.eval_model),
+                daemon=True,
+            ).start()
+            print(f"[RAG EVAL] Fired background eval for {len(rag_eval_records)} trace(s)")
 
         was_answered = answer_analyzer.is_answered(question=messages[-1]["text"], answer=final_answer)
         print(f"[ANALYSIS] Question answered: {was_answered}")

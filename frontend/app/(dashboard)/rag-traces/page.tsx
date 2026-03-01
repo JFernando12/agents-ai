@@ -59,7 +59,8 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
       value: metrics.total_queries,
       sub: undefined as string | undefined,
       icon: BarChart3,
-      color: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+      color:
+        'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     },
     {
       label: 'Hit Rate',
@@ -78,7 +79,8 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
       value: `${Math.round(metrics.avg_score * 100)}%`,
       sub: `${metrics.avg_chunks_used.toFixed(1)} chunks/consulta`,
       icon: Layers,
-      color: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400',
+      color:
+        'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400',
     },
     {
       label: 'Latencia promedio',
@@ -93,20 +95,95 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-gray-100 dark:divide-white/[0.06]">
-      {items.map(({ label, value, sub, icon: Icon, color }) => (
-        <div key={label} className="flex items-start gap-3 px-5 py-4">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>
-            <Icon className="w-3.5 h-3.5" />
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-gray-100 dark:divide-white/[0.06]">
+        {items.map(({ label, value, sub, icon: Icon, color }) => (
+          <div key={label} className="flex items-start gap-3 px-5 py-4">
+            <div
+              className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                {label}
+              </p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white mt-0.5 leading-none">
+                {value}
+              </p>
+              {sub && (
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                  {sub}
+                </p>
+              )}
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white mt-0.5 leading-none">{value}</p>
-            {sub && <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{sub}</p>}
+        ))}
+      </div>
+      {metrics.evaluated_traces > 0 && (
+        <div className="border-t border-gray-100 dark:border-white/[0.06] px-5 py-3 flex items-center gap-6">
+          <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider flex-shrink-0">
+            Evaluación &middot; {metrics.evaluated_traces} trazas
+          </p>
+          <div className="flex items-center gap-4">
+            {metrics.avg_faithfulness != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                  Faithfulness
+                </span>
+                <span
+                  className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                    metrics.avg_faithfulness >= 0.7
+                      ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
+                      : metrics.avg_faithfulness >= 0.4
+                        ? 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                        : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {(metrics.avg_faithfulness * 100).toFixed(0)}%
+                </span>
+              </div>
+            )}
+            {metrics.avg_answer_relevance != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                  Relevancia
+                </span>
+                <span
+                  className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                    metrics.avg_answer_relevance >= 0.7
+                      ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
+                      : metrics.avg_answer_relevance >= 0.4
+                        ? 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                        : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {(metrics.avg_answer_relevance * 100).toFixed(0)}%
+                </span>
+              </div>
+            )}
+            {metrics.avg_context_precision != null && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                  Precisión ctx.
+                </span>
+                <span
+                  className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                    metrics.avg_context_precision >= 0.7
+                      ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
+                      : metrics.avg_context_precision >= 0.4
+                        ? 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                        : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {(metrics.avg_context_precision * 100).toFixed(0)}%
+                </span>
+              </div>
+            )}
           </div>
         </div>
-      ))}
-    </div>
+      )}
+    </>
   );
 }
 
@@ -256,6 +333,82 @@ function TraceRow({ trace }: { trace: RAGTrace }) {
               {trace.embedding_model}
             </p>
           </div>
+
+          {trace.hybrid_search_used && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-violet-700 dark:text-violet-400 uppercase tracking-wide">
+                Hybrid Search activo
+              </span>
+            </div>
+          )}
+
+          {/* Eval scores */}
+          {(trace.faithfulness != null ||
+            trace.answer_relevance != null ||
+            trace.context_precision != null) && (
+            <div className="rounded-lg border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/[0.05] px-3.5 py-2.5">
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold mb-2">
+                Evaluación de calidad
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {trace.faithfulness != null && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Faithfulness
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                        trace.faithfulness >= 0.7
+                          ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
+                          : trace.faithfulness >= 0.4
+                            ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                            : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
+                      }`}
+                    >
+                      {(trace.faithfulness * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                )}
+                {trace.answer_relevance != null && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Relevancia
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                        trace.answer_relevance >= 0.7
+                          ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
+                          : trace.answer_relevance >= 0.4
+                            ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                            : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
+                      }`}
+                    >
+                      {(trace.answer_relevance * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                )}
+                {trace.context_precision != null && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Precisión ctx.
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                        trace.context_precision >= 0.7
+                          ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
+                          : trace.context_precision >= 0.4
+                            ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
+                            : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
+                      }`}
+                    >
+                      {(trace.context_precision * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

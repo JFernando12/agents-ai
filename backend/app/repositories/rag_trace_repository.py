@@ -59,9 +59,39 @@ class RAGTraceRepository(BaseDynamoDBRepository):
             item["score_threshold"] = Decimal(str(trace.score_threshold))
         if trace.rewritten_query:
             item["rewritten_query"] = trace.rewritten_query
+        if trace.hybrid_search_used:
+            item["hybrid_search_used"] = True
 
         self.table.put_item(Item=item)
         return trace_id
+
+    def update_eval_scores(
+        self,
+        trace_id: str,
+        faithfulness: float | None,
+        answer_relevance: float | None,
+        context_precision: float | None,
+    ) -> None:
+        """Patch eval score fields onto an existing RAGTrace item."""
+        updates: dict[str, Decimal] = {}
+        if faithfulness is not None:
+            updates["faithfulness"] = Decimal(str(faithfulness))
+        if answer_relevance is not None:
+            updates["answer_relevance"] = Decimal(str(answer_relevance))
+        if context_precision is not None:
+            updates["context_precision"] = Decimal(str(context_precision))
+        if not updates:
+            return
+
+        set_expr = ", ".join(f"#{k} = :{k}" for k in updates)
+        expr_names = {f"#{k}": k for k in updates}
+        expr_values = {f":{k}": v for k, v in updates.items()}
+        self.table.update_item(
+            Key={"id": trace_id},
+            UpdateExpression=f"SET {set_expr}",
+            ExpressionAttributeNames=expr_names,
+            ExpressionAttributeValues=expr_values,
+        )
 
     def get_by_agent(
         self,
@@ -99,6 +129,10 @@ class RAGTraceRepository(BaseDynamoDBRepository):
                 top_k_requested=r["top_k_requested"],
                 score_threshold=r.get("score_threshold"),
                 documents_hit=r.get("documents_hit", []),
+                faithfulness=r.get("faithfulness"),
+                answer_relevance=r.get("answer_relevance"),
+                context_precision=r.get("context_precision"),
+                hybrid_search_used=r.get("hybrid_search_used", False),
                 created_at=datetime.fromtimestamp(r["created_at"] / 1000),
             )
             for r in raw_items
@@ -153,6 +187,14 @@ class RAGTraceRepository(BaseDynamoDBRepository):
             for doc, count in doc_counter.most_common(10)
         ]
 
+        # Fase 4 — items that have been evaluated
+        eval_items = [
+            i for i in items
+            if i.get("faithfulness") is not None
+            and i.get("answer_relevance") is not None
+            and i.get("context_precision") is not None
+        ]
+
         return RAGMetrics(
             agent_id=agent_id,
             total_queries=total,
@@ -164,6 +206,10 @@ class RAGTraceRepository(BaseDynamoDBRepository):
             avg_score=avg_score,
             avg_latency_ms=avg_latency_ms,
             top_documents=top_documents,
+            avg_faithfulness=round(sum(i["faithfulness"] for i in eval_items) / len(eval_items), 3) if eval_items else None,
+            avg_answer_relevance=round(sum(i["answer_relevance"] for i in eval_items) / len(eval_items), 3) if eval_items else None,
+            avg_context_precision=round(sum(i["context_precision"] for i in eval_items) / len(eval_items), 3) if eval_items else None,
+            evaluated_traces=len(eval_items),
         )
 
 
