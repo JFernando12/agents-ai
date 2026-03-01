@@ -1,4 +1,4 @@
-from app.models.rag_trace import RAGMetrics, RAGTracesResponse
+from app.models.rag_trace import RAGMetrics, RAGTrace, RAGTracesResponse
 from app.repositories.rag_trace_repository import rag_trace_repository
 
 
@@ -17,6 +17,9 @@ class RAGTraceService:
 
     def get_metrics(self, agent_id: str) -> RAGMetrics:
         return rag_trace_repository.get_metrics(agent_id=agent_id)
+
+    def get_trace(self, trace_id: str):
+        return rag_trace_repository.get_by_id(trace_id)
 
 
 rag_trace_service = RAGTraceService()

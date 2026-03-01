@@ -23,6 +23,11 @@ class ApiRAGTraces extends ApiService {
     });
     return response.data.data as RAGMetrics;
   };
+
+  getTrace = async (traceId: string): Promise<RAGTrace> => {
+    const response = await this.api.get(`/rag-traces/${traceId}`);
+    return response.data.data as RAGTrace;
+  };
 }
 
 export const apiRAGTraces = new ApiRAGTraces();

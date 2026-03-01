@@ -145,6 +145,35 @@ class RAGTraceRepository(BaseDynamoDBRepository):
             has_more=new_last_key is not None,
         )
 
+    def get_by_id(self, trace_id: str) -> RAGTrace | None:
+        response = self.table.get_item(Key={"id": trace_id})
+        item = response.get("Item")
+        if not item:
+            return None
+        r = _decimal_to_python(item)
+        return RAGTrace(
+            id=r["id"],
+            agent_id=r["agent_id"],
+            conversation_id=r.get("conversation_id"),
+            query=r["query"],
+            rewritten_query=r.get("rewritten_query"),
+            chunks_retrieved=r["chunks_retrieved"],
+            chunks_used=r["chunks_used"],
+            avg_score=r["avg_score"],
+            max_score=r["max_score"],
+            min_score=r["min_score"],
+            latency_ms=r["latency_ms"],
+            embedding_model=r["embedding_model"],
+            top_k_requested=r["top_k_requested"],
+            score_threshold=r.get("score_threshold"),
+            documents_hit=r.get("documents_hit", []),
+            faithfulness=r.get("faithfulness"),
+            answer_relevance=r.get("answer_relevance"),
+            context_precision=r.get("context_precision"),
+            hybrid_search_used=r.get("hybrid_search_used", False),
+            created_at=datetime.fromtimestamp(r["created_at"] / 1000),
+        )
+
     def get_metrics(self, agent_id: str, sample_limit: int = 200) -> RAGMetrics:
         """Compute aggregate metrics for an agent using the N most recent traces."""
         response = self.table.query(

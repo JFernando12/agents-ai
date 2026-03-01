@@ -42,3 +42,21 @@ def get_rag_metrics(
         status_code=200,
         content=success_response(metrics.model_dump(mode="json"), "RAG metrics retrieved"),
     )
+
+
+@rag_trace_router.get("/{trace_id}")
+def get_rag_trace(
+    trace_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Return a single RAG trace by ID."""
+    trace = rag_trace_service.get_trace(trace_id)
+    if not trace:
+        return JSONResponse(
+            status_code=404,
+            content=error_response("RAG trace not found"),
+        )
+    return JSONResponse(
+        status_code=200,
+        content=success_response(trace.model_dump(mode="json"), "RAG trace retrieved"),
+    )

@@ -16,3 +16,11 @@ export function useRAGMetrics(agentId: string | null) {
     enabled: !!agentId,
   });
 }
+
+export function useRAGTrace(traceId: string | null) {
+  return useQuery({
+    queryKey: ['rag-trace', traceId],
+    queryFn: () => apiRAGTraces.getTrace(traceId!),
+    enabled: !!traceId,
+  });
+}

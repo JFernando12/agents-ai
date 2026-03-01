@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   DatabaseZap,
   BarChart3,
@@ -8,13 +9,14 @@ import {
   Layers,
   Target,
   FileText,
-  ChevronDown,
-  ChevronUp,
   Loader2,
+  Bot,
+  ChevronRight,
 } from 'lucide-react';
 import { useRAGTraces, useRAGMetrics } from '@/lib/hooks/useRAGTraces';
 import { useAgents } from '@/lib/hooks/useAgents';
 import type { RAGTrace, RAGMetrics } from '@/types';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -59,8 +61,7 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
       value: metrics.total_queries,
       sub: undefined as string | undefined,
       icon: BarChart3,
-      color:
-        'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+      color: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     },
     {
       label: 'Hit Rate',
@@ -79,8 +80,7 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
       value: `${Math.round(metrics.avg_score * 100)}%`,
       sub: `${metrics.avg_chunks_used.toFixed(1)} chunks/consulta`,
       icon: Layers,
-      color:
-        'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400',
+      color: 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400',
     },
     {
       label: 'Latencia promedio',
@@ -99,22 +99,16 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-gray-100 dark:divide-white/[0.06]">
         {items.map(({ label, value, sub, icon: Icon, color }) => (
           <div key={label} className="flex items-start gap-3 px-5 py-4">
-            <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}
-            >
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>
               <Icon className="w-3.5 h-3.5" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                {label}
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</p>
               <p className="text-lg font-bold text-gray-900 dark:text-white mt-0.5 leading-none">
                 {value}
               </p>
               {sub && (
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                  {sub}
-                </p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{sub}</p>
               )}
             </div>
           </div>
@@ -128,9 +122,7 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
           <div className="flex items-center gap-4">
             {metrics.avg_faithfulness != null && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                  Faithfulness
-                </span>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">Faithfulness</span>
                 <span
                   className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
                     metrics.avg_faithfulness >= 0.7
@@ -146,9 +138,7 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
             )}
             {metrics.avg_answer_relevance != null && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                  Relevancia
-                </span>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">Relevancia</span>
                 <span
                   className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
                     metrics.avg_answer_relevance >= 0.7
@@ -164,9 +154,7 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
             )}
             {metrics.avg_context_precision != null && (
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                  Precisión ctx.
-                </span>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">Precisión ctx.</span>
                 <span
                   className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
                     metrics.avg_context_precision >= 0.7
@@ -189,423 +177,268 @@ function MetricsStrip({ metrics }: { metrics: RAGMetrics }) {
 
 // ── Trace row ─────────────────────────────────────────────────────────────────
 
-function TraceRow({ trace }: { trace: RAGTrace }) {
-  const [open, setOpen] = useState(false);
+function TraceRow({ trace, agentId }: { trace: RAGTrace; agentId: string }) {
+  const router = useRouter();
 
   return (
-    <div
-      className={`border-b border-gray-100 dark:border-white/[0.04] last:border-0 ${open ? 'bg-indigo-50/40 dark:bg-indigo-500/[0.05]' : ''}`}
+    <button
+      onClick={() => router.push(`/rag-traces/${trace.id}?agentId=${agentId}`)}
+      className="w-full flex items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.03] border-b border-gray-100 dark:border-white/[0.04] last:border-0"
     >
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className={`w-full flex items-center gap-3 px-5 py-2.5 text-left transition-colors ${open ? 'bg-indigo-50/60 dark:bg-indigo-500/[0.07]' : 'hover:bg-gray-50 dark:hover:bg-white/[0.03]'}`}
-      >
-        {/* Query */}
-        <div className="flex-1 min-w-0">
-          <p
-            className={`text-sm truncate font-medium transition-colors ${open ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-100'}`}
-          >
-            {trace.query}
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-            {formatDate(trace.created_at)}
-          </p>
-        </div>
-
-        {/* Chunks */}
-        <div className="text-center w-20 flex-shrink-0">
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">Chunks</p>
-          <p className="text-sm font-semibold text-gray-800 dark:text-white">
-            {trace.chunks_used}
-            <span className="text-gray-400 font-normal">
-              /{trace.chunks_retrieved}
-            </span>
-          </p>
-        </div>
-
-        {/* Score */}
-        <div className="text-center w-20 flex-shrink-0">
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-0.5">
-            Score
-          </p>
-          <ScoreBadge value={trace.avg_score} />
-        </div>
-
-        {/* Latency */}
-        <div className="text-center w-20 flex-shrink-0">
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">
-            Latencia
-          </p>
-          <p
-            className={`text-sm font-semibold ${trace.latency_ms > 2000 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-white'}`}
-          >
-            {trace.latency_ms < 1000
-              ? `${trace.latency_ms}ms`
-              : `${(trace.latency_ms / 1000).toFixed(1)}s`}
-          </p>
-        </div>
-
-        {/* Expand */}
-        <div
-          className={`flex-shrink-0 transition-colors ${open ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400'}`}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm truncate font-medium text-gray-800 dark:text-gray-100">
+          {trace.query}
+        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          {formatDate(trace.created_at)}
+        </p>
+      </div>
+      <div className="text-center w-20 flex-shrink-0">
+        <p className="text-[11px] text-gray-400 dark:text-gray-500">Chunks</p>
+        <p className="text-sm font-semibold text-gray-800 dark:text-white">
+          {trace.chunks_used}
+          <span className="text-gray-400 font-normal">/{trace.chunks_retrieved}</span>
+        </p>
+      </div>
+      <div className="text-center w-20 flex-shrink-0">
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-0.5">Score</p>
+        <ScoreBadge value={trace.avg_score} />
+      </div>
+      <div className="text-center w-20 flex-shrink-0">
+        <p className="text-[11px] text-gray-400 dark:text-gray-500">Latencia</p>
+        <p
+          className={`text-sm font-semibold ${trace.latency_ms > 2000 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-white'}`}
         >
-          {open ? (
-            <ChevronUp className="w-4 h-4" />
+          {trace.latency_ms < 1000 ? `${trace.latency_ms}ms` : `${(trace.latency_ms / 1000).toFixed(1)}s`}
+        </p>
+      </div>
+      <ChevronRight size={14} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
+    </button>
+  );
+}
+
+// ── Agent picker ──────────────────────────────────────────────────────────────
+
+function AgentPicker() {
+  const router = useRouter();
+  const { data: agents, isLoading } = useAgents();
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="bg-white dark:bg-[#18181B] rounded-xl border border-gray-200 dark:border-white/[0.08] h-full flex flex-col overflow-hidden">
+        <PageHeader
+          crumbs={[{ label: 'RAG Analytics' }]}
+          subtitle="Selecciona un agente para ver sus métricas y trazas RAG."
+        />
+
+        <div className="flex items-center gap-3 px-5 py-2 border-b border-gray-100 dark:border-white/[0.05] flex-shrink-0 bg-gray-50/60 dark:bg-white/[0.01]">
+          <div className="w-8 flex-shrink-0" />
+          <span className="flex-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+            Agente
+          </span>
+          <div className="w-6 flex-shrink-0" />
+        </div>
+
+        <div className="flex-1 overflow-y-auto py-1">
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-gray-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Cargando agentes…
+            </div>
+          ) : !agents || agents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+              <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-white/[0.05] flex items-center justify-center">
+                <Bot className="w-6 h-6 text-gray-300 dark:text-gray-600" />
+              </div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Sin agentes</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Crea un agente primero desde el Centro de Agentes.
+              </p>
+            </div>
           ) : (
-            <ChevronDown className="w-4 h-4" />
+            <div className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+              {agents.map((agent) => (
+                <button
+                  key={agent.id}
+                  onClick={() => router.push(`/rag-traces?agentId=${agent.id}`)}
+                  className="group w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                    <DatabaseZap className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {agent.name}
+                    </p>
+                    {agent.description && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                        {agent.description}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronRight
+                    size={15}
+                    className="text-gray-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors flex-shrink-0"
+                  />
+                </button>
+              ))}
+            </div>
           )}
         </div>
-      </button>
-
-      {/* Detail */}
-      {open && (
-        <div className="ml-5 mr-3 mb-3 rounded-lg border border-indigo-100 dark:border-indigo-500/20 bg-white dark:bg-[#18181B] shadow-sm overflow-hidden">
-          <div className="h-0.5 w-full bg-indigo-400/60 dark:bg-indigo-500/50" />
-          <div className="px-4 pb-4 space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
-              <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                  Score máx.
-                </p>
-                <p
-                  className={`text-sm font-semibold mt-0.5 ${scoreColor(trace.max_score)}`}
-                >
-                  {Math.round(trace.max_score * 100)}%
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                  Score mín.
-                </p>
-                <p
-                  className={`text-sm font-semibold mt-0.5 ${scoreColor(trace.min_score)}`}
-                >
-                  {Math.round(trace.min_score * 100)}%
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                  Top-K solicitado
-                </p>
-                <p className="text-sm font-semibold mt-0.5 text-gray-800 dark:text-white">
-                  {trace.top_k_requested}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                  Score threshold
-                </p>
-                <p className="text-sm font-semibold mt-0.5 text-gray-800 dark:text-white">
-                  {trace.score_threshold != null
-                    ? `${Math.round(trace.score_threshold * 100)}%`
-                    : '—'}
-                </p>
-              </div>
-            </div>
-
-            {trace.documents_hit.length > 0 && (
-              <div>
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">
-                  Documentos usados
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {trace.documents_hit.map((doc) => (
-                    <span
-                      key={doc}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-md bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400"
-                    >
-                      <FileText className="w-3 h-3" />
-                      {doc}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {trace.rewritten_query && (
-              <div className="rounded-lg border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/60 dark:bg-indigo-500/[0.05] px-3.5 py-2.5">
-                <p className="text-[11px] text-indigo-500 dark:text-indigo-400 uppercase tracking-wide font-semibold mb-1">
-                  Consulta reescrita
-                </p>
-                <p className="text-xs text-gray-700 dark:text-gray-300 italic">
-                  {trace.rewritten_query}
-                </p>
-              </div>
-            )}
-
-            <div>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
-                Modelo embedding
-              </p>
-              <p className="text-xs font-mono text-gray-600 dark:text-gray-300">
-                {trace.embedding_model}
-              </p>
-            </div>
-
-            {trace.hybrid_search_used && (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-50 dark:bg-violet-500/10 border border-violet-100 dark:border-violet-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-500 flex-shrink-0" />
-                <span className="text-[11px] font-semibold text-violet-700 dark:text-violet-400 uppercase tracking-wide">
-                  Hybrid Search activo
-                </span>
-              </div>
-            )}
-
-            {/* Eval scores */}
-            {(trace.faithfulness != null ||
-              trace.answer_relevance != null ||
-              trace.context_precision != null) && (
-              <div className="rounded-lg border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-500/[0.05] px-3.5 py-2.5">
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold mb-2">
-                  Evaluación de calidad
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  {trace.faithfulness != null && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                        Faithfulness
-                      </span>
-                      <span
-                        className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
-                          trace.faithfulness >= 0.7
-                            ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
-                            : trace.faithfulness >= 0.4
-                              ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
-                              : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
-                        }`}
-                      >
-                        {(trace.faithfulness * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  )}
-                  {trace.answer_relevance != null && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                        Relevancia
-                      </span>
-                      <span
-                        className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
-                          trace.answer_relevance >= 0.7
-                            ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
-                            : trace.answer_relevance >= 0.4
-                              ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
-                              : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
-                        }`}
-                      >
-                        {(trace.answer_relevance * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  )}
-                  {trace.context_precision != null && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                        Precisión ctx.
-                      </span>
-                      <span
-                        className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
-                          trace.context_precision >= 0.7
-                            ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
-                            : trace.context_precision >= 0.4
-                              ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400'
-                              : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
-                        }`}
-                      >
-                        {(trace.context_precision * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── RAG Dashboard ─────────────────────────────────────────────────────────────
 
-export default function RAGTracesPage() {
+function RAGDashboard({ agentId }: { agentId: string }) {
   const { data: agents = [] } = useAgents();
-  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
-
-  const agentId = selectedAgentId || null;
+  const agent = agents.find((a) => a.id === agentId);
 
   const { data: tracesData, isLoading: tracesLoading } = useRAGTraces(agentId);
   const { data: metrics, isLoading: metricsLoading } = useRAGMetrics(agentId);
 
   const traces = tracesData?.items ?? [];
 
-  const selectClass =
-    'px-2.5 py-1.5 text-sm bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] text-gray-700 dark:text-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-colors';
-
   return (
-    <div className="h-full flex flex-col overflow-hidden w-full">
+    <div className="h-full flex flex-col">
       <div className="bg-white dark:bg-[#18181B] rounded-xl border border-gray-200 dark:border-white/[0.08] h-full flex flex-col overflow-hidden">
-        {/* Card header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.06] flex-shrink-0">
-          <div>
-            <h1 className="text-base font-semibold text-gray-900 dark:text-white">
-              RAG Analytics
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Observabilidad y calidad del sistema de recuperación de
-              conocimiento.
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          crumbs={[
+            { label: 'RAG Analytics', href: '/rag-traces' },
+            { label: agent?.name ?? '…' },
+          ]}
+        />
 
-        {/* Filters row */}
-        <div className="px-5 py-2 border-b border-gray-100 dark:border-white/[0.05] flex-shrink-0 bg-gray-50/60 dark:bg-white/[0.01]">
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedAgentId}
-              onChange={(e) => setSelectedAgentId(e.target.value)}
-              className={`${selectClass} max-w-[200px]`}
-            >
-              <option value="">Selecciona un agente</option>
-              {agents.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Body */}
         <div className="flex-1 overflow-auto">
-          {!agentId ? (
-            /* Empty state */
-            <div className="flex flex-col items-center justify-center h-full gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-white/[0.05] flex items-center justify-center">
-                <DatabaseZap className="w-5 h-5 text-gray-300 dark:text-gray-600" />
-              </div>
-              <p className="text-sm text-gray-400 dark:text-gray-500">
-                Selecciona un agente para ver sus métricas RAG
-              </p>
+          {metricsLoading ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-400 dark:text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Cargando métricas...
             </div>
-          ) : (
-            <>
-              {/* Metrics strip */}
-              {metricsLoading ? (
-                <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-400 dark:text-gray-500">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Cargando métricas...
-                </div>
-              ) : metrics ? (
-                <div className="border-b border-gray-100 dark:border-white/[0.06]">
-                  <MetricsStrip metrics={metrics} />
-                </div>
-              ) : null}
+          ) : metrics ? (
+            <div className="border-b border-gray-100 dark:border-white/[0.06]">
+              <MetricsStrip metrics={metrics} />
+            </div>
+          ) : null}
 
-              {/* Top documents */}
-              {metrics && metrics.top_documents.length > 0 && (
-                <div className="border-b border-gray-100 dark:border-white/[0.06]">
-                  <div className="flex items-center gap-1.5 px-5 py-2.5 bg-gray-50/60 dark:bg-white/[0.01] border-b border-gray-100 dark:border-white/[0.05]">
-                    <FileText className="w-3 h-3 text-gray-400" />
-                    <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                      Documentos más consultados
-                    </p>
-                  </div>
-                  <div className="space-y-2 px-5 py-4">
-                    {metrics.top_documents.map(({ document, hits }, idx) => {
-                      const maxHits = metrics.top_documents[0]?.hits ?? 1;
-                      const pct = Math.round((hits / maxHits) * 100);
-                      return (
-                        <div key={document} className="flex items-center gap-3">
-                          <span className="text-xs text-gray-400 font-mono w-4 flex-shrink-0 text-right">
-                            {idx + 1}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-0.5">
-                              <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
-                                {document}
-                              </span>
-                              <span className="text-xs font-semibold text-gray-500 ml-2 flex-shrink-0">
-                                {hits}
-                              </span>
-                            </div>
-                            <div className="h-1.5 bg-gray-100 dark:bg-white/[0.06] rounded-full">
-                              <div
-                                className="h-1.5 bg-indigo-400 dark:bg-indigo-500 rounded-full transition-all"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Traces section */}
-              <div>
-                {/* Section header */}
-                <div className="flex items-center justify-between px-5 py-2.5 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50/60 dark:bg-white/[0.01] sticky top-0 z-10">
-                  <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                    Trazas recientes
-                  </p>
-                  {traces.length > 0 && (
-                    <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                      {traces.length} registros
-                    </span>
-                  )}
-                </div>
-
-                {tracesLoading ? (
-                  <div className="flex items-center justify-center gap-2 py-12 text-sm text-gray-400 dark:text-gray-500">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Cargando trazas...
-                  </div>
-                ) : traces.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-14 gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-white/[0.05] flex items-center justify-center">
-                      <DatabaseZap className="w-5 h-5 text-gray-300 dark:text-gray-600" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm text-gray-400 dark:text-gray-500">
-                        Sin trazas RAG para este agente
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 opacity-70">
-                        Las trazas se generan cuando el agente usa la
-                        herramienta de búsqueda en KB
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Table column headers */}
-                    <div className="flex items-center gap-3 px-5 py-2 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50/60 dark:bg-white/[0.01]">
-                      <p className="flex-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        Consulta
-                      </p>
-                      <p className="w-20 text-center text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        Chunks
-                      </p>
-                      <p className="w-20 text-center text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        Score
-                      </p>
-                      <p className="w-20 text-center text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        Latencia
-                      </p>
-                      <div className="w-4" />
-                    </div>
-
-                    <div className="divide-y divide-gray-100 dark:divide-white/[0.04]">
-                      {traces.map((trace) => (
-                        <TraceRow key={trace.id} trace={trace} />
-                      ))}
-                    </div>
-                  </>
-                )}
+          {metrics && metrics.top_documents.length > 0 && (
+            <div className="border-b border-gray-100 dark:border-white/[0.06]">
+              <div className="flex items-center gap-1.5 px-5 py-2.5 bg-gray-50/60 dark:bg-white/[0.01] border-b border-gray-100 dark:border-white/[0.05]">
+                <FileText className="w-3 h-3 text-gray-400" />
+                <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  Documentos más consultados
+                </p>
               </div>
-            </>
+              <div className="space-y-2 px-5 py-4">
+                {metrics.top_documents.map(({ document, hits }, idx) => {
+                  const maxHits = metrics.top_documents[0]?.hits ?? 1;
+                  const pct = Math.round((hits / maxHits) * 100);
+                  return (
+                    <div key={document} className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400 font-mono w-4 flex-shrink-0 text-right">
+                        {idx + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
+                            {document}
+                          </span>
+                          <span className="text-xs font-semibold text-gray-500 ml-2 flex-shrink-0">
+                            {hits}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-gray-100 dark:bg-white/[0.06] rounded-full">
+                          <div
+                            className="h-1.5 bg-indigo-400 dark:bg-indigo-500 rounded-full transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
+
+          <div>
+            <div className="flex items-center justify-between px-5 py-2.5 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50/60 dark:bg-white/[0.01] sticky top-0 z-10">
+              <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                Trazas recientes
+              </p>
+              {traces.length > 0 && (
+                <span className="text-[11px] text-gray-400 dark:text-gray-500">
+                  {traces.length} registros
+                </span>
+              )}
+            </div>
+
+            {tracesLoading ? (
+              <div className="flex items-center justify-center gap-2 py-12 text-sm text-gray-400 dark:text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cargando trazas...
+              </div>
+            ) : traces.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-14 gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-white/[0.05] flex items-center justify-center">
+                  <DatabaseZap className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    Sin trazas RAG para este agente
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 opacity-70">
+                    Las trazas se generan cuando el agente usa la herramienta de búsqueda en KB
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 px-5 py-2 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50/60 dark:bg-white/[0.01]">
+                  <p className="flex-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Consulta
+                  </p>
+                  <p className="w-20 text-center text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Chunks
+                  </p>
+                  <p className="w-20 text-center text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Score
+                  </p>
+                  <p className="w-20 text-center text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Latencia
+                  </p>
+                  <div className="w-4" />
+                </div>
+                <div>
+                  {traces.map((trace) => (
+                    <TraceRow key={trace.id} trace={trace} agentId={agentId} />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Router ────────────────────────────────────────────────────────────────────
+
+function RAGTracesContent() {
+  const searchParams = useSearchParams();
+  const agentId = searchParams.get('agentId');
+
+  if (agentId) return <RAGDashboard agentId={agentId} />;
+  return <AgentPicker />;
+}
+
+export default function RAGTracesPage() {
+  return (
+    <Suspense>
+      <RAGTracesContent />
+    </Suspense>
   );
 }
