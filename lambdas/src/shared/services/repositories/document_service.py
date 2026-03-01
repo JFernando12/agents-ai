@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any
 
 from ....config.environment import env
 from ...interfaces import Document

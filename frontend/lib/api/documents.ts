@@ -20,9 +20,6 @@ class ApiDocuments extends ApiService {
     const formattedData = data.data.map((doc: any) => ({
       id: doc.id,
       name: doc.file_name,
-      category: doc.category,
-      medio: doc.medio,
-      link: doc.link,
       createdAt: new Date(doc.created_at).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -35,23 +32,17 @@ class ApiDocuments extends ApiService {
 
   uploadDocument = async ({
     serviceId,
-    data: { file, name, category, medio, link },
+    data: { file, name },
   }: {
     serviceId: string;
     data: {
       file: File;
       name: string;
-      category: 'oficial' | 'interno';
-      medio: string;
-      link: string;
     };
   }): Promise<void> => {
     const response = await this.api.post('/documents', {
       agent_id: serviceId,
       file_name: name,
-      category,
-      medio,
-      link,
     });
     const presignedUrl = response.data.data.presigned_url;
 

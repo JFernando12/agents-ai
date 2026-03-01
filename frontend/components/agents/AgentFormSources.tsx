@@ -15,16 +15,10 @@ const input =
 
 const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
   const [showUpload, setShowUpload] = useState(false);
-  const [documentTab, setDocumentTab] = useState<'interno' | 'oficial'>(
-    'interno',
-  );
   const [selectedFuenteId, setSelectedFuenteId] = useState<string | null>(null);
   const [newFileData, setNewFileData] = useState<{
     file: File;
     name: string;
-    category: 'oficial' | 'interno';
-    medio: string;
-    link: string;
   } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,15 +31,7 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
     [selectedFuenteId, documents],
   );
 
-  const filteredDocuments = useMemo(
-    () =>
-      documents?.filter((doc) =>
-        documentTab === 'oficial'
-          ? doc.category === 'oficial'
-          : doc.category !== 'oficial',
-      ) || [],
-    [documents, documentTab],
-  );
+  const filteredDocuments = documents || [];
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!agent?.id || !e.target.files?.[0]) return;
@@ -53,9 +39,6 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
     setNewFileData({
       file,
       name: file.name,
-      category: 'interno',
-      medio: '',
-      link: '',
     });
     setShowUpload(true);
   };
@@ -67,9 +50,6 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
       data: {
         file: newFileData.file,
         name: newFileData.name,
-        category: newFileData.category,
-        medio: newFileData.medio,
-        link: newFileData.link,
       },
     });
     setNewFileData(null);
@@ -87,24 +67,8 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
 
   return (
     <div className="space-y-4">
-      {/* ── Header row: category tabs + upload button ── */}
-      <div className="flex items-center justify-between border-b border-gray-100 dark:border-white/[0.06] pb-0">
-        <div className="flex gap-0">
-          {(['interno', 'oficial'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setDocumentTab(tab)}
-              className={`pb-2.5 px-3 text-xs font-semibold uppercase tracking-wide border-b-2 transition-colors ${
-                documentTab === tab
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
-            >
-              {tab === 'interno' ? 'Internos' : 'Oficiales'}
-            </button>
-          ))}
-        </div>
+      {/* ── Header row: upload button ── */}
+      <div className="flex items-center justify-end border-b border-gray-100 dark:border-white/[0.06] pb-0">
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -137,73 +101,21 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className={label}>Nombre del archivo</label>
-              <input
-                type="text"
-                value={newFileData.name}
-                className={input}
-                onChange={(e) =>
-                  setNewFileData((d) =>
-                    d ? { ...d, name: e.target.value } : null,
-                  )
-                }
-              />
-            </div>
-            <div>
-              <label className={label}>Medio de obtención</label>
-              <input
-                type="text"
-                value={newFileData.medio}
-                onChange={(e) =>
-                  setNewFileData((d) =>
-                    d ? { ...d, medio: e.target.value } : null,
-                  )
-                }
-                className={input}
-              />
-            </div>
-            <div>
-              <label className={label}>Link de publicación</label>
-              <input
-                type="text"
-                value={newFileData.link}
-                onChange={(e) =>
-                  setNewFileData((d) =>
-                    d ? { ...d, link: e.target.value } : null,
-                  )
-                }
-                className={input}
-              />
-            </div>
+          <div>
+            <label className={label}>Nombre del archivo</label>
+            <input
+              type="text"
+              value={newFileData.name}
+              className={input}
+              onChange={(e) =>
+                setNewFileData((d) =>
+                  d ? { ...d, name: e.target.value } : null,
+                )
+              }
+            />
           </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-4">
-              {(['interno', 'oficial'] as const).map((cat) => (
-                <label
-                  key={cat}
-                  className="flex items-center gap-1.5 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="category"
-                    value={cat}
-                    checked={newFileData.category === cat}
-                    onChange={(e) =>
-                      setNewFileData((d) =>
-                        d ? { ...d, category: e.target.value as any } : null,
-                      )
-                    }
-                    className="accent-indigo-600"
-                  />
-                  <span className="text-xs text-gray-600 dark:text-gray-400 capitalize">
-                    {cat}
-                  </span>
-                </label>
-              ))}
-            </div>
+          <div className="flex items-center justify-end pt-1">
             <button
               type="button"
               onClick={handleSaveNewFuente}
@@ -243,9 +155,7 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
               <FileText className="w-4.5 h-4.5 text-gray-400 dark:text-gray-500" />
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {documentTab === 'oficial'
-                ? 'Sin documentos oficiales'
-                : 'Sin documentos internos'}
+              Sin documentos
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
               Usa «Subir documento» para agregar uno.
@@ -264,7 +174,6 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
             {[
               { key: 'Nombre', val: selectedFuente.name },
               { key: 'Última actualización', val: selectedFuente.lastUpdated },
-              { key: 'Medio de obtención', val: selectedFuente.medio },
             ].map(({ key, val }) => (
               <div key={key}>
                 <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
@@ -275,21 +184,6 @@ const AgentFormSources = ({ agent }: AgentFormSourcesProps) => {
                 </p>
               </div>
             ))}
-            {selectedFuente.link && (
-              <div className="col-span-2">
-                <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
-                  Link
-                </p>
-                <a
-                  href={selectedFuente.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-indigo-600 dark:text-indigo-400 hover:underline truncate block text-sm"
-                >
-                  {selectedFuente.link}
-                </a>
-              </div>
-            )}
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 {
-  "name": "ai-bot-services-python",
+  "name": "sales-agent-ai-lambdas",
   "version": "1.0.0",
   "description": "Python-based conversational AI system for multi-service document management",
   "scripts": {

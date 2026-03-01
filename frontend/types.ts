@@ -98,11 +98,8 @@ export interface ToolUpdate {
 export type Fuente = {
   id: string;
   name: string;
-  category: 'oficial' | 'interno';
   active: boolean;
   lastUpdated: string;
-  medio: string;
-  link: string;
 };
 
 export interface LogEntry {
