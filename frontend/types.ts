@@ -436,3 +436,28 @@ export interface WhatsAppMessagesResponse {
   items: WhatsAppMessage[];
   next_key: Record<string, string> | null;
 }
+
+// ---------------------------------------------------------------------------
+// Products
+// ---------------------------------------------------------------------------
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductCreate {
+  name: string;
+  description?: string | null;
+  slug: string;
+}
+
+export interface ProductUpdate {
+  name?: string | null;
+  description?: string | null;
+  slug?: string | null;
+}

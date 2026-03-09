@@ -154,7 +154,6 @@ const ModalEditAgent: React.FC<ModalEditAgentProps> = ({
               <AgentFormGeneral
                 agent={agentData}
                 handleChange={handleChange}
-                handleIconSelect={handleIconSelect}
                 handlePresetChange={handlePresetChange}
               />
             )}

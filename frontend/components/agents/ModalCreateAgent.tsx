@@ -87,7 +87,6 @@ const ModalCreateAgent: React.FC<ModalCreateAgentProps> = ({
           <AgentFormGeneral
             agent={agentData}
             handleChange={handleChange}
-            handleIconSelect={handleIconSelect}
             handlePresetChange={handlePresetChange}
           />
         </div>

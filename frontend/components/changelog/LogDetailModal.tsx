@@ -22,6 +22,7 @@ const fieldLabels: Record<keyof Agent, string> = {
   tools: 'Herramientas',
   sub_agents: 'Sub-agentes',
   questions: 'Preguntas Frecuentes',
+  ragConfig: 'RAG Config',
 };
 
 const actionBadgeStyles: Record<string, string> = {

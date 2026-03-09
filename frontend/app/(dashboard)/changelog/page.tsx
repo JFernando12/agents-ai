@@ -19,6 +19,7 @@ const fieldLabels: Record<keyof Agent, string> = {
   tools: 'Herramientas',
   sub_agents: 'Sub-agentes',
   questions: 'Preguntas Frecuentes',
+  ragConfig: 'RAG Config',
 };
 
 function ActionBadge({ action }: { action: LogEntry['action'] }) {

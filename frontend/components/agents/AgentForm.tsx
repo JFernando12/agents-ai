@@ -164,7 +164,6 @@ const AgentForm: React.FC<AgentFormProps> = ({
               <AgentFormGeneral
                 agent={agentData}
                 handleChange={handleChange}
-                handleIconSelect={handleIconSelect}
                 handlePresetChange={handlePresetChange}
               />
             </div>

@@ -362,13 +362,7 @@ export function ToolForm({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={
-            isMutating ||
-            !form.display_name ||
-            !form.name ||
-            !form.url ||
-            !form.product_id
-          }
+          disabled={isMutating || !form.display_name || !form.name || !form.url}
           className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isMutating && <Loader2 className="w-4 h-4 animate-spin" />}

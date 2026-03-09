@@ -1,6 +1,6 @@
 'use client';
 
-import { WhatsAppStats } from '@/types';
+import type { WhatsAppStats } from '@/types';
 import { MessageCircle, Wifi, Users, CheckCircle2 } from 'lucide-react';
 
 interface Props {

@@ -69,7 +69,7 @@ export function CatalogPicker({
               El catálogo está vacío.
             </p>
           )}
-          {pickerGrouped.size === 0 && catalogSearch && (
+          {pickerGrouped.length === 0 && catalogSearch && (
             <p className="text-sm text-gray-400 text-center py-6">
               Sin resultados para &quot;{catalogSearch}&quot;.
             </p>
