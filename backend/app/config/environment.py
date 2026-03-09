@@ -42,6 +42,11 @@ class Environment(BaseSettings):
     eval_set_table: str = 'ai-eval-set'
     eval_run_table: str = 'ai-eval-run'
 
+    # WhatsApp tables
+    whatsapp_channel_table: str = 'ai-whatsapp-channel'
+    whatsapp_session_table: str = 'ai-whatsapp-session'
+    whatsapp_message_table: str = 'ai-whatsapp-message'
+
     # RAG defaults (overridden per-agent via RAGConfig)
     rag_vector_bucket: str = 'sales-agent-ai-vectors'
     rag_vector_index: str = 'documents-index'

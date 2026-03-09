@@ -10,6 +10,7 @@ from .account_repository import account_repository
 from .user_repository import user_repository
 from .rag_trace_repository import rag_trace_repository
 from .eval_set_repository import eval_set_repository
+from .whatsapp_repository import whatsapp_repository
 
 __all__ = [
     "agent_repository",
@@ -24,4 +25,5 @@ __all__ = [
     "user_repository",
     "rag_trace_repository",
     "eval_set_repository",
+    "whatsapp_repository",
 ]

@@ -10,6 +10,7 @@ from .unanswered_service import unanswered_service
 from .auth_service import auth_service
 from .account_service import account_service
 from .eval_set_service import eval_set_service
+from .whatsapp_service import whatsapp_service
 
 __all__ = [
     "agent_service",
@@ -24,4 +25,5 @@ __all__ = [
     "auth_service",
     "account_service",
     "eval_set_service",
+    "whatsapp_service",
 ]

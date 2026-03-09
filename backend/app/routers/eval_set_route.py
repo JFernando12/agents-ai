@@ -21,7 +21,7 @@ def list_eval_sets(
 ):
     items = eval_set_service.list_by_agent(agent_id)
     return JSONResponse(
-        content=success_response([i.model_dump() for i in items]),
+        content=success_response([i.model_dump(mode="json") for i in items]),
         status_code=200,
     )
 
@@ -33,7 +33,7 @@ def create_eval_set(
 ):
     eval_set = eval_set_service.create(data)
     return JSONResponse(
-        content=success_response(eval_set.model_dump()),
+        content=success_response(eval_set.model_dump(mode="json")),
         status_code=201,
     )
 
@@ -50,7 +50,7 @@ def get_eval_set(
             content=error_response(message="Eval set not found."),
         )
     return JSONResponse(
-        content=success_response(eval_set.model_dump()),
+        content=success_response(eval_set.model_dump(mode="json")),
         status_code=200,
     )
 
@@ -68,7 +68,7 @@ def update_eval_set(
             content=error_response(message="Eval set not found."),
         )
     return JSONResponse(
-        content=success_response(updated.model_dump()),
+        content=success_response(updated.model_dump(mode="json")),
         status_code=200,
     )
 
@@ -102,7 +102,7 @@ def trigger_run(
     try:
         run = eval_set_service.trigger_run(eval_set_id)
         return JSONResponse(
-            content=success_response(run.model_dump()),
+            content=success_response(run.model_dump(mode="json")),
             status_code=202,
         )
     except ValueError as exc:
@@ -119,7 +119,7 @@ def list_runs(
 ):
     summaries = eval_set_service.list_runs(eval_set_id)
     return JSONResponse(
-        content=success_response([s.model_dump() for s in summaries]),
+        content=success_response([s.model_dump(mode="json") for s in summaries]),
         status_code=200,
     )
 
@@ -136,6 +136,6 @@ def get_run(
             content=error_response(message="Eval run not found."),
         )
     return JSONResponse(
-        content=success_response(run.model_dump()),
+        content=success_response(run.model_dump(mode="json")),
         status_code=200,
     )

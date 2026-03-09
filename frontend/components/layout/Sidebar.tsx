@@ -8,6 +8,7 @@ import { can, getRoleLabel } from '@/lib/permissions';
 import {
   Bot,
   HelpCircle,
+  MessageCircle,
   Wrench,
   ScrollText,
   Sun,
@@ -25,6 +26,7 @@ import { useEffect, useState } from 'react';
 const navItems = [
   { href: '/agents', label: 'Centro de Agentes', icon: Bot },
   { href: '/unanswered', label: 'Escalaciones', icon: HelpCircle },
+  { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
   { href: '/tools', label: 'Herramientas', icon: Wrench },
   { href: '/execution-logs', label: 'Ejecuciones', icon: Activity },
   { href: '/rag-traces', label: 'RAG Analytics', icon: DatabaseZap },

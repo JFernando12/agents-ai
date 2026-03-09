@@ -22,7 +22,7 @@ def register(register_data: AccountCreate):
         )
     return JSONResponse(
         status_code=201,
-        content=success_response(result.model_dump(), "Account created successfully"),
+        content=success_response(result.model_dump(mode="json"), "Account created successfully"),
     )
 
 
@@ -37,5 +37,5 @@ def login(login_data: LoginRequest):
         )
     return JSONResponse(
         status_code=200,
-        content=success_response(result.model_dump(), "Login successful"),
+        content=success_response(result.model_dump(mode="json"), "Login successful"),
     )

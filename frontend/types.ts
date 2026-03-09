@@ -350,3 +350,89 @@ export interface EvalRunSummary {
   created_at: string;
   completed_at?: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// WhatsApp
+// ---------------------------------------------------------------------------
+
+export interface WhatsAppChannel {
+  id: string;
+  account_id: string;
+  agent_id: string;
+  name: string;
+  phone_number_id: string;
+  wa_token: string;
+  app_secret?: string | null;
+  verify_token: string;
+  is_active: boolean;
+  created_at: number;   // epoch ms
+  updated_at: number;   // epoch ms
+}
+
+export interface WhatsAppChannelCreate {
+  agent_id: string;
+  name: string;
+  phone_number_id: string;
+  wa_token: string;
+  app_secret?: string | null;
+  verify_token: string;
+}
+
+export interface WhatsAppChannelUpdate {
+  agent_id?: string;
+  name?: string;
+  phone_number_id?: string;
+  wa_token?: string;
+  app_secret?: string | null;
+  verify_token?: string;
+  is_active?: boolean;
+}
+
+export interface WhatsAppSession {
+  id: string;
+  channel_id: string;
+  from_phone: string;
+  contact_name?: string | null;
+  conversation_id: string;
+  agent_id: string;
+  status: 'active' | 'inactive';
+  last_message_at?: number | null;   // epoch ms
+  last_message_preview?: string | null;
+  unread_count: number;
+}
+
+export type WhatsAppMessageStatus = 'received' | 'processing' | 'sent' | 'failed';
+export type WhatsAppMessageRole = 'user' | 'assistant';
+export type WhatsAppMessageSentBy = 'agent' | 'human' | 'user';
+
+export interface WhatsAppMessage {
+  id: string;
+  session_id: string;
+  channel_id: string;
+  wa_message_id?: string | null;
+  role: WhatsAppMessageRole;
+  content: string;
+  type: 'text' | 'image' | 'audio' | 'document' | 'sticker';
+  media_url?: string | null;
+  status: WhatsAppMessageStatus;
+  sent_by: WhatsAppMessageSentBy;
+  error_detail?: string | null;
+  created_at: number;   // epoch ms
+}
+
+export interface WhatsAppStats {
+  total_channels: number;
+  active_channels: number;
+  total_sessions: number;
+  active_sessions: number;
+}
+
+export interface WhatsAppSessionsResponse {
+  items: WhatsAppSession[];
+  next_key: Record<string, string> | null;
+}
+
+export interface WhatsAppMessagesResponse {
+  items: WhatsAppMessage[];
+  next_key: Record<string, string> | null;
+}

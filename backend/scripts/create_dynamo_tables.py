@@ -51,6 +51,10 @@ TABLE_NAMES = {
     "rag_trace":           os.getenv("RAG_TRACE_TABLE",          "ai-rag-trace"),
     "eval_set":            os.getenv("EVAL_SET_TABLE",            "ai-eval-set"),
     "eval_run":            os.getenv("EVAL_RUN_TABLE",            "ai-eval-run"),
+    # WhatsApp
+    "whatsapp_channel":    os.getenv("WHATSAPP_CHANNEL_TABLE",  "ai-whatsapp-channel"),
+    "whatsapp_session":    os.getenv("WHATSAPP_SESSION_TABLE",  "ai-whatsapp-session"),
+    "whatsapp_message":    os.getenv("WHATSAPP_MESSAGE_TABLE",  "ai-whatsapp-message"),
 }
 
 # Default billing / throughput for every table
@@ -512,6 +516,107 @@ TABLES = [
                     {"AttributeName": "eval_set_id", "KeyType": "HASH"},
                 ],
                 "Projection": {"ProjectionType": "ALL"},
+            },
+        ],
+        "BillingMode": BILLING_MODE,
+    },
+
+    # ------------------------------------------------------------------
+    # ai-whatsapp-channel  (WhatsApp channel configurations)
+    # PK: id (S)
+    # GSI account_id-index  →  account_id (S)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["whatsapp_channel"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id",         "AttributeType": "S"},
+            {"AttributeName": "account_id", "AttributeType": "S"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "account_id-index",
+                "KeySchema": [
+                    {"AttributeName": "account_id", "KeyType": "HASH"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+        ],
+        "BillingMode": BILLING_MODE,
+    },
+
+    # ------------------------------------------------------------------
+    # ai-whatsapp-session  (one session per contact per channel)
+    # PK: id (S)
+    # GSI channel_id-from_phone-index  →  channel_id (S) + from_phone (S)
+    # GSI channel_id-last_message_at-index  →  channel_id (S) + last_message_at (N)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["whatsapp_session"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id",              "AttributeType": "S"},
+            {"AttributeName": "channel_id",      "AttributeType": "S"},
+            {"AttributeName": "from_phone",      "AttributeType": "S"},
+            {"AttributeName": "last_message_at", "AttributeType": "N"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "channel_id-from_phone-index",
+                "KeySchema": [
+                    {"AttributeName": "channel_id", "KeyType": "HASH"},
+                    {"AttributeName": "from_phone",  "KeyType": "RANGE"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+            {
+                "IndexName": "channel_id-last_message_at-index",
+                "KeySchema": [
+                    {"AttributeName": "channel_id",      "KeyType": "HASH"},
+                    {"AttributeName": "last_message_at",  "KeyType": "RANGE"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+        ],
+        "BillingMode": BILLING_MODE,
+    },
+
+    # ------------------------------------------------------------------
+    # ai-whatsapp-message  (individual messages per session)
+    # PK: id (S)
+    # GSI session_id-created_at-index  →  session_id (S) + created_at (N)
+    # GSI wa_message_id-index          →  wa_message_id (S)  (dedup)
+    # ------------------------------------------------------------------
+    {
+        "TableName": TABLE_NAMES["whatsapp_message"],
+        "KeySchema": [
+            {"AttributeName": "id", "KeyType": "HASH"},
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "id",            "AttributeType": "S"},
+            {"AttributeName": "session_id",    "AttributeType": "S"},
+            {"AttributeName": "created_at",    "AttributeType": "N"},
+            {"AttributeName": "wa_message_id", "AttributeType": "S"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "session_id-created_at-index",
+                "KeySchema": [
+                    {"AttributeName": "session_id", "KeyType": "HASH"},
+                    {"AttributeName": "created_at",  "KeyType": "RANGE"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+            {
+                "IndexName": "wa_message_id-index",
+                "KeySchema": [
+                    {"AttributeName": "wa_message_id", "KeyType": "HASH"},
+                ],
+                "Projection": {"ProjectionType": "KEYS_ONLY"},
             },
         ],
         "BillingMode": BILLING_MODE,

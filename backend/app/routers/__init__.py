@@ -11,6 +11,7 @@ from .auth_route import auth_router
 from .account_route import account_router
 from .rag_trace_route import rag_trace_router
 from .eval_set_route import eval_set_router
+from .whatsapp_route import whatsapp_router
 
 __all__ = [
     "agent_router",
@@ -26,4 +27,5 @@ __all__ = [
     "account_router",
     "rag_trace_router",
     "eval_set_router",
+    "whatsapp_router",
 ]
