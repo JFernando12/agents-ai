@@ -64,8 +64,36 @@ class WhatsAppMessage(BaseModel):
     created_at: int                         # epoch ms
 
 
+class ButtonItem(BaseModel):
+    id: str
+    title: str
+
+
+class ListRow(BaseModel):
+    id: str
+    title: str
+    description: str | None = None
+
+
+class ListSection(BaseModel):
+    title: str
+    rows: list[ListRow]
+
+
 class ManualSendRequest(BaseModel):
-    message: str
+    type: str = "text"  # text | image | document | buttons | list
+    # text
+    message: str = ""
+    # image / document
+    media_url: str | None = None
+    filename: str | None = None
+    caption: str | None = None
+    # buttons
+    buttons: list[ButtonItem] | None = None
+    footer: str | None = None
+    # list
+    button_label: str | None = None
+    sections: list[ListSection] | None = None
 
 
 class WhatsAppStats(BaseModel):

@@ -41,6 +41,7 @@ class AgentRepository(BaseDynamoDBRepository):
             'top_k': agent_data.top_k,
             'icon': agent_data.icon,
             'is_public': 1 if agent_data.is_public else 0,
+            'whatsapp_enabled': 1 if agent_data.whatsapp_enabled else 0,
             'tools': [t.model_dump() for t in agent_data.tools] if agent_data.tools else [],
             'sub_agents': [t.model_dump() for t in agent_data.sub_agents] if agent_data.sub_agents else [],
             'questions': [q.model_dump() for q in agent_data.questions] if agent_data.questions else None,
@@ -75,6 +76,7 @@ class AgentRepository(BaseDynamoDBRepository):
                 max_tokens=item['max_tokens'],
                 top_k=item['top_k'],
                 is_public=bool(item.get('is_public', 0)),
+                whatsapp_enabled=bool(item.get('whatsapp_enabled', 0)),
                 tools=item.get('tools', []),
                 sub_agents=item.get('sub_agents', []),
                 questions=item.get('questions', []),
@@ -134,6 +136,7 @@ class AgentRepository(BaseDynamoDBRepository):
                 max_tokens=item['max_tokens'],
                 top_k=item['top_k'],
                 is_public=bool(item.get('is_public', 0)),
+                whatsapp_enabled=bool(item.get('whatsapp_enabled', 0)),
                 tools=item.get('tools', []),
                 sub_agents=item.get('sub_agents', []),
                 questions=item.get('questions', []),
@@ -197,6 +200,10 @@ class AgentRepository(BaseDynamoDBRepository):
         if agent_data.is_public is not None:
             update_expression_parts.append("is_public = :is_public")
             expression_attribute_values[':is_public'] = 1 if agent_data.is_public else 0
+
+        if agent_data.whatsapp_enabled is not None:
+            update_expression_parts.append("whatsapp_enabled = :whatsapp_enabled")
+            expression_attribute_values[':whatsapp_enabled'] = 1 if agent_data.whatsapp_enabled else 0
 
         if agent_data.tools is not None:
             update_expression_parts.append("tools = :tools")

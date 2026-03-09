@@ -89,15 +89,20 @@ async def receive_webhook(
 
                     if msg_type == "text":
                         message_text = msg.get("text", {}).get("body", "")
-                    else:
-                        # Non-text types: acknowledge but don't process (Phase 4)
-                        print(f"[WhatsApp] Unsupported message type: {msg_type}")
-                        continue
-
-                    if not message_text or not from_phone:
-                        continue
-
-                    background_tasks.add_task(
+                        elif msg_type == "interactive":
+                            interactive = msg.get("interactive", {})
+                            interactive_type = interactive.get("type", "")
+                            if interactive_type == "button_reply":
+                                btn = interactive.get("button_reply", {})
+                                message_text = btn.get("title", btn.get("id", ""))
+                            elif interactive_type == "list_reply":
+                                row = interactive.get("list_reply", {})
+                                message_text = row.get("title", row.get("id", ""))
+                            else:
+                                print(f"[WhatsApp] Unsupported interactive subtype: {interactive_type}")
+                                continue
+                        else:
+                            # Non-text types: acknowledge but don't process
                         whatsapp_service.process_incoming_message,
                         channel_id=channel_id,
                         from_phone=from_phone,
@@ -271,7 +276,7 @@ def send_manual_message(
     channel = whatsapp_service.get_channel(session.channel_id)
     if not channel or channel.account_id != current_user.account_id:
         return JSONResponse(status_code=403, content=error_response("Access denied"))
-    whatsapp_service.send_manual_message(session_id, body.message, current_user.email)
+    whatsapp_service.send_manual_message(session_id, body, current_user.email)
     return JSONResponse(
         status_code=200,
         content=success_response(None, "Message sent successfully"),

@@ -46,6 +46,7 @@ class Agent(BaseModel):
     max_tokens: int | None = None
     top_k: int | None = None
     is_public: bool | None = None
+    whatsapp_enabled: bool = False
     tools: list[AgentTool] | None = None
     sub_agents: list[AgentTool] | None = None
     questions: list[FrequentQuestion] | None = None
@@ -65,6 +66,7 @@ class AgentCreate(BaseModel):
     max_tokens: int
     top_k: int
     is_public: bool
+    whatsapp_enabled: bool = False
     tools: list[AgentTool]
     sub_agents: list[AgentTool] | None = None
     questions: list[FrequentQuestion] | None = None
@@ -82,6 +84,7 @@ class AgentUpdate(BaseModel):
     max_tokens: int | None = None
     top_k: int | None = None
     is_public: bool | None = None
+    whatsapp_enabled: bool | None = None
     tools: list[AgentTool] | None = None
     sub_agents: list[AgentTool] | None = None
     questions: list[FrequentQuestion] | None = None
