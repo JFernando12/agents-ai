@@ -164,7 +164,7 @@ class WhatsAppService:
         )
 
         try:
-            history_msgs, _ = conversation_repository.get_messages(
+            history_msgs = conversation_repository.get_messages(
                 conversation_id=session.conversation_id,
                 limit=30,
             )

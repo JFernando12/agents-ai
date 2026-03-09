@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 
-GRAPH_API_URL = "https://graph.facebook.com/v21.0"
+GRAPH_API_URL = "https://graph.facebook.com/v23.0"
 
 
 class WhatsAppClient:
