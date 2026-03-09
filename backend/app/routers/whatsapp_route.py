@@ -89,20 +89,27 @@ async def receive_webhook(
 
                     if msg_type == "text":
                         message_text = msg.get("text", {}).get("body", "")
-                        elif msg_type == "interactive":
-                            interactive = msg.get("interactive", {})
-                            interactive_type = interactive.get("type", "")
-                            if interactive_type == "button_reply":
-                                btn = interactive.get("button_reply", {})
-                                message_text = btn.get("title", btn.get("id", ""))
-                            elif interactive_type == "list_reply":
-                                row = interactive.get("list_reply", {})
-                                message_text = row.get("title", row.get("id", ""))
-                            else:
-                                print(f"[WhatsApp] Unsupported interactive subtype: {interactive_type}")
-                                continue
+                    elif msg_type == "interactive":
+                        interactive = msg.get("interactive", {})
+                        interactive_type = interactive.get("type", "")
+                        if interactive_type == "button_reply":
+                            btn = interactive.get("button_reply", {})
+                            message_text = btn.get("title", btn.get("id", ""))
+                        elif interactive_type == "list_reply":
+                            row = interactive.get("list_reply", {})
+                            message_text = row.get("title", row.get("id", ""))
                         else:
-                            # Non-text types: acknowledge but don't process
+                            print(f"[WhatsApp] Unsupported interactive subtype: {interactive_type}")
+                            continue
+                    else:
+                        # Non-text types: acknowledge but don't process
+                        print(f"[WhatsApp] Unsupported message type: {msg_type}")
+                        continue
+
+                    if not message_text or not from_phone:
+                        continue
+
+                    background_tasks.add_task(
                         whatsapp_service.process_incoming_message,
                         channel_id=channel_id,
                         from_phone=from_phone,
