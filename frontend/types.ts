@@ -62,6 +62,7 @@ export interface Agent {
   topK: number;
   maxTokens: number;
   isPublic: boolean;
+  whatsappEnabled?: boolean;
   tools?: AgentTool[];
   sub_agents?: AgentTool[];
   questions?: FrequestQuestion[];

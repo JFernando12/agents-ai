@@ -2,7 +2,7 @@ import { Agent } from '@/types';
 import Tooltip from '../ui/Tooltip';
 import { apiAgents } from '@/lib/api/agents';
 import { useState } from 'react';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, MessageCircle, Sparkles } from 'lucide-react';
 import { useModels } from '@/lib/hooks/useAgents';
 
 const configPresets = [
@@ -292,6 +292,51 @@ const AgentFormGeneral = ({
               Privado — solo visible en administración
             </option>
           </select>
+        </div>
+      </section>
+
+      {/* WhatsApp */}
+      <section className="border-t border-gray-100 dark:border-white/[0.06] pt-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <MessageCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-1">
+                Funciones de WhatsApp
+                <Tooltip text="Habilita herramientas exclusivas para WhatsApp: envío de imágenes, documentos, botones interactivos y listas. Solo se activan cuando el agente responde a través de un canal de WhatsApp." />
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                El agente podrá responder con imágenes, documentos, botones y
+                listas interactivas.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={agent.whatsappEnabled ?? false}
+            onClick={() =>
+              handleChange({
+                target: {
+                  name: 'whatsappEnabled',
+                  value: String(!(agent.whatsappEnabled ?? false)),
+                },
+              } as React.ChangeEvent<HTMLInputElement>)
+            }
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/40 ${
+              agent.whatsappEnabled
+                ? 'bg-green-500'
+                : 'bg-gray-200 dark:bg-white/[0.1]'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                agent.whatsappEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
       </section>
     </div>

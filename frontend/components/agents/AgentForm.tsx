@@ -32,6 +32,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
     topK: 50,
     maxTokens: 2000,
     isPublic: true,
+    whatsappEnabled: false,
     tools: [],
     sub_agents: [],
     questions: [],
@@ -55,6 +56,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
         topK: 50,
         maxTokens: 2000,
         isPublic: true,
+        whatsappEnabled: false,
         tools: [],
         sub_agents: [],
         questions: [],
@@ -69,7 +71,7 @@ const AgentForm: React.FC<AgentFormProps> = ({
   ) => {
     const { name, value } = e.target;
     const isNumberField = ['temperature', 'topK', 'maxTokens'].includes(name);
-    const isBooleanField = ['isPublic'].includes(name);
+    const isBooleanField = ['isPublic', 'whatsappEnabled'].includes(name);
 
     setAgentData((prev) => ({
       ...prev,

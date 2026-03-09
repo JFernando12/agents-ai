@@ -16,6 +16,7 @@ const fieldLabels: Record<keyof Agent, string> = {
   topK: 'Top K',
   maxTokens: 'Max Tokens',
   isPublic: 'Visibilidad',
+  whatsappEnabled: 'Funciones de WhatsApp',
   tools: 'Herramientas',
   sub_agents: 'Sub-agentes',
   questions: 'Preguntas Frecuentes',
