@@ -288,3 +288,26 @@ def send_manual_message(
         status_code=200,
         content=success_response(None, "Message sent successfully"),
     )
+
+
+@whatsapp_router.delete("/sessions/{session_id}")
+def delete_session(
+    session_id: str,
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin", "editor")),
+):
+    session = whatsapp_service.get_session(session_id)
+    if not session:
+        return JSONResponse(status_code=404, content=error_response("Session not found"))
+    channel = whatsapp_service.get_channel(session.channel_id)
+    if not channel or channel.account_id != current_user.account_id:
+        return JSONResponse(status_code=403, content=error_response("Access denied"))
+    success = whatsapp_service.delete_session(session_id)
+    if not success:
+        return JSONResponse(status_code=404, content=error_response("Session not found"))
+    return JSONResponse(
+        status_code=200,
+        content=success_response(
+            {"channel_id": session.channel_id},
+            "Session deleted successfully",
+        ),
+    )

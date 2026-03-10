@@ -171,6 +171,38 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             return None
         return self._map_session(response['Item'])
 
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a session and all its messages. Returns True if the session existed."""
+        # 1. Collect all message IDs for this session (paginated)
+        message_ids = []
+        kwargs: dict = {
+            'IndexName': 'session_id-created_at-index',
+            'KeyConditionExpression': Key('session_id').eq(session_id),
+            'ProjectionExpression': 'id',
+        }
+        while True:
+            response = self.message_table.query(**kwargs)
+            message_ids.extend(item['id'] for item in response.get('Items', []))
+            if 'LastEvaluatedKey' not in response:
+                break
+            kwargs['ExclusiveStartKey'] = response['LastEvaluatedKey']
+
+        # 2. Batch-delete messages in chunks of 25 (DynamoDB limit)
+        for i in range(0, len(message_ids), 25):
+            with self.message_table.batch_writer() as batch:
+                for msg_id in message_ids[i:i + 25]:
+                    batch.delete_item(Key={'id': msg_id})
+
+        # 3. Delete the session itself
+        try:
+            self.session_table.delete_item(
+                Key={'id': session_id},
+                ConditionExpression='attribute_exists(id)',
+            )
+            return True
+        except self.dynamodb.meta.client.exceptions.ConditionalCheckFailedException:
+            return False
+
     # ── Messages ─────────────────────────────────────────────────────────────
 
     def save_message(self, msg: dict) -> str:

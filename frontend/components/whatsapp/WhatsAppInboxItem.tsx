@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { WhatsAppSession } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { User } from 'lucide-react';
+import { User, Trash2 } from 'lucide-react';
+import { useDeleteWhatsAppSession } from '@/lib/hooks/useWhatsApp';
 
 interface Props {
   session: WhatsAppSession;
@@ -12,15 +14,41 @@ interface Props {
   isActive: boolean;
 }
 
-export default function WhatsAppInboxItem({ session, channelId, isActive }: Props) {
+export default function WhatsAppInboxItem({
+  session,
+  channelId,
+  isActive,
+}: Props) {
+  const router = useRouter();
+  const deleteSession = useDeleteWhatsAppSession();
+
   const timeLabel = session.last_message_at
-    ? formatDistanceToNow(new Date(session.last_message_at), { addSuffix: true, locale: es })
+    ? formatDistanceToNow(new Date(session.last_message_at), {
+        addSuffix: true,
+        locale: es,
+      })
     : '';
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (
+      !confirm(
+        `¿Eliminar la conversación con ${session.contact_name || session.from_phone}? Esta acción no se puede deshacer.`,
+      )
+    )
+      return;
+    deleteSession.mutate(session.id, {
+      onSuccess: () => {
+        if (isActive) router.push(`/whatsapp/${channelId}`);
+      },
+    });
+  };
 
   return (
     <Link
       href={`/whatsapp/${channelId}/${session.id}`}
-      className={`flex items-start gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors border-b border-gray-100 dark:border-white/[0.05] last:border-b-0 ${
+      className={`group flex items-start gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors border-b border-gray-100 dark:border-white/[0.05] last:border-b-0 ${
         isActive ? 'bg-indigo-50/60 dark:bg-indigo-500/[0.06]' : ''
       }`}
     >
@@ -35,7 +63,17 @@ export default function WhatsAppInboxItem({ session, channelId, isActive }: Prop
           <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
             {session.contact_name || session.from_phone}
           </span>
-          <span className="text-[11px] text-gray-400 dark:text-gray-500 flex-shrink-0">{timeLabel}</span>
+          <span className="text-[11px] text-gray-400 dark:text-gray-500 flex-shrink-0 group-hover:hidden">
+            {timeLabel}
+          </span>
+          <button
+            onClick={handleDelete}
+            disabled={deleteSession.isPending}
+            className="hidden group-hover:flex flex-shrink-0 p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+            title="Eliminar conversación"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
           {session.from_phone}

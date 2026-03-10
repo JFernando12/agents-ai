@@ -106,3 +106,16 @@ export const useSendWhatsAppMessage = (sessionId: string) => {
     },
   });
 };
+
+// ── Delete session ────────────────────────────────────────────────────────────
+
+export const useDeleteWhatsAppSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => whatsappApi.deleteSession(sessionId),
+    onSuccess: (_data, _sessionId) => {
+      qc.invalidateQueries({ queryKey: ['whatsapp-sessions'] });
+      qc.invalidateQueries({ queryKey: ['whatsapp-stats'] });
+    },
+  });
+};

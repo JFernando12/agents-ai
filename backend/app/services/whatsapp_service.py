@@ -282,8 +282,9 @@ class WhatsAppService:
                             'status': 'sent' if success else 'failed',
                             'sent_by': 'agent',
                         })
-            else:
-                # No rich messages: send the plain text response
+
+            # Always send the final text answer (whether or not rich messages were queued)
+            if answer:
                 success = whatsapp_client.send_text(
                     wa_token=channel.wa_token,
                     phone_number_id=channel.phone_number_id,
@@ -313,6 +314,9 @@ class WhatsAppService:
 
     def get_session(self, session_id: str) -> Optional[WhatsAppSession]:
         return whatsapp_repository.get_session(session_id)
+
+    def delete_session(self, session_id: str) -> bool:
+        return whatsapp_repository.delete_session(session_id)
 
     def get_messages(
         self,

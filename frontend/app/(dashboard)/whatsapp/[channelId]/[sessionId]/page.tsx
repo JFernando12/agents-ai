@@ -2,10 +2,12 @@
 
 import { use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, User, Trash2 } from 'lucide-react';
 import {
   useWhatsAppMessages,
   useSendWhatsAppMessage,
+  useDeleteWhatsAppSession,
 } from '@/lib/hooks/useWhatsApp';
 import { useQuery } from '@tanstack/react-query';
 import { whatsappApi } from '@/lib/api/whatsapp';
@@ -18,15 +20,34 @@ interface Props {
 
 export default function WhatsAppConversationPage({ params }: Props) {
   const { channelId, sessionId } = use(params);
+  const router = useRouter();
+  const deleteSession = useDeleteWhatsAppSession();
 
   const { data: session } = useQuery({
     queryKey: ['whatsapp-session', sessionId],
-    queryFn: () => whatsappApi.getSessions(channelId).then((r) => r.items.find((s) => s.id === sessionId)),
+    queryFn: () =>
+      whatsappApi
+        .getSessions(channelId)
+        .then((r) => r.items.find((s) => s.id === sessionId)),
     enabled: !!sessionId,
   });
 
   const { data: messages = [], isLoading } = useWhatsAppMessages(sessionId);
   const sendMessage = useSendWhatsAppMessage(sessionId);
+
+  const handleDelete = () => {
+    const name =
+      session?.contact_name || session?.from_phone || 'esta conversación';
+    if (
+      !confirm(
+        `¿Eliminar la conversación con ${name}? Esta acción no se puede deshacer.`,
+      )
+    )
+      return;
+    deleteSession.mutate(sessionId, {
+      onSuccess: () => router.push(`/whatsapp/${channelId}`),
+    });
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -49,7 +70,9 @@ export default function WhatsAppConversationPage({ params }: Props) {
               {session?.contact_name || session?.from_phone || '...'}
             </p>
             {session?.contact_name && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">{session?.from_phone}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {session?.from_phone}
+              </p>
             )}
           </div>
 
@@ -60,6 +83,16 @@ export default function WhatsAppConversationPage({ params }: Props) {
               Agente respondiendo...
             </span>
           )}
+
+          {/* Delete button */}
+          <button
+            onClick={handleDelete}
+            disabled={deleteSession.isPending}
+            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-colors"
+            title="Eliminar conversación"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Messages */}

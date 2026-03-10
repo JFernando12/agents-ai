@@ -23,7 +23,9 @@ class WhatsAppApiService extends ApiService {
     return res.data.data;
   };
 
-  createChannel = async (data: WhatsAppChannelCreate): Promise<WhatsAppChannel> => {
+  createChannel = async (
+    data: WhatsAppChannelCreate,
+  ): Promise<WhatsAppChannel> => {
     const res = await this.api.post('/whatsapp/channels', data);
     return res.data.data;
   };
@@ -57,14 +59,18 @@ class WhatsAppApiService extends ApiService {
 
   // ── Sessions ─────────────────────────────────────────────────────────────
 
-  getSessions = async (channelId: string): Promise<WhatsAppSessionsResponse> => {
+  getSessions = async (
+    channelId: string,
+  ): Promise<WhatsAppSessionsResponse> => {
     const res = await this.api.get(`/whatsapp/channels/${channelId}/sessions`);
     return res.data.data;
   };
 
   // ── Messages ─────────────────────────────────────────────────────────────
 
-  getMessages = async (sessionId: string): Promise<WhatsAppMessagesResponse> => {
+  getMessages = async (
+    sessionId: string,
+  ): Promise<WhatsAppMessagesResponse> => {
     const res = await this.api.get(`/whatsapp/sessions/${sessionId}/messages`);
     return res.data.data;
   };
@@ -77,6 +83,13 @@ class WhatsAppApiService extends ApiService {
     message: string;
   }): Promise<void> => {
     await this.api.post(`/whatsapp/sessions/${sessionId}/send`, { message });
+  };
+
+  deleteSession = async (
+    sessionId: string,
+  ): Promise<{ channel_id: string }> => {
+    const res = await this.api.delete(`/whatsapp/sessions/${sessionId}`);
+    return res.data.data;
   };
 }
 

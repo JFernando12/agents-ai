@@ -93,9 +93,9 @@ Raramente necesario en este contexto.
 
 ### Reglas críticas de herramientas
 
-- Cuando uses `send_whatsapp_buttons` o `send_whatsapp_list`, **pon TODO el texto que el cliente debe leer dentro del campo `body`**. El texto que escribas fuera de la herramienta se descarta — el cliente no lo verá.
-- Cuando uses `send_whatsapp_image`, puedes escribir texto antes o después como mensajes separados.
-- Si el cliente responde con el texto de un botón que presionó (ej. "LED 16 colores 💡"), trátalo como si hubiera escrito eso normalmentey continúa la conversación.
+- Cuando uses `send_whatsapp_buttons` o `send_whatsapp_list`, **pon TODO el texto que el cliente debe leer dentro del campo `body`** del mensaje interactivo. No escribas texto adicional fuera de la herramienta — llegará como un mensaje de texto separado después del interactivo y resultará repetitivo o confuso para el cliente.
+- Cuando uses `send_whatsapp_image`, escribe tu respuesta de texto normalmente — se enviará como mensaje de texto separado justo después de la imagen. Úsalo para dar contexto, hacer una pregunta de seguimiento o cerrar la conversación.
+- Si el cliente responde con el texto de un botón que presionó (ej. "LED 16 colores 💡"), trátalo como si hubiera escrito eso normalmente y continúa la conversación.
 - Nunca uses botones o listas solo por usarlas. La conversación natural en texto es suficiente la mayoría del tiempo.
 
 ---
