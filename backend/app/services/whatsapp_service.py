@@ -203,12 +203,29 @@ class WhatsAppService:
             message_queue = channel_context.get('message_queue', [])
 
             if message_queue:
-                # Send each queued rich message via WhatsApp
+                # The agent controls order via explicit tool calls.
+                # Process the queue in insertion order — the agent decided the sequence.
                 for queued_msg in message_queue:
                     msg_type = queued_msg['type']
                     payload = queued_msg['payload']
                     success = False
-                    if msg_type == 'image':
+                    if msg_type == 'text':
+                        success = whatsapp_client.send_text(
+                            wa_token=channel.wa_token,
+                            phone_number_id=channel.phone_number_id,
+                            to=from_phone,
+                            message=payload['message'],
+                        )
+                        whatsapp_repository.save_message({
+                            'session_id': session.id,
+                            'channel_id': channel_id,
+                            'role': 'assistant',
+                            'content': payload['message'],
+                            'type': 'text',
+                            'status': 'sent' if success else 'failed',
+                            'sent_by': 'agent',
+                        })
+                    elif msg_type == 'image':
                         success = whatsapp_client.send_image(
                             wa_token=channel.wa_token,
                             phone_number_id=channel.phone_number_id,
@@ -283,18 +300,33 @@ class WhatsAppService:
                             'sent_by': 'agent',
                         })
 
-            # Always send the final text answer (whether or not rich messages were queued)
-            if answer:
-                success = whatsapp_client.send_text(
-                    wa_token=channel.wa_token,
-                    phone_number_id=channel.phone_number_id,
-                    to=from_phone,
-                    message=answer,
-                )
-                if not success:
-                    whatsapp_repository.update_message_status(
-                        assistant_msg_id, 'failed', 'WhatsApp API call failed'
+                # Fallback: if the agent never called send_whatsapp_text, send
+                # the final answer as plain text so the response is never lost.
+                queue_has_text = any(m['type'] == 'text' for m in message_queue)
+                if not queue_has_text and answer:
+                    success = whatsapp_client.send_text(
+                        wa_token=channel.wa_token,
+                        phone_number_id=channel.phone_number_id,
+                        to=from_phone,
+                        message=answer,
                     )
+                    if not success:
+                        whatsapp_repository.update_message_status(
+                            assistant_msg_id, 'failed', 'WhatsApp API call failed'
+                        )
+            else:
+                # No rich messages: send the plain text response
+                if answer:
+                    success = whatsapp_client.send_text(
+                        wa_token=channel.wa_token,
+                        phone_number_id=channel.phone_number_id,
+                        to=from_phone,
+                        message=answer,
+                    )
+                    if not success:
+                        whatsapp_repository.update_message_status(
+                            assistant_msg_id, 'failed', 'WhatsApp API call failed'
+                        )
 
         except Exception as e:
             print(f"[WhatsApp] process_incoming_message error: {e}")

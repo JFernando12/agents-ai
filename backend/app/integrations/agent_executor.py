@@ -16,6 +16,7 @@ from app.repositories import agent_repository, tool_repository
 
 # ── WhatsApp-specific tool names ──────────────────────────────────────────────
 WA_TOOL_NAMES = {
+    "send_whatsapp_text",
     "send_whatsapp_image",
     "send_whatsapp_document",
     "send_whatsapp_buttons",
@@ -23,6 +24,29 @@ WA_TOOL_NAMES = {
 }
 
 WA_TOOL_SPECS = [
+    {
+        "toolSpec": {
+            "name": "send_whatsapp_text",
+            "description": (
+                "Envía un mensaje de texto al usuario en WhatsApp. "
+                "Úsala cuando necesites enviar texto en un momento específico del flujo, "
+                "por ejemplo antes o después de una imagen. "
+                "Permite controlar el orden de los mensajes."
+            ),
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "message": {
+                            "type": "string",
+                            "description": "Texto del mensaje a enviar",
+                        },
+                    },
+                    "required": ["message"],
+                }
+            },
+        }
+    },
     {
         "toolSpec": {
             "name": "send_whatsapp_image",
