@@ -184,9 +184,17 @@ class WhatsAppService:
             )
             answer = agent_response.response
 
+            # Strip markdown code fences the LLM sometimes wraps around JSON
+            # e.g. ```json\n{...}\n``` → {...}
+            stripped = answer.strip()
+            if stripped.startswith("```"):
+                stripped = stripped.split("\n", 1)[-1]  # drop opening fence line
+                stripped = stripped.rsplit("```", 1)[0]  # drop closing fence
+                stripped = stripped.strip()
+
             # Parse canonical JSON first so we can extract readable text for history
             try:
-                wa_payload = json.loads(answer)
+                wa_payload = json.loads(stripped)
             except (json.JSONDecodeError, TypeError):
                 wa_payload = {'type': 'text', 'body': answer}
 
