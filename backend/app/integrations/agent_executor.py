@@ -379,17 +379,28 @@ class AgentExecutor:
                 "type": tool_name.replace("send_whatsapp_", ""),
                 "payload": tool_input,
             })
+            # For interactive messages (buttons/list) the body is self-contained:
+            # instruct the model NOT to emit additional user-facing text.
+            # For media/text tools, a neutral ack is enough.
+            interactive_tools = {"send_whatsapp_buttons", "send_whatsapp_list"}
+            if tool_name in interactive_tools:
+                ack = (
+                    "Encolado. El campo 'body' ya contiene todo el texto para el usuario. "
+                    "NO generes texto adicional para el usuario en esta respuesta."
+                )
+            else:
+                ack = "Encolado."
             result = ToolResult(
                 tool_name=tool_name,
                 success=True,
-                result="Mensaje preparado para envío.",
+                result=ack,
                 error=None,
             )
             trace = ToolCallTrace(
                 tool_name=tool_name,
                 tool_use_id=tool_use_id,
                 input=tool_input,
-                output="Mensaje preparado para envío.",
+                output=ack,
                 success=True,
                 error=None,
                 iteration=iteration,
@@ -397,7 +408,7 @@ class AgentExecutor:
             return {
                 "toolResult": {
                     "toolUseId": tool_use_id,
-                    "content": [{"text": "Mensaje preparado para envío."}],
+                    "content": [{"text": ack}],
                 }
             }, trace
         # ─────────────────────────────────────────────────────────────────────

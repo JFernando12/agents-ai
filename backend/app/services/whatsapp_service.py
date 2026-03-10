@@ -300,10 +300,14 @@ class WhatsAppService:
                             'sent_by': 'agent',
                         })
 
-                # Fallback: if the agent never called send_whatsapp_text, send
-                # the final answer as plain text so the response is never lost.
+                # Fallback: only send plain text if the agent didn't already
+                # handle it explicitly AND the queue has no self-contained
+                # interactive message (buttons/list already carry all the text
+                # the user needs; sending an extra text would be the echo of
+                # the internal tool-result acknowledgment).
                 queue_has_text = any(m['type'] == 'text' for m in message_queue)
-                if not queue_has_text and answer:
+                queue_has_interactive = any(m['type'] in ('buttons', 'list') for m in message_queue)
+                if not queue_has_text and not queue_has_interactive and answer:
                     success = whatsapp_client.send_text(
                         wa_token=channel.wa_token,
                         phone_number_id=channel.phone_number_id,
