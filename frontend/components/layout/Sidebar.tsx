@@ -9,6 +9,7 @@ import {
   Bot,
   HelpCircle,
   MessageCircle,
+  MessagesSquare,
   Wrench,
   ScrollText,
   Sun,
@@ -25,6 +26,7 @@ import { useEffect, useState } from 'react';
 
 const navItems = [
   { href: '/agents', label: 'Centro de Agentes', icon: Bot },
+  { href: '/conversations', label: 'Conversaciones', icon: MessagesSquare },
   { href: '/unanswered', label: 'Escalaciones', icon: HelpCircle },
   { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
   { href: '/tools', label: 'Herramientas', icon: Wrench },

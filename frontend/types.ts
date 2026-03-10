@@ -299,6 +299,26 @@ export interface EvalSet {
   updated_at: string;
 }
 
+// ── Conversations ─────────────────────────────────────────────────────────────
+
+export interface Conversation {
+  id: string;
+  title: string | null;
+  user: string;
+  agent_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationMessage {
+  role: string;
+  content: string;
+  timestamp: string;
+  metadata?: Record<string, unknown> | null;
+  context_data?: Record<string, unknown> | null;
+  attachments?: string[] | null;
+}
+
 export interface EvalSetCreate {
   agent_id: string;
   name: string;

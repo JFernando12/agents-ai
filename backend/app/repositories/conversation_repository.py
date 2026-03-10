@@ -142,6 +142,30 @@ class ConversationRepository(BaseDynamoDBRepository):
             conversations.append(conversation)
         return conversations
     
+    def get_all(self, agent_id: str | None = None) -> list[Conversation]:
+        if agent_id:
+            response = self.conversation_table.scan(
+                FilterExpression='agent_id = :agent_id',
+                ExpressionAttributeValues={':agent_id': agent_id}
+            )
+        else:
+            response = self.conversation_table.scan()
+
+        conversations = []
+        for item in response.get('Items', []):
+            conversation = Conversation(
+                id=item['id'],
+                title=item.get('title', ''),
+                user=item['user'],
+                agent_id=item['agent_id'],
+                created_at=item['created_at'],
+                updated_at=item['updated_at']
+            )
+            conversations.append(conversation)
+
+        conversations.sort(key=lambda c: c.updated_at, reverse=True)
+        return conversations
+
     def delete(self, conversation_id: str) -> bool:
         conversation = self.get_by_id(conversation_id)
         if not conversation:

@@ -98,22 +98,21 @@ class WhatsAppService:
             print(f"[WhatsApp] Channel {channel_id} not found or inactive.")
             return
 
-        # 3. Get or create Conversation
-        title = ' '.join(message_text.split()[:5]) or from_phone
-        conversation_id = conversation_service.create(
-            ConversationCreate(
-                user=from_phone,
-                agent_id=channel.agent_id,
-                title=title,
-            )
-        )
-
-        # Try to find existing session (might have an existing conversation_id)
+        # 3. Get or create Conversation + Session
+        # Check for existing session first to reuse its conversation
         existing_session = whatsapp_repository.find_session_by_phone(channel_id, from_phone)
         if existing_session:
             conversation_id = existing_session.conversation_id
             session = existing_session
         else:
+            title = ' '.join(message_text.split()[:5]) or from_phone
+            conversation_id = conversation_service.create(
+                ConversationCreate(
+                    user=from_phone,
+                    agent_id=channel.agent_id,
+                    title=title,
+                )
+            )
             session = whatsapp_repository.get_or_create_session(
                 channel_id=channel_id,
                 from_phone=from_phone,
@@ -353,6 +352,9 @@ class WhatsAppService:
         return whatsapp_repository.get_session(session_id)
 
     def delete_session(self, session_id: str) -> bool:
+        session = whatsapp_repository.get_session(session_id)
+        if session:
+            conversation_repository.delete(session.conversation_id)
         return whatsapp_repository.delete_session(session_id)
 
     def get_messages(
@@ -389,7 +391,7 @@ class WhatsAppService:
         else:
             content = body.message or ''
 
-        # Persist message
+        # Persist message to WhatsApp table
         msg_id = whatsapp_repository.save_message({
             'session_id': session_id,
             'channel_id': session.channel_id,
@@ -400,6 +402,15 @@ class WhatsAppService:
             'status': 'sent',
             'sent_by': 'human',
         })
+
+        # Mirror to unified conversation history so the agent has context
+        from app.models.conversation import Message as ConversationMessage
+        conv_msg = ConversationMessage(
+            role='assistant',
+            content=content,
+            timestamp=datetime.now(),
+        )
+        conversation_repository.save_message(session.conversation_id, conv_msg)
 
         # Update session preview
         whatsapp_repository.update_session(session_id, {

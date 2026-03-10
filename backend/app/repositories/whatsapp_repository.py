@@ -90,6 +90,17 @@ class WhatsAppRepository(BaseDynamoDBRepository):
 
     # ── Sessions ─────────────────────────────────────────────────────────────
 
+    def find_session_by_conversation_id(self, conversation_id: str) -> Optional[WhatsAppSession]:
+        """Find a WhatsApp session linked to a specific conversation_id (scan-based)."""
+        response = self.session_table.scan(
+            FilterExpression=Attr('conversation_id').eq(conversation_id),
+            Limit=1,
+        )
+        items = response.get('Items', [])
+        if not items:
+            return None
+        return self._map_session(items[0])
+
     def get_or_create_session(
         self,
         channel_id: str,
