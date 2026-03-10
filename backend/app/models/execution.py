@@ -19,7 +19,6 @@ class AgentResponse(BaseModel):
     response: str
     configuration: AgentConfig
     contexts: list = []
-    wa_messages_queued: int = 0
 
 
 # ── Execution trace models ────────────────────────────────────────────────────

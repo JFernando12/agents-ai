@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Optional
 
@@ -174,14 +175,13 @@ class WhatsAppService:
                 messages.append({'role': msg.role, 'text': msg.content})
             messages.append({'role': 'user', 'text': message_text})
 
-            channel_context: dict = {'message_queue': []}
             executor = AgentExecutor(agent_id=channel.agent_id)
             agent_response = executor.run(
                 user=from_phone,
                 messages=messages,
                 context=None,
                 account_id=channel.account_id,
-                channel_context=channel_context,
+                whatsapp_mode=True,
             )
             answer = agent_response.response
 
@@ -200,143 +200,140 @@ class WhatsAppService:
                 ExpressionAttributeValues={':content': answer, ':status': 'sent'},
             )
 
-            message_queue = channel_context.get('message_queue', [])
+            # Parse canonical JSON and dispatch
+            try:
+                wa_payload = json.loads(answer)
+            except (json.JSONDecodeError, TypeError):
+                wa_payload = {'type': 'text', 'body': answer}
 
-            if message_queue:
-                # The agent controls order via explicit tool calls.
-                # Process the queue in insertion order — the agent decided the sequence.
-                for queued_msg in message_queue:
-                    msg_type = queued_msg['type']
-                    payload = queued_msg['payload']
-                    success = False
-                    if msg_type == 'text':
-                        success = whatsapp_client.send_text(
-                            wa_token=channel.wa_token,
-                            phone_number_id=channel.phone_number_id,
-                            to=from_phone,
-                            message=payload['message'],
-                        )
-                        whatsapp_repository.save_message({
-                            'session_id': session.id,
-                            'channel_id': channel_id,
-                            'role': 'assistant',
-                            'content': payload['message'],
-                            'type': 'text',
-                            'status': 'sent' if success else 'failed',
-                            'sent_by': 'agent',
-                        })
-                    elif msg_type == 'image':
-                        success = whatsapp_client.send_image(
-                            wa_token=channel.wa_token,
-                            phone_number_id=channel.phone_number_id,
-                            to=from_phone,
-                            url=payload['url'],
-                            caption=payload.get('caption'),
-                        )
-                        whatsapp_repository.save_message({
-                            'session_id': session.id,
-                            'channel_id': channel_id,
-                            'role': 'assistant',
-                            'content': payload.get('caption', ''),
-                            'type': 'image',
-                            'media_url': payload['url'],
-                            'status': 'sent' if success else 'failed',
-                            'sent_by': 'agent',
-                        })
-                    elif msg_type == 'document':
-                        success = whatsapp_client.send_document(
-                            wa_token=channel.wa_token,
-                            phone_number_id=channel.phone_number_id,
-                            to=from_phone,
-                            url=payload['url'],
-                            filename=payload['filename'],
-                            caption=payload.get('caption'),
-                        )
-                        whatsapp_repository.save_message({
-                            'session_id': session.id,
-                            'channel_id': channel_id,
-                            'role': 'assistant',
-                            'content': payload.get('caption', payload['filename']),
-                            'type': 'document',
-                            'media_url': payload['url'],
-                            'status': 'sent' if success else 'failed',
-                            'sent_by': 'agent',
-                        })
-                    elif msg_type == 'buttons':
-                        success = whatsapp_client.send_buttons(
-                            wa_token=channel.wa_token,
-                            phone_number_id=channel.phone_number_id,
-                            to=from_phone,
-                            body=payload['body'],
-                            buttons=payload['buttons'],
-                            footer=payload.get('footer'),
-                        )
-                        whatsapp_repository.save_message({
-                            'session_id': session.id,
-                            'channel_id': channel_id,
-                            'role': 'assistant',
-                            'content': payload['body'],
-                            'type': 'buttons',
-                            'status': 'sent' if success else 'failed',
-                            'sent_by': 'agent',
-                        })
-                    elif msg_type == 'list':
-                        success = whatsapp_client.send_list(
-                            wa_token=channel.wa_token,
-                            phone_number_id=channel.phone_number_id,
-                            to=from_phone,
-                            body=payload['body'],
-                            button_label=payload['button_label'],
-                            sections=payload['sections'],
-                            footer=payload.get('footer'),
-                        )
-                        whatsapp_repository.save_message({
-                            'session_id': session.id,
-                            'channel_id': channel_id,
-                            'role': 'assistant',
-                            'content': payload['body'],
-                            'type': 'list',
-                            'status': 'sent' if success else 'failed',
-                            'sent_by': 'agent',
-                        })
-
-                # Fallback: only send plain text if the agent didn't already
-                # handle it explicitly AND the queue has no self-contained
-                # interactive message (buttons/list already carry all the text
-                # the user needs; sending an extra text would be the echo of
-                # the internal tool-result acknowledgment).
-                queue_has_text = any(m['type'] == 'text' for m in message_queue)
-                queue_has_interactive = any(m['type'] in ('buttons', 'list') for m in message_queue)
-                if not queue_has_text and not queue_has_interactive and answer:
-                    success = whatsapp_client.send_text(
-                        wa_token=channel.wa_token,
-                        phone_number_id=channel.phone_number_id,
-                        to=from_phone,
-                        message=answer,
-                    )
-                    if not success:
-                        whatsapp_repository.update_message_status(
-                            assistant_msg_id, 'failed', 'WhatsApp API call failed'
-                        )
-            else:
-                # No rich messages: send the plain text response
-                if answer:
-                    success = whatsapp_client.send_text(
-                        wa_token=channel.wa_token,
-                        phone_number_id=channel.phone_number_id,
-                        to=from_phone,
-                        message=answer,
-                    )
-                    if not success:
-                        whatsapp_repository.update_message_status(
-                            assistant_msg_id, 'failed', 'WhatsApp API call failed'
-                        )
+            self._dispatch_wa_message(
+                wa_payload, channel, from_phone, session, channel_id, assistant_msg_id
+            )
 
         except Exception as e:
             print(f"[WhatsApp] process_incoming_message error: {e}")
             whatsapp_repository.update_message_status(
                 assistant_msg_id, 'failed', str(e)
             )
+
+    def _dispatch_wa_message(
+        self,
+        payload: dict,
+        channel,
+        to: str,
+        session,
+        channel_id: str,
+        primary_msg_id: str | None = None,
+    ) -> None:
+        """Dispatch a single canonical WA payload dict.  Handles 'multi' recursively."""
+        msg_type = payload.get('type', 'text')
+
+        if msg_type == 'multi':
+            for sub in payload.get('messages', []):
+                self._dispatch_wa_message(sub, channel, to, session, channel_id)
+            return
+
+        success = False
+        save_kwargs: dict = {
+            'session_id': session.id,
+            'channel_id': channel_id,
+            'role': 'assistant',
+            'sent_by': 'agent',
+        }
+
+        if msg_type == 'text':
+            body = payload.get('body', '')
+            success = whatsapp_client.send_text(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                message=body,
+            )
+            save_kwargs.update({'content': body, 'type': 'text'})
+
+        elif msg_type == 'image':
+            url = payload.get('url', '')
+            caption = payload.get('caption', '')
+            success = whatsapp_client.send_image(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                url=url,
+                caption=caption or None,
+            )
+            save_kwargs.update({'content': caption, 'type': 'image', 'media_url': url})
+
+        elif msg_type == 'document':
+            url = payload.get('url', '')
+            filename = payload.get('filename', 'document')
+            caption = payload.get('caption', '')
+            success = whatsapp_client.send_document(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                url=url,
+                filename=filename,
+                caption=caption or None,
+            )
+            save_kwargs.update({
+                'content': caption or filename,
+                'type': 'document',
+                'media_url': url,
+            })
+
+        elif msg_type == 'buttons':
+            body = payload.get('body', '')
+            success = whatsapp_client.send_buttons(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                body=body,
+                buttons=payload.get('buttons', []),
+                footer=payload.get('footer'),
+            )
+            save_kwargs.update({'content': body, 'type': 'buttons'})
+
+        elif msg_type == 'list':
+            body = payload.get('body', '')
+            success = whatsapp_client.send_list(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                body=body,
+                button_label=payload.get('button_label', 'Ver opciones'),
+                sections=payload.get('sections', []),
+                footer=payload.get('footer'),
+            )
+            save_kwargs.update({'content': body, 'type': 'list'})
+
+        else:
+            # Unrecognised type — fall back to text with the raw JSON
+            raw = json.dumps(payload, ensure_ascii=False)
+            success = whatsapp_client.send_text(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                message=raw,
+            )
+            save_kwargs.update({'content': raw, 'type': 'text'})
+
+        save_kwargs['status'] = 'sent' if success else 'failed'
+
+        # For the very first assistant message we update the placeholder;
+        # additional messages in a 'multi' get their own DB rows.
+        if primary_msg_id and msg_type != 'multi':
+            whatsapp_repository.message_table.update_item(
+                Key={'id': primary_msg_id},
+                UpdateExpression='SET #status = :status',
+                ExpressionAttributeNames={'#status': 'status'},
+                ExpressionAttributeValues={':status': save_kwargs['status']},
+            )
+            primary_msg_id = None  # only update it once
+        else:
+            whatsapp_repository.save_message(save_kwargs)
+
+        if not success:
+            print(f"[WhatsApp] Failed to send {msg_type} message to {to}")
 
     # ── Inbox ─────────────────────────────────────────────────────────────────
 

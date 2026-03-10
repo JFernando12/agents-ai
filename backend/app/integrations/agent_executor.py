@@ -14,190 +14,43 @@ from app.models.execution import AgentConfig, AgentResponse, ExecutionTraceCreat
 from app.models.rag_trace import RAGTraceCreate
 from app.repositories import agent_repository, tool_repository
 
-# ── WhatsApp-specific tool names ──────────────────────────────────────────────
-WA_TOOL_NAMES = {
-    "send_whatsapp_text",
-    "send_whatsapp_image",
-    "send_whatsapp_document",
-    "send_whatsapp_buttons",
-    "send_whatsapp_list",
-}
+# ── WhatsApp JSON canonical response format ──────────────────────────────────────────
+WA_JSON_SYSTEM_SUFFIX = """
+---
 
-WA_TOOL_SPECS = [
-    {
-        "toolSpec": {
-            "name": "send_whatsapp_text",
-            "description": (
-                "Envía un mensaje de texto al usuario en WhatsApp. "
-                "Úsala cuando necesites enviar texto en un momento específico del flujo, "
-                "por ejemplo antes o después de una imagen. "
-                "Permite controlar el orden de los mensajes."
-            ),
-            "inputSchema": {
-                "json": {
-                    "type": "object",
-                    "properties": {
-                        "message": {
-                            "type": "string",
-                            "description": "Texto del mensaje a enviar",
-                        },
-                    },
-                    "required": ["message"],
-                }
-            },
-        }
-    },
-    {
-        "toolSpec": {
-            "name": "send_whatsapp_image",
-            "description": (
-                "Envía una imagen al usuario en WhatsApp. "
-                "Úsala cuando necesites mostrar una imagen, gráfica, captura de pantalla o foto. "
-                "El campo 'url' debe ser una URL pública."
-            ),
-            "inputSchema": {
-                "json": {
-                    "type": "object",
-                    "properties": {
-                        "url": {
-                            "type": "string",
-                            "description": "URL pública de la imagen (jpg, png, webp, gif)",
-                        },
-                        "caption": {
-                            "type": "string",
-                            "description": "Texto descriptivo opcional que aparece debajo de la imagen",
-                        },
-                    },
-                    "required": ["url"],
-                }
-            },
-        }
-    },
-    {
-        "toolSpec": {
-            "name": "send_whatsapp_document",
-            "description": (
-                "Envía un documento (PDF, Excel, Word, CSV, etc.) al usuario en WhatsApp. "
-                "Úsala cuando necesites compartir un archivo descargable."
-            ),
-            "inputSchema": {
-                "json": {
-                    "type": "object",
-                    "properties": {
-                        "url": {
-                            "type": "string",
-                            "description": "URL pública del documento",
-                        },
-                        "filename": {
-                            "type": "string",
-                            "description": "Nombre del archivo que verá el usuario (ej. 'reporte_enero.pdf')",
-                        },
-                        "caption": {
-                            "type": "string",
-                            "description": "Texto descriptivo opcional",
-                        },
-                    },
-                    "required": ["url", "filename"],
-                }
-            },
-        }
-    },
-    {
-        "toolSpec": {
-            "name": "send_whatsapp_buttons",
-            "description": (
-                "Envía un mensaje interactivo con botones de respuesta rápida en WhatsApp. "
-                "Úsala cuando quieras que el usuario elija entre 2 o 3 opciones cortas. "
-                "El campo 'body' es el texto principal del mensaje (obligatorio). "
-                "Máximo 3 botones; el título de cada botón tiene un máximo de 20 caracteres."
-            ),
-            "inputSchema": {
-                "json": {
-                    "type": "object",
-                    "properties": {
-                        "body": {
-                            "type": "string",
-                            "description": "Texto principal del mensaje",
-                        },
-                        "footer": {
-                            "type": "string",
-                            "description": "Texto secundario pequeño debajo del cuerpo (opcional)",
-                        },
-                        "buttons": {
-                            "type": "array",
-                            "description": "Lista de botones (mínimo 1, máximo 3)",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "id": {"type": "string", "description": "Identificador único del botón"},
-                                    "title": {"type": "string", "description": "Texto del botón (máximo 20 caracteres)"},
-                                },
-                                "required": ["id", "title"],
-                            },
-                            "minItems": 1,
-                            "maxItems": 3,
-                        },
-                    },
-                    "required": ["body", "buttons"],
-                }
-            },
-        }
-    },
-    {
-        "toolSpec": {
-            "name": "send_whatsapp_list",
-            "description": (
-                "Envía un mensaje interactivo con una lista de opciones en WhatsApp. "
-                "Úsala cuando el usuario necesite elegir entre más de 3 opciones o que estén "
-                "organizadas en secciones. El campo 'body' es el texto principal. "
-                "Máximo 10 filas en total entre todas las secciones."
-            ),
-            "inputSchema": {
-                "json": {
-                    "type": "object",
-                    "properties": {
-                        "body": {
-                            "type": "string",
-                            "description": "Texto principal del mensaje",
-                        },
-                        "button_label": {
-                            "type": "string",
-                            "description": "Texto del botón que abre la lista (ej. 'Ver opciones')",
-                        },
-                        "footer": {
-                            "type": "string",
-                            "description": "Texto secundario opcional",
-                        },
-                        "sections": {
-                            "type": "array",
-                            "description": "Secciones de la lista",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "title": {"type": "string", "description": "Título de la sección"},
-                                    "rows": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {"type": "string"},
-                                                "title": {"type": "string", "description": "Máximo 24 caracteres"},
-                                                "description": {"type": "string", "description": "Descripción opcional"},
-                                            },
-                                            "required": ["id", "title"],
-                                        },
-                                    },
-                                },
-                                "required": ["title", "rows"],
-                            },
-                        },
-                    },
-                    "required": ["body", "button_label", "sections"],
-                }
-            },
-        }
-    },
-]
+## INSTRUCCION DE FORMATO (CRITICA — NO IGNORAR)
+
+Estás en un canal de WhatsApp. Tu respuesta completa debe ser únicamente un JSON válido — sin ningún texto antes ni después del JSON.
+
+Elige el tipo según lo que necesites enviar:
+
+**Texto simple:**
+{"type":"text","body":"tu mensaje"}
+
+**Imagen:**
+{"type":"image","url":"https://...","caption":"texto opcional bajo la imagen"}
+
+**Documento:**
+{"type":"document","url":"https://...","filename":"archivo.pdf","caption":"texto opcional"}
+
+**Botones (2–3 opciones):**
+{"type":"buttons","body":"texto principal","buttons":[{"id":"1","title":"Opción 1"},{"id":"2","title":"Opción 2"}],"footer":"texto pequeño opcional"}
+
+**Lista (más de 3 opciones):**
+{"type":"list","body":"texto principal","button_label":"Ver opciones","sections":[{"title":"Sección","rows":[{"id":"1","title":"Opción","description":"desc opcional"}]}],"footer":"texto opcional"}
+
+**Múltiples mensajes en orden:**
+{"type":"multi","messages":[{"type":"text","body":"texto"},{"type":"image","url":"https://...","caption":"..."}]}
+
+Reglas:
+- Usa "multi" cuando necesitas enviar más de un mensaje (texto + imagen, etc.). El orden en "messages" es el orden de entrega.
+- Para botones y lista, TODO el texto que el usuario debe leer va dentro de "body".
+- Máximo 3 botones; títulos de botón máximo 20 caracteres.
+- No incluyas campos nulos o vacíos en el JSON.
+- Puedes usar *negritas* de WhatsApp dentro de los campos de texto.
+- SOLO JSON. Sin markdown, sin explicaciones.
+"""
+
 
 class AgentExecutor:
     def __init__(self, agent_id: str) -> None:
@@ -229,13 +82,15 @@ class AgentExecutor:
     # Prompt / message builders
     # -------------------------------------------------------------------------
 
-    def _build_system_prompt(self, system_prompt: str, context: dict | None) -> str:
+    def _build_system_prompt(self, system_prompt: str, context: dict | None, whatsapp_enabled: bool = False) -> str:
         parts = []
         if system_prompt:
             parts.append(system_prompt)
         if context:
             context_lines = "\n".join(f"- {k}: {v}" for k, v in context.items())
             parts.append(f"### Contexto adicional\n\n{context_lines}")
+        if whatsapp_enabled:
+            parts.append(WA_JSON_SYSTEM_SUFFIX)
         return "\n\n".join(parts)
 
     def _build_converse_messages(self, messages: list, attached_text: str | None) -> list:
@@ -261,7 +116,6 @@ class AgentExecutor:
         self,
         enabled_tool_ids: list[str],
         enabled_sub_agent_ids: list[str],
-        whatsapp_enabled: bool = False,
     ) -> tuple[list, dict[str, str]]:
         db_tools = tool_repository.get_by_ids(enabled_tool_ids)
         tool_specs = [
@@ -327,9 +181,6 @@ class AgentExecutor:
             }
         })
 
-        if whatsapp_enabled:
-            tool_specs.extend(WA_TOOL_SPECS)
-
         return tool_specs, sub_agent_name_to_id
 
     # -------------------------------------------------------------------------
@@ -369,49 +220,8 @@ class AgentExecutor:
         iteration: int,
         rag_config: RAGConfig | None = None,
         conversation_id: str | None = None,
-        channel_context: dict | None = None,
     ) -> tuple[dict, ToolCallTrace]:
         print(f"[BEDROCK] Iteration {iteration}: Executing tool: {tool_name} with input: {tool_input}")
-
-        # ── WhatsApp rich-message tools: enqueue as side-effect ───────────────
-        if tool_name in WA_TOOL_NAMES and channel_context is not None:
-            channel_context["message_queue"].append({
-                "type": tool_name.replace("send_whatsapp_", ""),
-                "payload": tool_input,
-            })
-            # For interactive messages (buttons/list) the body is self-contained:
-            # instruct the model NOT to emit additional user-facing text.
-            # For media/text tools, a neutral ack is enough.
-            interactive_tools = {"send_whatsapp_buttons", "send_whatsapp_list"}
-            if tool_name in interactive_tools:
-                ack = (
-                    "Encolado. El campo 'body' ya contiene todo el texto para el usuario. "
-                    "NO generes texto adicional para el usuario en esta respuesta."
-                )
-            else:
-                ack = "Encolado."
-            result = ToolResult(
-                tool_name=tool_name,
-                success=True,
-                result=ack,
-                error=None,
-            )
-            trace = ToolCallTrace(
-                tool_name=tool_name,
-                tool_use_id=tool_use_id,
-                input=tool_input,
-                output=ack,
-                success=True,
-                error=None,
-                iteration=iteration,
-            )
-            return {
-                "toolResult": {
-                    "toolUseId": tool_use_id,
-                    "content": [{"text": ack}],
-                }
-            }, trace
-        # ─────────────────────────────────────────────────────────────────────
 
         if tool_name == "search_knowledge_base":
             query = tool_input.get("query", last_user_text)
@@ -497,7 +307,6 @@ class AgentExecutor:
         user: str | None,
         rag_config: RAGConfig | None = None,
         conversation_id: str | None = None,
-        channel_context: dict | None = None,
     ) -> tuple[dict, list, list[ToolCallTrace], int]:
         max_iterations = 5
         iteration = 0
@@ -532,7 +341,6 @@ class AgentExecutor:
                     iteration=iteration,
                     rag_config=rag_config,
                     conversation_id=conversation_id,
-                    channel_context=channel_context,
                 )
                 for b in tool_use_blocks
             ]
@@ -588,7 +396,7 @@ class AgentExecutor:
         context: dict | None = None,
         account_id: str = "default",
         conversation_id: str | None = None,
-        channel_context: dict | None = None,
+        whatsapp_mode: bool = False,
     ) -> AgentResponse:
         start_time = time.monotonic()
         agent_config = self._load_agent_config()
@@ -602,9 +410,7 @@ class AgentExecutor:
         rag_config = agent_config.rag_config  # may be None → rag_service uses defaults
         enabled_tool_ids = [t.id for t in tools if t.enabled]
         enabled_sub_agent_ids = [t.id for t in (agent_config.sub_agents or []) if t.enabled]
-        whatsapp_enabled = agent_config.whatsapp_enabled and channel_context is not None
-        if channel_context is not None and "message_queue" not in channel_context:
-            channel_context["message_queue"] = []
+        whatsapp_enabled = whatsapp_mode or bool(agent_config.whatsapp_enabled)
 
         last_user_text = next(
             (m["text"] for m in reversed(messages) if m["role"] == "user"),
@@ -614,10 +420,10 @@ class AgentExecutor:
         rag_eval_records: list = []
 
         model_id = self._resolve_model_id(model)
-        full_system_prompt = self._build_system_prompt(system_prompt, context)
+        full_system_prompt = self._build_system_prompt(system_prompt, context, whatsapp_enabled=whatsapp_enabled)
         converse_messages = self._build_converse_messages(messages, attached_text)
         tool_specs, sub_agent_name_to_id = self._build_tool_specs(
-            enabled_tool_ids, enabled_sub_agent_ids, whatsapp_enabled=whatsapp_enabled
+            enabled_tool_ids, enabled_sub_agent_ids
         )
 
         converse_params: dict = {
@@ -642,7 +448,6 @@ class AgentExecutor:
             user=user,
             rag_config=rag_config,
             conversation_id=conversation_id,
-            channel_context=channel_context,
         )
         final_answer = self._extract_final_answer(final_response, tool_results)
         duration_ms = int((time.monotonic() - start_time) * 1000)
@@ -708,8 +513,6 @@ class AgentExecutor:
         except Exception as e:
             print(f"[TRACE ERROR] Failed to save execution trace: {e}")
 
-        wa_messages_queued = len(channel_context["message_queue"]) if channel_context else 0
-
         return AgentResponse(
             agent_name=agent_name,
             response=final_answer,
@@ -722,5 +525,4 @@ class AgentExecutor:
                 tools=tools,
             ),
             contexts=used_contexts,
-            wa_messages_queued=wa_messages_queued,
         )
