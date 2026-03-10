@@ -13,7 +13,6 @@ from app.models.whatsapp import (
 )
 from app.models.chat import ChatRequest
 from app.models.conversation import ConversationCreate
-from app.models.user import User
 from app.repositories.whatsapp_repository import whatsapp_repository
 from app.services.conversation_service import conversation_service
 from app.integrations.agent_executor import AgentExecutor
@@ -157,14 +156,6 @@ class WhatsAppService:
         })
 
         # 6. Build history and run agent
-        service_user = User(
-            id='whatsapp-service',
-            name='WhatsApp',
-            email=from_phone,
-            role='viewer',
-            account_id=channel.account_id,
-        )
-
         try:
             history_msgs = conversation_repository.get_messages(
                 conversation_id=session.conversation_id,
@@ -185,10 +176,18 @@ class WhatsAppService:
             )
             answer = agent_response.response
 
-            # Save to conversation history
+            # Parse canonical JSON first so we can extract readable text for history
+            try:
+                wa_payload = json.loads(answer)
+            except (json.JSONDecodeError, TypeError):
+                wa_payload = {'type': 'text', 'body': answer}
+
+            history_text = self._extract_text_for_history(wa_payload) or answer
+
+            # Save human-readable text to conversation history (not raw JSON)
             from app.models.conversation import Message
             user_msg = Message(role='user', content=message_text, timestamp=datetime.now())
-            assistant_msg_obj = Message(role='assistant', content=answer, timestamp=datetime.now())
+            assistant_msg_obj = Message(role='assistant', content=history_text, timestamp=datetime.now())
             conversation_repository.save_message(session.conversation_id, user_msg)
             conversation_repository.save_message(session.conversation_id, assistant_msg_obj)
 
@@ -197,14 +196,8 @@ class WhatsAppService:
                 Key={'id': assistant_msg_id},
                 UpdateExpression='SET #content = :content, #status = :status',
                 ExpressionAttributeNames={'#content': 'content', '#status': 'status'},
-                ExpressionAttributeValues={':content': answer, ':status': 'sent'},
+                ExpressionAttributeValues={':content': history_text, ':status': 'sent'},
             )
-
-            # Parse canonical JSON and dispatch
-            try:
-                wa_payload = json.loads(answer)
-            except (json.JSONDecodeError, TypeError):
-                wa_payload = {'type': 'text', 'body': answer}
 
             self._dispatch_wa_message(
                 wa_payload, channel, from_phone, session, channel_id, assistant_msg_id
@@ -215,6 +208,25 @@ class WhatsAppService:
             whatsapp_repository.update_message_status(
                 assistant_msg_id, 'failed', str(e)
             )
+
+    def _extract_text_for_history(self, payload: dict) -> str:
+        """Return a plain-text representation of a WA payload for conversation history."""
+        msg_type = payload.get('type', 'text')
+        if msg_type == 'text':
+            return payload.get('body', '')
+        elif msg_type == 'image':
+            caption = payload.get('caption', '')
+            return f"[imagen]{': ' + caption if caption else ''}"
+        elif msg_type == 'document':
+            caption = payload.get('caption', '')
+            filename = payload.get('filename', 'documento')
+            return f"[documento: {filename}]{': ' + caption if caption else ''}"
+        elif msg_type in ('buttons', 'list'):
+            return payload.get('body', '')
+        elif msg_type == 'multi':
+            parts = [self._extract_text_for_history(sub) for sub in payload.get('messages', [])]
+            return '\n\n'.join(p for p in parts if p)
+        return ''
 
     def _dispatch_wa_message(
         self,
