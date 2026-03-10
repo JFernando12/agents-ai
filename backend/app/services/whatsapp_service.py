@@ -122,6 +122,9 @@ class WhatsAppService:
             )
 
         now = int(datetime.now().timestamp() * 1000)
+        # Capture user timestamp NOW, before the agent runs, so it is
+        # always strictly earlier than the assistant timestamp.
+        user_received_at = datetime.now()
         preview = message_text[:80]
 
         # 4. Save incoming user message
@@ -189,7 +192,7 @@ class WhatsAppService:
 
             # Save human-readable text to conversation history (not raw JSON)
             from app.models.conversation import Message
-            user_msg = Message(role='user', content=message_text, timestamp=datetime.now())
+            user_msg = Message(role='user', content=message_text, timestamp=user_received_at)
             assistant_msg_obj = Message(role='assistant', content=history_text, timestamp=datetime.now())
             conversation_repository.save_message(session.conversation_id, user_msg)
             conversation_repository.save_message(session.conversation_id, assistant_msg_obj)
