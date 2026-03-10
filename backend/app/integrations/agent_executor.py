@@ -39,11 +39,7 @@ Elige el tipo según lo que necesites enviar:
 **Lista (más de 3 opciones):**
 {"type":"list","body":"texto principal","button_label":"Ver opciones","sections":[{"title":"Sección","rows":[{"id":"1","title":"Opción","description":"desc opcional"}]}],"footer":"texto opcional"}
 
-**Múltiples mensajes en orden:**
-{"type":"multi","messages":[{"type":"text","body":"texto"},{"type":"image","url":"https://...","caption":"..."}]}
-
 Reglas:
-- Usa "multi" cuando necesitas enviar más de un mensaje (texto + imagen, etc.). El orden en "messages" es el orden de entrega.
 - Para botones y lista, TODO el texto que el usuario debe leer va dentro de "body".
 - Máximo 3 botones; títulos de botón máximo 20 caracteres.
 - No incluyas campos nulos o vacíos en el JSON.

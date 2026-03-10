@@ -223,9 +223,6 @@ class WhatsAppService:
             return f"[documento: {filename}]{': ' + caption if caption else ''}"
         elif msg_type in ('buttons', 'list'):
             return payload.get('body', '')
-        elif msg_type == 'multi':
-            parts = [self._extract_text_for_history(sub) for sub in payload.get('messages', [])]
-            return '\n\n'.join(p for p in parts if p)
         return ''
 
     def _dispatch_wa_message(
@@ -239,11 +236,6 @@ class WhatsAppService:
     ) -> None:
         """Dispatch a single canonical WA payload dict.  Handles 'multi' recursively."""
         msg_type = payload.get('type', 'text')
-
-        if msg_type == 'multi':
-            for sub in payload.get('messages', []):
-                self._dispatch_wa_message(sub, channel, to, session, channel_id)
-            return
 
         success = False
         save_kwargs: dict = {

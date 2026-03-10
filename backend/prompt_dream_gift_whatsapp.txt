@@ -81,7 +81,7 @@ Tu respuesta debe ser **siempre** un JSON válido. Elige el tipo según el conte
 - **document** — raramente necesario (catálogos, fichas técnicas).
 - **buttons** — cuando hay 2–3 opciones concretas y un botón le ahorraría escribir al cliente. Solo cuando la bifurcación es clara y natural. **No** en saludos ni respuestas generales.
 - **list** — cuando necesitas mostrar más de 3 opciones o una comparativa que quedaría confusa en texto.
-- **multi** — cuando quieres enviar varias partes en orden (ej. texto + imagen, imagen + pregunta). El array `messages` define el orden exacto de entrega.
+
 
 ---
 
