@@ -1,4 +1,6 @@
 import json
+import time
+import threading
 from datetime import datetime
 from typing import Optional
 
@@ -147,7 +149,7 @@ class WhatsAppService:
         })
 
         # 5. Save assistant placeholder as 'processing'
-        assistant_msg_id = whatsapp_repository.save_message({
+        placeholder_id = whatsapp_repository.save_message({
             'session_id': session.id,
             'channel_id': channel_id,
             'role': 'assistant',
@@ -197,22 +199,24 @@ class WhatsAppService:
             conversation_repository.save_message(session.conversation_id, user_msg)
             conversation_repository.save_message(session.conversation_id, assistant_msg_obj)
 
-            # Update placeholder message content + status
+            # Update placeholder with readable content only.
+            # Status is set by _dispatch_wa_message after the actual API call
+            # so it always reflects the real outcome.
             whatsapp_repository.message_table.update_item(
-                Key={'id': assistant_msg_id},
-                UpdateExpression='SET #content = :content, #status = :status',
-                ExpressionAttributeNames={'#content': 'content', '#status': 'status'},
-                ExpressionAttributeValues={':content': history_text, ':status': 'sent'},
+                Key={'id': placeholder_id},
+                UpdateExpression='SET #content = :content',
+                ExpressionAttributeNames={'#content': 'content'},
+                ExpressionAttributeValues={':content': history_text},
             )
 
             self._dispatch_wa_message(
-                wa_payload, channel, from_phone, session, channel_id, assistant_msg_id
+                wa_payload, channel, from_phone, session, channel_id, placeholder_id
             )
 
         except Exception as e:
             print(f"[WhatsApp] process_incoming_message error: {e}")
             whatsapp_repository.update_message_status(
-                assistant_msg_id, 'failed', str(e)
+                placeholder_id, 'failed', str(e)
             )
 
     def _extract_text_for_history(self, payload: dict) -> str:
@@ -229,7 +233,103 @@ class WhatsAppService:
             return f"[documento: {filename}]{': ' + caption if caption else ''}"
         elif msg_type in ('buttons', 'list'):
             return payload.get('body', '')
+        elif msg_type == 'multi':
+            parts = [
+                self._extract_text_for_history(m)
+                for m in payload.get('messages', [])
+            ]
+            return ' | '.join(p for p in parts if p)
         return ''
+
+    def _send_single(self, payload: dict, channel, to: str) -> bool:
+        """Make exactly one WhatsApp Cloud API call. Never touches the DB."""
+        msg_type = payload.get('type', 'text')
+        if msg_type == 'text':
+            return whatsapp_client.send_text(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                message=payload.get('body', ''),
+            )
+        elif msg_type == 'image':
+            return whatsapp_client.send_image(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                url=payload.get('url', ''),
+                caption=payload.get('caption') or None,
+            )
+        elif msg_type == 'document':
+            return whatsapp_client.send_document(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                url=payload.get('url', ''),
+                filename=payload.get('filename', 'document'),
+                caption=payload.get('caption') or None,
+            )
+        elif msg_type == 'buttons':
+            return whatsapp_client.send_buttons(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                body=payload.get('body', ''),
+                buttons=payload.get('buttons', []),
+                footer=payload.get('footer'),
+            )
+        elif msg_type == 'list':
+            return whatsapp_client.send_list(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                body=payload.get('body', ''),
+                button_label=payload.get('button_label', 'Ver opciones'),
+                sections=payload.get('sections', []),
+                footer=payload.get('footer'),
+            )
+        else:
+            return whatsapp_client.send_text(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=to,
+                message=json.dumps(payload, ensure_ascii=False),
+            )
+
+    def _persist_result(
+        self,
+        placeholder_id: str | None,
+        success: bool,
+        msg_type: str,
+        session_id: str,
+        channel_id: str,
+        content: str = '',
+        **extra_fields,
+    ) -> None:
+        """Update the status of an existing placeholder row, or insert a new row.
+
+        When placeholder_id is set the row already has its content — we only
+        flip the status to the real outcome.  When it is None (e.g. manual
+        sends, or secondary standalone messages) a full new row is created.
+        """
+        status = 'sent' if success else 'failed'
+        if placeholder_id:
+            whatsapp_repository.message_table.update_item(
+                Key={'id': placeholder_id},
+                UpdateExpression='SET #status = :status',
+                ExpressionAttributeNames={'#status': 'status'},
+                ExpressionAttributeValues={':status': status},
+            )
+        else:
+            whatsapp_repository.save_message({
+                'session_id': session_id,
+                'channel_id': channel_id,
+                'role': 'assistant',
+                'sent_by': 'agent',
+                'content': content,
+                'type': msg_type,
+                'status': status,
+                **extra_fields,
+            })
 
     def _dispatch_wa_message(
         self,
@@ -238,112 +338,81 @@ class WhatsAppService:
         to: str,
         session,
         channel_id: str,
-        primary_msg_id: str | None = None,
+        placeholder_id: str | None = None,
     ) -> None:
-        """Dispatch a single canonical WA payload dict.  Handles 'multi' recursively."""
+        """Dispatch a canonical WA payload to WhatsApp and persist the result.
+
+        For 'multi': each sub-message is sent individually to WA (first one
+        synchronously, the rest in a daemon thread with inter-message delays),
+        but only a single DB record is written — the placeholder row whose
+        content was already set by process_incoming_message via
+        _extract_text_for_history.  The DB status is driven by whether the
+        first (synchronous) send actually succeeds.
+        """
         msg_type = payload.get('type', 'text')
 
-        success = False
-        save_kwargs: dict = {
-            'session_id': session.id,
-            'channel_id': channel_id,
-            'role': 'assistant',
-            'sent_by': 'agent',
-        }
+        # ── multi: fan-out to WA, single DB record ────────────────────────────
+        if msg_type == 'multi':
+            messages_list = payload.get('messages', [])
+            if not messages_list:
+                return
 
-        if msg_type == 'text':
-            body = payload.get('body', '')
-            success = whatsapp_client.send_text(
-                wa_token=channel.wa_token,
-                phone_number_id=channel.phone_number_id,
-                to=to,
-                message=body,
+            # First sub-message sent synchronously — its outcome sets DB status.
+            first_success = self._send_single(messages_list[0], channel, to)
+            if not first_success:
+                print(f"[WhatsApp] Failed to send first multi-message to {to}")
+            self._persist_result(
+                placeholder_id=placeholder_id,
+                success=first_success,
+                msg_type='multi',
+                session_id=session.id,
+                channel_id=channel_id,
+                content=self._extract_text_for_history(payload),
             )
-            save_kwargs.update({'content': body, 'type': 'text'})
 
-        elif msg_type == 'image':
-            url = payload.get('url', '')
-            caption = payload.get('caption', '')
-            success = whatsapp_client.send_image(
-                wa_token=channel.wa_token,
-                phone_number_id=channel.phone_number_id,
-                to=to,
-                url=url,
-                caption=caption or None,
-            )
-            save_kwargs.update({'content': caption, 'type': 'image', 'media_url': url})
+            # Remaining sub-messages go out in a daemon thread, zero DB ops.
+            if len(messages_list) > 1:
+                def _send_remaining(remaining: list, prev_type: str) -> None:
+                    for msg in remaining:
+                        # Wait longer after an image — Meta's media API is slower
+                        delay = 1.5 if prev_type == 'image' else 0.8
+                        time.sleep(delay)
+                        ok = self._send_single(msg, channel, to)
+                        if not ok:
+                            print(f"[WhatsApp] Failed to send multi sub-message ({msg.get('type')}) to {to}")
+                        prev_type = msg.get('type', 'text')
 
-        elif msg_type == 'document':
-            url = payload.get('url', '')
-            filename = payload.get('filename', 'document')
-            caption = payload.get('caption', '')
-            success = whatsapp_client.send_document(
-                wa_token=channel.wa_token,
-                phone_number_id=channel.phone_number_id,
-                to=to,
-                url=url,
-                filename=filename,
-                caption=caption or None,
-            )
-            save_kwargs.update({
-                'content': caption or filename,
-                'type': 'document',
-                'media_url': url,
-            })
+                threading.Thread(
+                    target=_send_remaining,
+                    args=(messages_list[1:], messages_list[0].get('type', 'text')),
+                    daemon=True,
+                ).start()
+            return
 
-        elif msg_type == 'buttons':
-            body = payload.get('body', '')
-            success = whatsapp_client.send_buttons(
-                wa_token=channel.wa_token,
-                phone_number_id=channel.phone_number_id,
-                to=to,
-                body=body,
-                buttons=payload.get('buttons', []),
-                footer=payload.get('footer'),
-            )
-            save_kwargs.update({'content': body, 'type': 'buttons'})
-
-        elif msg_type == 'list':
-            body = payload.get('body', '')
-            success = whatsapp_client.send_list(
-                wa_token=channel.wa_token,
-                phone_number_id=channel.phone_number_id,
-                to=to,
-                body=body,
-                button_label=payload.get('button_label', 'Ver opciones'),
-                sections=payload.get('sections', []),
-                footer=payload.get('footer'),
-            )
-            save_kwargs.update({'content': body, 'type': 'list'})
-
-        else:
-            # Unrecognised type — fall back to text with the raw JSON
-            raw = json.dumps(payload, ensure_ascii=False)
-            success = whatsapp_client.send_text(
-                wa_token=channel.wa_token,
-                phone_number_id=channel.phone_number_id,
-                to=to,
-                message=raw,
-            )
-            save_kwargs.update({'content': raw, 'type': 'text'})
-
-        save_kwargs['status'] = 'sent' if success else 'failed'
-
-        # For the very first assistant message we update the placeholder;
-        # additional messages in a 'multi' get their own DB rows.
-        if primary_msg_id and msg_type != 'multi':
-            whatsapp_repository.message_table.update_item(
-                Key={'id': primary_msg_id},
-                UpdateExpression='SET #status = :status',
-                ExpressionAttributeNames={'#status': 'status'},
-                ExpressionAttributeValues={':status': save_kwargs['status']},
-            )
-            primary_msg_id = None  # only update it once
-        else:
-            whatsapp_repository.save_message(save_kwargs)
-
+        # ── single message ─────────────────────────────────────────────────────
+        success = self._send_single(payload, channel, to)
         if not success:
             print(f"[WhatsApp] Failed to send {msg_type} message to {to}")
+
+        _CONTENT_FIELDS: dict[str, dict] = {
+            'text':     {'content': payload.get('body', ''), 'type': 'text'},
+            'image':    {'content': payload.get('caption', ''), 'type': 'image',    'media_url': payload.get('url', '')},
+            'document': {'content': payload.get('caption') or payload.get('filename', ''), 'type': 'document', 'media_url': payload.get('url', '')},
+            'buttons':  {'content': payload.get('body', ''), 'type': 'buttons'},
+            'list':     {'content': payload.get('body', ''), 'type': 'list'},
+        }
+        extra = _CONTENT_FIELDS.get(
+            msg_type,
+            {'content': json.dumps(payload, ensure_ascii=False), 'type': 'text'},
+        )
+        self._persist_result(
+            placeholder_id=placeholder_id,
+            success=success,
+            msg_type=msg_type,
+            session_id=session.id,
+            channel_id=channel_id,
+            **extra,
+        )
 
     # ── Inbox ─────────────────────────────────────────────────────────────────
 
