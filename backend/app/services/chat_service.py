@@ -57,7 +57,7 @@ class ChatService:
             if not conversation:
                 return None
             message_objects = conversation_repository.get_messages(
-                chat_id=chat_data.conversation_id,
+                conversation_id=chat_data.conversation_id,
                 limit=30
             )
             chat_data.agent_id = conversation.agent_id
@@ -65,15 +65,15 @@ class ChatService:
         if not chat_data.agent_id:
             return None
         
-        messages = []
-        for msg in message_objects:
-            message_dict = {
-                'role': msg.role,
-                'text': msg.content,
-            }
-            messages.append(message_dict)
-        messages = messages[::-1]
+        # get_messages returns chronological order (oldest first)
+        messages = [{'role': msg.role, 'text': msg.content} for msg in message_objects]
         messages.append(user_message)
+
+        if chat_data.conversation_id:
+            print(f"[ChatService] conversation_id={chat_data.conversation_id} history ({len(messages)} msgs):")
+            for i, m in enumerate(messages):
+                preview = m['text'][:120].replace('\n', ' ')
+                print(f"  [{i+1}] {m['role']}: {preview}")
 
         agent = AgentExecutor(agent_id=chat_data.agent_id)
         agent_response = agent.run(

@@ -552,6 +552,7 @@ TABLES = [
     # PK: id (S)
     # GSI channel_id-from_phone-index  →  channel_id (S) + from_phone (S)
     # GSI channel_id-last_message_at-index  →  channel_id (S) + last_message_at (N)
+    # GSI conversation_id-index  →  conversation_id (S)
     # ------------------------------------------------------------------
     {
         "TableName": TABLE_NAMES["whatsapp_session"],
@@ -563,6 +564,7 @@ TABLES = [
             {"AttributeName": "channel_id",      "AttributeType": "S"},
             {"AttributeName": "from_phone",      "AttributeType": "S"},
             {"AttributeName": "last_message_at", "AttributeType": "N"},
+            {"AttributeName": "conversation_id", "AttributeType": "S"},
         ],
         "GlobalSecondaryIndexes": [
             {
@@ -578,6 +580,13 @@ TABLES = [
                 "KeySchema": [
                     {"AttributeName": "channel_id",      "KeyType": "HASH"},
                     {"AttributeName": "last_message_at",  "KeyType": "RANGE"},
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+            },
+            {
+                "IndexName": "conversation_id-index",
+                "KeySchema": [
+                    {"AttributeName": "conversation_id", "KeyType": "HASH"},
                 ],
                 "Projection": {"ProjectionType": "ALL"},
             },

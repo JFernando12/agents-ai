@@ -43,14 +43,17 @@ class ConversationRepository(BaseDynamoDBRepository):
         self.message_table.put_item(Item=item)
     
     def get_messages(self, conversation_id: str, limit: int | None = 50) -> list[Message]:
-        response = self.message_table.query(
-            IndexName='conversation_id-index',
-            KeyConditionExpression='conversation_id = :cid',
-            ExpressionAttributeValues={':cid': conversation_id},
-            Limit=limit,
-            ScanIndexForward=False
-        )
-                
+        kwargs: dict = {
+            'IndexName': 'conversation_id-index',
+            'KeyConditionExpression': 'conversation_id = :cid',
+            'ExpressionAttributeValues': {':cid': conversation_id},
+        }
+        if limit:
+            kwargs['Limit'] = limit
+            kwargs['ScanIndexForward'] = False  # fetch most recent N first
+
+        response = self.message_table.query(**kwargs)
+
         messages = []
         for item in response['Items']:
             content = item.get('content') or item.get('text', '')
@@ -75,7 +78,9 @@ class ConversationRepository(BaseDynamoDBRepository):
                 
             )
             messages.append(message)
-        
+
+        # Always return in chronological order (oldest → newest)
+        messages.sort(key=lambda m: m.timestamp)
         return messages
     
     def create(

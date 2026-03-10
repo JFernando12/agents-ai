@@ -22,10 +22,20 @@ import ModalDelete from '@/components/ui/ModalDelete';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function toDate(value: string | number): Date {
+  if (typeof value === 'number') {
+    return new Date(value > 1e12 ? value : value * 1000);
+  }
+  // ISO string (e.g. "2026-03-09T12:30:00") or numeric string
+  const asNum = Number(value);
+  if (!isNaN(asNum)) {
+    return new Date(asNum > 1e12 ? asNum : asNum * 1000);
+  }
+  return new Date(value);
+}
+
 function formatDate(value: string | number): string {
-  const ms = typeof value === 'number' ? value : Number(value);
-  const d = new Date(ms > 1e12 ? ms : ms * 1000);
-  return d.toLocaleString('es-MX', {
+  return toDate(value).toLocaleString('es-MX', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -35,9 +45,10 @@ function formatDate(value: string | number): string {
 }
 
 function formatTime(value: string | number): string {
-  const ms = typeof value === 'number' ? value : Number(value);
-  const d = new Date(ms > 1e12 ? ms : ms * 1000);
-  return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  return toDate(value).toLocaleTimeString('es-MX', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 // ── Conversation row ──────────────────────────────────────────────────────────
@@ -122,9 +133,7 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
       {/* Avatar */}
       <div
         className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-          isUser
-            ? 'bg-indigo-600'
-            : 'bg-gray-100 dark:bg-white/[0.08]'
+          isUser ? 'bg-indigo-600' : 'bg-gray-100 dark:bg-white/[0.08]'
         }`}
       >
         {isUser ? (
@@ -135,7 +144,9 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
       </div>
 
       {/* Bubble */}
-      <div className={`max-w-[75%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+      <div
+        className={`max-w-[75%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}
+      >
         <div
           className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
             isUser
@@ -169,9 +180,15 @@ function MessageThread({
   agentName: string;
   onClose: () => void;
 }) {
-  const { data: messages, isLoading } = useConversationMessages(conversation.id);
+  const { data: messages, isLoading } = useConversationMessages(
+    conversation.id,
+  );
 
-  const sorted = messages ? [...messages].reverse() : [];
+  const sorted = messages
+    ? [...messages].sort(
+        (a, b) => toDate(a.timestamp).getTime() - toDate(b.timestamp).getTime(),
+      )
+    : [];
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

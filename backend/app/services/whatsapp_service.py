@@ -160,10 +160,14 @@ class WhatsAppService:
                 conversation_id=session.conversation_id,
                 limit=30,
             )
-            messages = []
-            for msg in reversed(history_msgs):
-                messages.append({'role': msg.role, 'text': msg.content})
+            # get_messages returns chronological order (oldest first)
+            messages = [{'role': msg.role, 'text': msg.content} for msg in history_msgs]
             messages.append({'role': 'user', 'text': message_text})
+
+            print(f"[WhatsAppService] conversation_id={session.conversation_id} from={from_phone} history ({len(messages)} msgs):")
+            for i, m in enumerate(messages):
+                preview = m['text'][:120].replace('\n', ' ')
+                print(f"  [{i+1}] {m['role']}: {preview}")
 
             executor = AgentExecutor(agent_id=channel.agent_id)
             agent_response = executor.run(
