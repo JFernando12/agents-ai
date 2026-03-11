@@ -17,7 +17,8 @@ class ToolsIntegration:
         self,
         tool_name: str,
         parameters: dict[str, Any],
-        tool_ids: list[str]
+        tool_ids: list[str],
+        whatsapp_context: dict[str, str] | None = None,
     ) -> ToolResult:
         try:
             # Look up tool config from DB using the agent's assigned tool IDs
@@ -35,6 +36,31 @@ class ToolsIntegration:
             method = tool_config.method.upper()
             url = tool_config.url
             headers = tool_config.headers or {}
+
+            # Resolve {param} templates in the URL from LLM-provided parameters.
+            # Parameters consumed here are stripped from the query string / body
+            # so the external system does not receive them twice.
+            remaining_params: dict[str, Any] = {}
+            for k, v in parameters.items():
+                if f"{{{k}}}" in url:
+                    url = url.replace(f"{{{k}}}", str(v))
+                else:
+                    remaining_params[k] = v
+            parameters = remaining_params
+
+            # Resolve WhatsApp context placeholders ({_session_id}, {_channel_id},
+            # {_from_phone}) in the URL and silently inject them into the body
+            # for POST / PUT / PATCH requests.
+            if whatsapp_context:
+                ctx = {
+                    "_session_id": whatsapp_context.get("session_id", ""),
+                    "_channel_id": whatsapp_context.get("channel_id", ""),
+                    "whatsapp_phone": whatsapp_context.get("from_phone", ""),
+                }
+                for placeholder, value in ctx.items():
+                    url = url.replace(f"{{{placeholder}}}", value)
+                if method in ("POST", "PUT", "PATCH"):
+                    parameters = {**parameters, **ctx}
 
             print(f"[TOOL EXECUTED] {tool_name} → {method} {url} | params: {parameters}")
 

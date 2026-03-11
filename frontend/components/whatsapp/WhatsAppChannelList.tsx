@@ -10,9 +10,17 @@ interface Props {
   onToggle: (id: string) => void;
   onEdit: (channel: WhatsAppChannel) => void;
   onDelete: (channel: WhatsAppChannel) => void;
+  onSetup: (channel: WhatsAppChannel) => void;
 }
 
-export default function WhatsAppChannelList({ channels, agents, onToggle, onEdit, onDelete }: Props) {
+export default function WhatsAppChannelList({
+  channels,
+  agents,
+  onToggle,
+  onEdit,
+  onDelete,
+  onSetup,
+}: Props) {
   const agentMap = Object.fromEntries(agents.map((a) => [a.id, a.name]));
 
   if (channels.length === 0) {
@@ -25,7 +33,8 @@ export default function WhatsAppChannelList({ channels, agents, onToggle, onEdit
           Sin canales de WhatsApp
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-500 max-w-xs">
-          Crea tu primer canal para conectar un número de WhatsApp Business con un agente.
+          Crea tu primer canal para conectar un número de WhatsApp Business con
+          un agente.
         </p>
       </div>
     );
@@ -41,6 +50,7 @@ export default function WhatsAppChannelList({ channels, agents, onToggle, onEdit
           onToggle={onToggle}
           onEdit={onEdit}
           onDelete={onDelete}
+          onSetup={onSetup}
         />
       ))}
     </div>

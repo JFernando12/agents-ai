@@ -8,6 +8,17 @@ from app.models import Agent, AgentCreate, AgentUpdate
 from app.models.agent import RAGConfig
 from .base_dynamodb_repository import BaseDynamoDBRepository
 
+
+def _floats_to_decimal(obj: Any) -> Any:
+    """Recursively convert float values to Decimal for DynamoDB compatibility."""
+    if isinstance(obj, float):
+        return Decimal(str(obj))
+    if isinstance(obj, dict):
+        return {k: _floats_to_decimal(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_floats_to_decimal(i) for i in obj]
+    return obj
+
 class AgentRepository(BaseDynamoDBRepository):
     def __init__(self):
         super().__init__()
@@ -219,11 +230,11 @@ class AgentRepository(BaseDynamoDBRepository):
         
         if agent_data.metadata is not None:
             update_expression_parts.append("metadata = :metadata")
-            expression_attribute_values[':metadata'] = agent_data.metadata
+            expression_attribute_values[':metadata'] = _floats_to_decimal(agent_data.metadata)
 
         if agent_data.rag_config is not None:
             update_expression_parts.append("rag_config = :rag_config")
-            expression_attribute_values[':rag_config'] = agent_data.rag_config.model_dump()
+            expression_attribute_values[':rag_config'] = _floats_to_decimal(agent_data.rag_config.model_dump())
 
         update_expression = "SET " + ", ".join(update_expression_parts)
         

@@ -385,9 +385,10 @@ export interface WhatsAppChannel {
   wa_token: string;
   app_secret?: string | null;
   verify_token: string;
+  webhook_secret?: string | null;
   is_active: boolean;
-  created_at: number;   // epoch ms
-  updated_at: number;   // epoch ms
+  created_at: number; // epoch ms
+  updated_at: number; // epoch ms
 }
 
 export interface WhatsAppChannelCreate {
@@ -397,6 +398,7 @@ export interface WhatsAppChannelCreate {
   wa_token: string;
   app_secret?: string | null;
   verify_token: string;
+  webhook_secret?: string | null;
 }
 
 export interface WhatsAppChannelUpdate {
@@ -416,10 +418,11 @@ export interface WhatsAppSession {
   contact_name?: string | null;
   conversation_id: string;
   agent_id: string;
-  status: 'active' | 'inactive';
-  last_message_at?: number | null;   // epoch ms
+  status: 'active' | 'human_handoff';
+  last_message_at?: number | null; // epoch ms
   last_message_preview?: string | null;
   unread_count: number;
+  labels: string[];
 }
 
 export type WhatsAppMessageStatus = 'received' | 'processing' | 'sent' | 'failed';
@@ -458,27 +461,3 @@ export interface WhatsAppMessagesResponse {
   next_key: Record<string, string> | null;
 }
 
-// ---------------------------------------------------------------------------
-// Products
-// ---------------------------------------------------------------------------
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  slug: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProductCreate {
-  name: string;
-  description?: string | null;
-  slug: string;
-}
-
-export interface ProductUpdate {
-  name?: string | null;
-  description?: string | null;
-  slug?: string | null;
-}

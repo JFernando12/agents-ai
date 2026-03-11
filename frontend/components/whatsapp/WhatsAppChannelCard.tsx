@@ -2,7 +2,15 @@
 
 import Link from 'next/link';
 import { WhatsAppChannel } from '@/types';
-import { Bot, Phone, Power, Pencil, Trash2, ChevronRight } from 'lucide-react';
+import {
+  Bot,
+  Phone,
+  Power,
+  Pencil,
+  Trash2,
+  ChevronRight,
+  Info,
+} from 'lucide-react';
 
 interface Props {
   channel: WhatsAppChannel;
@@ -10,9 +18,17 @@ interface Props {
   onToggle: (id: string) => void;
   onEdit: (channel: WhatsAppChannel) => void;
   onDelete: (channel: WhatsAppChannel) => void;
+  onSetup: (channel: WhatsAppChannel) => void;
 }
 
-export default function WhatsAppChannelCard({ channel, agentName, onToggle, onEdit, onDelete }: Props) {
+export default function WhatsAppChannelCard({
+  channel,
+  agentName,
+  onToggle,
+  onEdit,
+  onDelete,
+  onSetup,
+}: Props) {
   return (
     <div className="bg-white dark:bg-[#18181B] border border-gray-200 dark:border-white/[0.08] rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-white/[0.14] transition-colors">
       {/* Card header: status indicator */}
@@ -24,7 +40,9 @@ export default function WhatsAppChannelCard({ channel, agentName, onToggle, onEd
             </svg>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{channel.name}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {channel.name}
+            </p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <Phone className="w-3 h-3 text-gray-400" />
               <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -40,7 +58,9 @@ export default function WhatsAppChannelCard({ channel, agentName, onToggle, onEd
               : 'bg-gray-100 text-gray-500 dark:bg-white/[0.05] dark:text-gray-500'
           }`}
         >
-          <span className={`w-1.5 h-1.5 rounded-full ${channel.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${channel.is_active ? 'bg-emerald-500' : 'bg-gray-400'}`}
+          />
           {channel.is_active ? 'Activo' : 'Inactivo'}
         </span>
       </div>
@@ -49,7 +69,9 @@ export default function WhatsAppChannelCard({ channel, agentName, onToggle, onEd
       {agentName && (
         <div className="px-4 pb-3 flex items-center gap-2">
           <Bot className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
-          <span className="text-xs text-gray-600 dark:text-gray-400 truncate">{agentName}</span>
+          <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+            {agentName}
+          </span>
         </div>
       )}
 
@@ -62,6 +84,13 @@ export default function WhatsAppChannelCard({ channel, agentName, onToggle, onEd
             className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
           >
             <Power className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => onSetup(channel)}
+            title="Ver configuración"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+          >
+            <Info className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onEdit(channel)}

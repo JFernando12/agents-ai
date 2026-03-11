@@ -12,6 +12,7 @@ class WhatsAppChannel(BaseModel):
     wa_token: str
     app_secret: Optional[str] = None
     verify_token: str
+    webhook_secret: Optional[str] = None
     is_active: bool = True
     created_at: datetime
     updated_at: datetime
@@ -24,6 +25,7 @@ class WhatsAppChannelCreate(BaseModel):
     wa_token: str
     app_secret: Optional[str] = None
     verify_token: str
+    webhook_secret: Optional[str] = None
 
 
 class WhatsAppChannelUpdate(BaseModel):
@@ -33,6 +35,7 @@ class WhatsAppChannelUpdate(BaseModel):
     wa_token: Optional[str] = None
     app_secret: Optional[str] = None
     verify_token: Optional[str] = None
+    webhook_secret: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -47,6 +50,7 @@ class WhatsAppSession(BaseModel):
     last_message_at: Optional[int] = None   # epoch ms
     last_message_preview: Optional[str] = None
     unread_count: int = 0
+    labels: list[str] = []
 
 
 class WhatsAppMessage(BaseModel):
@@ -113,3 +117,10 @@ class WebhookEntry(BaseModel):
 class IncomingWebhookPayload(BaseModel):
     object: str
     entry: list[WebhookEntry]
+
+
+class AsyncWebhookPayload(BaseModel):
+    status: str  # "ready" | "failed"
+    message_to_client: Optional[Any] = None
+    context_for_agent: Optional[dict] = None
+    error_message: Optional[str] = None

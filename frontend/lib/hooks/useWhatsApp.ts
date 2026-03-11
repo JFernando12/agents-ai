@@ -119,3 +119,16 @@ export const useDeleteWhatsAppSession = () => {
     },
   });
 };
+
+// ── Toggle agent on/off for a session ────────────────────────────────────────
+
+export const useToggleWhatsAppSession = (sessionId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => whatsappApi.toggleSessionAgent(sessionId),
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: ['whatsapp-session', sessionId] });
+      qc.invalidateQueries({ queryKey: ['whatsapp-sessions', updated.channel_id] });
+    },
+  });
+};

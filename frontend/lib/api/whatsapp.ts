@@ -91,6 +91,11 @@ class WhatsAppApiService extends ApiService {
     const res = await this.api.delete(`/whatsapp/sessions/${sessionId}`);
     return res.data.data;
   };
+
+  toggleSessionAgent = async (sessionId: string): Promise<WhatsAppSession> => {
+    const res = await this.api.post(`/whatsapp/sessions/${sessionId}/toggle`);
+    return res.data.data;
+  };
 }
 
 export const whatsappApi = new WhatsAppApiService();

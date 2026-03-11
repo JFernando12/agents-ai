@@ -3,11 +3,12 @@
 import { use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, User, Trash2 } from 'lucide-react';
+import { ArrowLeft, User, Trash2, Bot, BotOff } from 'lucide-react';
 import {
   useWhatsAppMessages,
   useSendWhatsAppMessage,
   useDeleteWhatsAppSession,
+  useToggleWhatsAppSession,
 } from '@/lib/hooks/useWhatsApp';
 import { useQuery } from '@tanstack/react-query';
 import { whatsappApi } from '@/lib/api/whatsapp';
@@ -34,6 +35,9 @@ export default function WhatsAppConversationPage({ params }: Props) {
 
   const { data: messages = [], isLoading } = useWhatsAppMessages(sessionId);
   const sendMessage = useSendWhatsAppMessage(sessionId);
+  const toggleAgent = useToggleWhatsAppSession(sessionId);
+
+  const isAgentActive = session?.status === 'active';
 
   const handleDelete = () => {
     const name =
@@ -75,6 +79,25 @@ export default function WhatsAppConversationPage({ params }: Props) {
               </p>
             )}
           </div>
+
+          {/* Agent status + toggle */}
+          <button
+            onClick={() => toggleAgent.mutate()}
+            disabled={toggleAgent.isPending}
+            title={isAgentActive ? 'Desactivar agente' : 'Activar agente'}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+              isAgentActive
+                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20'
+                : 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:hover:bg-amber-500/20'
+            }`}
+          >
+            {isAgentActive ? (
+              <Bot className="w-3.5 h-3.5" />
+            ) : (
+              <BotOff className="w-3.5 h-3.5" />
+            )}
+            {isAgentActive ? 'Activo' : 'Desactivado'}
+          </button>
 
           {/* Processing indicator */}
           {messages.some((m) => m.status === 'processing') && (

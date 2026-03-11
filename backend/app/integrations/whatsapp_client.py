@@ -169,5 +169,26 @@ class WhatsAppClient:
         ).hexdigest()
         return hmac.compare_digest(expected_sig, received_sig)
 
+    def download_media(self, media_id: str, wa_token: str) -> tuple[bytes, str]:
+        """Download media from the Meta Graph API.
+
+        Returns (raw_bytes, mime_type). The ``media_id`` is resolved to a
+        temporary download URL in the first request; the actual bytes are
+        fetched in the second request.
+        """
+        headers = {"Authorization": f"Bearer {wa_token}"}
+        # Step 1 – resolve the temporary URL
+        info_resp = requests.get(f"{GRAPH_API_URL}/{media_id}", headers=headers, timeout=15)
+        info_resp.raise_for_status()
+        info = info_resp.json()
+        media_url = info.get("url")
+        mime_type = info.get("mime_type", "image/jpeg")
+        if not media_url:
+            raise ValueError(f"Meta Graph API returned no URL for media_id={media_id}")
+        # Step 2 – download the bytes
+        media_resp = requests.get(media_url, headers=headers, timeout=30)
+        media_resp.raise_for_status()
+        return media_resp.content, mime_type
+
 
 whatsapp_client = WhatsAppClient()

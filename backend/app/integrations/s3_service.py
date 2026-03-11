@@ -87,4 +87,14 @@ class S3Service:
             logging.error(f"Error deleting objects with prefix {prefix}: {str(e)}")
             raise Exception(f"Failed to delete objects with prefix {prefix}: {str(e)}")
 
+    def upload_bytes(self, content: bytes, key: str, content_type: str = "image/jpeg") -> str:
+        """Upload raw bytes to S3 and return the public HTTPS URL."""
+        self.s3_client.put_object(
+            Bucket=self.bucket_name,
+            Key=key,
+            Body=content,
+            ContentType=content_type,
+        )
+        return f"https://{self.bucket_name}.s3.amazonaws.com/{key}"
+
 s3_service = S3Service()

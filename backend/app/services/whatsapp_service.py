@@ -19,6 +19,7 @@ from app.repositories.whatsapp_repository import whatsapp_repository
 from app.services.conversation_service import conversation_service
 from app.integrations.agent_executor import AgentExecutor
 from app.integrations.whatsapp_client import whatsapp_client
+from app.integrations.s3_service import s3_service
 from app.repositories.conversation_repository import conversation_repository
 
 
@@ -78,6 +79,8 @@ class WhatsAppService:
         contact_name: Optional[str],
         message_text: str,
         wa_message_id: str,
+        media_id: Optional[str] = None,
+        caption: Optional[str] = None,
     ) -> None:
         """
         Full pipeline for an incoming WhatsApp message:
@@ -123,6 +126,74 @@ class WhatsAppService:
                 agent_id=channel.agent_id,
             )
 
+        # Handle image message: download from Meta, upload to S3
+        msg_save_type = 'text'
+        msg_save_media_url: Optional[str] = None
+        if media_id:
+            try:
+                image_bytes, mime_type = whatsapp_client.download_media(media_id, channel.wa_token)
+                ext = mime_type.split("/", 1)[-1].split(";")[0].strip() or "jpg"
+                s3_key = f"whatsapp/media/{channel_id}/{wa_message_id}.{ext}"
+                s3_url = s3_service.upload_bytes(image_bytes, s3_key, mime_type)
+            except Exception as _img_err:
+                print(f"[WhatsApp] Image download/upload failed for {media_id}: {_img_err}")
+                return
+
+            if session.status == "human_handoff":
+                # Image received while handoff is active — save and confirm receipt
+                now_ms = int(datetime.now().timestamp() * 1000)
+                whatsapp_repository.save_message({
+                    'session_id': session.id,
+                    'channel_id': channel_id,
+                    'wa_message_id': wa_message_id,
+                    'role': 'user',
+                    'content': caption or '[imagen]',
+                    'type': 'image',
+                    'media_url': s3_url,
+                    'status': 'received',
+                    'sent_by': 'user',
+                })
+                whatsapp_repository.add_labels_to_session(session.id, ["comprobante_recibido"])
+                whatsapp_repository.update_session(session.id, {
+                    'last_message_at': now_ms,
+                    'last_message_preview': caption or '[imagen]',
+                    'unread_count': int(session.unread_count or 0) + 1,
+                })
+                whatsapp_client.send_text(
+                    wa_token=channel.wa_token,
+                    phone_number_id=channel.phone_number_id,
+                    to=from_phone,
+                    message="Recibimos tu imagen 📋 Un agente la revisará en breve.",
+                )
+                return
+
+            # Normal session: expose S3 URL to the agent
+            message_text = f"[Cliente envió imagen: {s3_url}]"
+            if caption:
+                message_text += f' (caption: "{caption}")'
+            msg_save_type = 'image'
+            msg_save_media_url = s3_url
+
+        # Skip agent for any message (text or image) in a human_handoff session
+        if session.status == "human_handoff":
+            now_ms = int(datetime.now().timestamp() * 1000)
+            whatsapp_repository.save_message({
+                'session_id': session.id,
+                'channel_id': channel_id,
+                'wa_message_id': wa_message_id,
+                'role': 'user',
+                'content': message_text,
+                'type': 'text',
+                'status': 'received',
+                'sent_by': 'user',
+            })
+            whatsapp_repository.update_session(session.id, {
+                'last_message_at': now_ms,
+                'last_message_preview': message_text[:80],
+                'unread_count': int(session.unread_count or 0) + 1,
+            })
+            return
+
         now = int(datetime.now().timestamp() * 1000)
         # Capture user timestamp NOW, before the agent runs, so it is
         # always strictly earlier than the assistant timestamp.
@@ -135,8 +206,9 @@ class WhatsAppService:
             'channel_id': channel_id,
             'wa_message_id': wa_message_id,
             'role': 'user',
-            'content': message_text,
-            'type': 'text',
+            'content': (caption or '[imagen]') if msg_save_type == 'image' else message_text,
+            'type': msg_save_type,
+            'media_url': msg_save_media_url,
             'status': 'received',
             'sent_by': 'user',
         })
@@ -181,6 +253,11 @@ class WhatsAppService:
                 context=None,
                 account_id=channel.account_id,
                 whatsapp_mode=True,
+                whatsapp_context={
+                    "session_id": session.id,
+                    "channel_id": channel_id,
+                    "from_phone": from_phone,
+                },
             )
             answer = agent_response.response
 
@@ -573,6 +650,120 @@ class WhatsAppService:
             total_sessions=total_sessions,
             active_sessions=active_sessions,
         )
+
+    # ── Async webhook (called by external systems after long operations) ──────
+
+    def process_async_webhook(
+        self,
+        channel_id: str,
+        session_id: str,
+        payload: dict,
+    ) -> None:
+        """Handle a callback from an external system (e.g. design generation done).
+
+        Payload schema::
+
+            {
+              "status": "ready" | "failed",
+              "message_to_client": <str or WA canonical payload>,
+              "context_for_agent": { ... },   # injected into conversation history
+              "error_message": "..."           # only when status == "failed"
+            }
+        """
+        session = whatsapp_repository.get_session(session_id)
+        if not session:
+            print(f"[WhatsApp] async_webhook: session {session_id} not found")
+            return
+        channel = whatsapp_repository.get_channel(channel_id)
+        if not channel:
+            print(f"[WhatsApp] async_webhook: channel {channel_id} not found")
+            return
+
+        status = payload.get("status", "ready")
+        now = int(datetime.now().timestamp() * 1000)
+
+        if status == "ready":
+            message_to_client = payload.get("message_to_client")
+            context_for_agent = payload.get("context_for_agent")
+            if not message_to_client:
+                print(f"[WhatsApp] async_webhook: missing message_to_client in payload")
+                return
+
+            wa_payload = (
+                {"type": "text", "body": message_to_client}
+                if isinstance(message_to_client, str)
+                else message_to_client
+            )
+            history_text = self._extract_text_for_history(wa_payload) or str(message_to_client)
+
+            # Send to client and save outbound message record
+            self._dispatch_wa_message(wa_payload, channel, session.from_phone, session, channel_id)
+
+            whatsapp_repository.update_session(session_id, {
+                "last_message_at": now,
+                "last_message_preview": history_text[:80],
+            })
+
+            # Mirror to unified conversation history
+            from app.models.conversation import Message
+            conversation_repository.save_message(
+                session.conversation_id,
+                Message(role="assistant", content=history_text, timestamp=datetime.now()),
+            )
+
+            # Inject context so the agent has it on the client's next message
+            if context_for_agent:
+                conversation_repository.save_message(
+                    session.conversation_id,
+                    Message(
+                        role="assistant",
+                        content=f"[tool_result] {json.dumps(context_for_agent, ensure_ascii=False)}",
+                        timestamp=datetime.now(),
+                    ),
+                )
+
+        elif status == "failed":
+            error_message = payload.get(
+                "error_message",
+                "Hubo un problema con tu solicitud. Nuestro equipo te contactar\u00e1 pronto \ud83d\ude4f",
+            )
+            whatsapp_client.send_text(
+                wa_token=channel.wa_token,
+                phone_number_id=channel.phone_number_id,
+                to=session.from_phone,
+                message=error_message,
+            )
+            whatsapp_repository.save_message({
+                "session_id": session_id,
+                "channel_id": channel_id,
+                "role": "assistant",
+                "content": error_message,
+                "type": "text",
+                "status": "sent",
+                "sent_by": "agent",
+            })
+            whatsapp_repository.update_session(session_id, {
+                "status": "human_handoff",
+                "last_message_at": now,
+            })
+            whatsapp_repository.add_labels_to_session(session_id, ["pendiente_revision"])
+        else:
+            print(f"[WhatsApp] async_webhook: unknown status '{status}'")
+
+    # ── Human handoff admin actions ───────────────────────────────────────────
+
+    def toggle_session_agent(self, session_id: str) -> Optional[WhatsAppSession]:
+        """Toggle agent active/inactive for a session."""
+        session = whatsapp_repository.get_session(session_id)
+        if not session:
+            return None
+        if session.status == "active":
+            whatsapp_repository.update_session(session_id, {"status": "human_handoff"})
+            whatsapp_repository.add_labels_to_session(session_id, ["pendiente_revision"])
+        else:
+            updated_labels = [l for l in (session.labels or []) if l != "pendiente_revision"]
+            whatsapp_repository.update_session(session_id, {"status": "active", "labels": updated_labels})
+        return whatsapp_repository.get_session(session_id)
 
 
 whatsapp_service = WhatsAppService()

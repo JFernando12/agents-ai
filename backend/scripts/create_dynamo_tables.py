@@ -16,7 +16,6 @@ Optional overrides for table names (defaults shown):
     UNANSWERED_TABLE=ai-unanswered
     UNANSWERED_COMMENT_TABLE=ai-unanswered-comment
     TOOL_TABLE=ai-tool
-    PRODUCT_TABLE=ai-product
 """
 
 import os
@@ -44,7 +43,6 @@ TABLE_NAMES = {
     "unanswered":          os.getenv("UNANSWERED_TABLE",         "ai-unanswered"),
     "unanswered_comment":  os.getenv("UNANSWERED_COMMENT_TABLE", "ai-unanswered-comment"),
     "tool":                os.getenv("TOOL_TABLE",               "ai-tool"),
-    "product":             os.getenv("PRODUCT_TABLE",            "ai-product"),
     "account":             os.getenv("ACCOUNT_TABLE",            "ai-account"),
     "user":                os.getenv("USER_TABLE",               "ai-user"),
     "execution_trace":     os.getenv("EXECUTION_TRACE_TABLE",    "ai-execution-trace"),
@@ -297,8 +295,7 @@ TABLES = [
     # ------------------------------------------------------------------
     # ai-tool  (tools / API integrations)
     # PK: id (S)
-    # GSI all_tools-index   →  all_tools (S)
-    # GSI product_id-index  →  product_id (S)
+    # GSI all_tools-index  →  all_tools (S)
     # ------------------------------------------------------------------
     {
         "TableName": TABLE_NAMES["tool"],
@@ -306,48 +303,14 @@ TABLES = [
             {"AttributeName": "id", "KeyType": "HASH"},
         ],
         "AttributeDefinitions": [
-            {"AttributeName": "id",         "AttributeType": "S"},
-            {"AttributeName": "all_tools",  "AttributeType": "S"},
-            {"AttributeName": "product_id", "AttributeType": "S"},
+            {"AttributeName": "id",        "AttributeType": "S"},
+            {"AttributeName": "all_tools", "AttributeType": "S"},
         ],
         "GlobalSecondaryIndexes": [
             {
                 "IndexName": "all_tools-index",
                 "KeySchema": [
                     {"AttributeName": "all_tools", "KeyType": "HASH"},
-                ],
-                "Projection": {"ProjectionType": "ALL"},
-            },
-            {
-                "IndexName": "product_id-index",
-                "KeySchema": [
-                    {"AttributeName": "product_id", "KeyType": "HASH"},
-                ],
-                "Projection": {"ProjectionType": "ALL"},
-            },
-        ],
-        "BillingMode": BILLING_MODE,
-    },
-
-    # ------------------------------------------------------------------
-    # ai-product  (products)
-    # PK: id (S)
-    # GSI slug-index  →  slug (S)
-    # ------------------------------------------------------------------
-    {
-        "TableName": TABLE_NAMES["product"],
-        "KeySchema": [
-            {"AttributeName": "id", "KeyType": "HASH"},
-        ],
-        "AttributeDefinitions": [
-            {"AttributeName": "id",   "AttributeType": "S"},
-            {"AttributeName": "slug", "AttributeType": "S"},
-        ],
-        "GlobalSecondaryIndexes": [
-            {
-                "IndexName": "slug-index",
-                "KeySchema": [
-                    {"AttributeName": "slug", "KeyType": "HASH"},
                 ],
                 "Projection": {"ProjectionType": "ALL"},
             },

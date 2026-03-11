@@ -8,6 +8,7 @@ from app.models.whatsapp import (
     WhatsAppChannelCreate,
     WhatsAppChannelUpdate,
     ManualSendRequest,
+    AsyncWebhookPayload,
 )
 from app.services.whatsapp_service import whatsapp_service
 from app.integrations.whatsapp_client import whatsapp_client
@@ -89,6 +90,8 @@ async def receive_webhook(
 
                     if msg_type == "text":
                         message_text = msg.get("text", {}).get("body", "")
+                        media_id = None
+                        caption = None
                     elif msg_type == "interactive":
                         interactive = msg.get("interactive", {})
                         interactive_type = interactive.get("type", "")
@@ -101,12 +104,23 @@ async def receive_webhook(
                         else:
                             print(f"[WhatsApp] Unsupported interactive subtype: {interactive_type}")
                             continue
+                        media_id = None
+                        caption = None
+                    elif msg_type == "image":
+                        image_data = msg.get("image", {})
+                        media_id = image_data.get("id")
+                        caption = image_data.get("caption", "") or None
+                        message_text = ""
+                        if not media_id:
+                            continue
                     else:
                         # Non-text types: acknowledge but don't process
                         print(f"[WhatsApp] Unsupported message type: {msg_type}")
                         continue
 
-                    if not message_text or not from_phone:
+                    if not from_phone:
+                        continue
+                    if not message_text and not media_id:
                         continue
 
                     background_tasks.add_task(
@@ -116,6 +130,8 @@ async def receive_webhook(
                         contact_name=contact_name,
                         message_text=message_text,
                         wa_message_id=wa_message_id,
+                        media_id=media_id,
+                        caption=caption,
                     )
     except Exception as e:
         print(f"[WhatsApp] Webhook parse error: {e}")
@@ -311,3 +327,65 @@ def delete_session(
             "Session deleted successfully",
         ),
     )
+
+
+@whatsapp_router.post("/sessions/{session_id}/toggle")
+def toggle_session_agent(
+    session_id: str,
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin", "editor")),
+):
+    """Toggle the agent on/off for a session.
+    active → human_handoff (agent disabled, label 'pendiente_revision' added)
+    human_handoff → active (agent re-enabled, label removed)
+    """
+    session = whatsapp_service.get_session(session_id)
+    if not session:
+        return JSONResponse(status_code=404, content=error_response("Session not found"))
+    channel = whatsapp_service.get_channel(session.channel_id)
+    if not channel or channel.account_id != current_user.account_id:
+        return JSONResponse(status_code=403, content=error_response("Access denied"))
+    updated = whatsapp_service.toggle_session_agent(session_id)
+    return JSONResponse(
+        status_code=200,
+        content=success_response(
+            updated.model_dump(mode="json") if updated else None,
+            "Agent toggled",
+        ),
+    )
+
+
+# ── Generic async webhook (for external system callbacks) ────────────────────
+
+@whatsapp_router.post("/webhooks/async/{channel_id}/{session_id}")
+async def async_tool_webhook(
+    channel_id: str,
+    session_id: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    x_webhook_secret: Optional[str] = Header(default=None, alias="X-Webhook-Secret"),
+):
+    """Generic callback endpoint for async tool operations (e.g. design generation).
+
+    External systems call this endpoint when a long-running operation finishes.
+    Authentication is via the ``X-Webhook-Secret`` header matched against the
+    ``webhook_secret`` stored on the WhatsApp channel.
+    """
+    channel = whatsapp_service.get_channel(channel_id)
+    if not channel:
+        return JSONResponse(status_code=404, content={"detail": "Channel not found"})
+
+    if channel.webhook_secret and x_webhook_secret != channel.webhook_secret:
+        return JSONResponse(status_code=403, content={"detail": "Invalid webhook secret"})
+
+    try:
+        payload = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"detail": "Invalid JSON"})
+
+    background_tasks.add_task(
+        whatsapp_service.process_async_webhook,
+        channel_id=channel_id,
+        session_id=session_id,
+        payload=payload,
+    )
+    return JSONResponse(status_code=200, content={"status": "accepted"})

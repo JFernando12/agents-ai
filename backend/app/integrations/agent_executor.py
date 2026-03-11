@@ -216,6 +216,7 @@ class AgentExecutor:
         iteration: int,
         rag_config: RAGConfig | None = None,
         conversation_id: str | None = None,
+        whatsapp_context: dict | None = None,
     ) -> tuple[dict, ToolCallTrace]:
         print(f"[BEDROCK] Iteration {iteration}: Executing tool: {tool_name} with input: {tool_input}")
 
@@ -255,8 +256,33 @@ class AgentExecutor:
                 message=tool_input.get("message", ""),
                 user=user,
             )
+        elif tool_name == "trigger_human_handoff":
+            if not whatsapp_context:
+                result = ToolResult(
+                    tool_name=tool_name,
+                    success=False,
+                    result=None,
+                    error="trigger_human_handoff requires a WhatsApp session context",
+                )
+            else:
+                from app.repositories.whatsapp_repository import whatsapp_repository as _wa_repo
+                _session_id = whatsapp_context.get("session_id", "")
+                _wa_repo.update_session(_session_id, {"status": "human_handoff"})
+                _wa_repo.add_labels_to_session(_session_id, ["pendiente_revision"])
+                print(f"[HANDOFF] session={_session_id} activated")
+                result = ToolResult(
+                    tool_name=tool_name,
+                    success=True,
+                    result={"handoff": True, "session_id": _session_id},
+                    error=None,
+                )
         else:
-            result = tools_integration.execute_tool(tool_name, tool_input, enabled_tool_ids)
+            result = tools_integration.execute_tool(
+                tool_name,
+                tool_input,
+                enabled_tool_ids,
+                whatsapp_context=whatsapp_context,
+            )
 
         # Serialize output for trace (convert dicts to JSON string)
         if result.result is None:
@@ -303,6 +329,7 @@ class AgentExecutor:
         user: str | None,
         rag_config: RAGConfig | None = None,
         conversation_id: str | None = None,
+        whatsapp_context: dict | None = None,
     ) -> tuple[dict, list, list[ToolCallTrace], int]:
         max_iterations = 5
         iteration = 0
@@ -337,6 +364,7 @@ class AgentExecutor:
                     iteration=iteration,
                     rag_config=rag_config,
                     conversation_id=conversation_id,
+                    whatsapp_context=whatsapp_context,
                 )
                 for b in tool_use_blocks
             ]
@@ -393,6 +421,7 @@ class AgentExecutor:
         account_id: str = "default",
         conversation_id: str | None = None,
         whatsapp_mode: bool = False,
+        whatsapp_context: dict | None = None,
     ) -> AgentResponse:
         start_time = time.monotonic()
         agent_config = self._load_agent_config()
@@ -444,6 +473,7 @@ class AgentExecutor:
             user=user,
             rag_config=rag_config,
             conversation_id=conversation_id,
+            whatsapp_context=whatsapp_context,
         )
         final_answer = self._extract_final_answer(final_response, tool_results)
         duration_ms = int((time.monotonic() - start_time) * 1000)

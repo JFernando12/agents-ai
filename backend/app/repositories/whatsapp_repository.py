@@ -307,6 +307,7 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             wa_token=item['wa_token'],
             app_secret=item.get('app_secret'),
             verify_token=item['verify_token'],
+            webhook_secret=item.get('webhook_secret'),
             is_active=bool(item.get('is_active', 1)),
             created_at=item['created_at'],
             updated_at=item['updated_at'],
@@ -325,6 +326,7 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             last_message_at=item.get('last_message_at'),
             last_message_preview=item.get('last_message_preview'),
             unread_count=int(item.get('unread_count', 0)),
+            labels=list(item.get('labels') or []),
         )
 
     @staticmethod
@@ -342,6 +344,16 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             sent_by=item.get('sent_by', 'agent'),
             error_detail=item.get('error_detail'),
             created_at=item['created_at'],
+        )
+
+
+    def add_labels_to_session(self, session_id: str, labels: list[str]) -> None:
+        """Append labels to a session, ignoring duplicates (atomic via list_append)."""
+        self.session_table.update_item(
+            Key={'id': session_id},
+            UpdateExpression='SET #labels = list_append(if_not_exists(#labels, :empty), :new)',
+            ExpressionAttributeNames={'#labels': 'labels'},
+            ExpressionAttributeValues={':empty': [], ':new': labels},
         )
 
 

@@ -3,11 +3,7 @@ import { UserRole } from './user';
 // Permission definitions per role (additive from viewer up)
 // Hierarchy: super_admin > owner > admin > editor > viewer
 const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  viewer: [
-    'view_agents',
-    'chat',
-    'view_conversations',
-  ],
+  viewer: ['view_agents', 'chat', 'view_conversations'],
   editor: [
     'view_agents',
     'chat',
@@ -15,7 +11,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'create_agents',
     'edit_agents',
     'view_tools',
-    'view_products',
   ],
   admin: [
     'view_agents',
@@ -28,10 +23,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'create_tools',
     'edit_tools',
     'delete_tools',
-    'view_products',
-    'create_products',
-    'edit_products',
-    'delete_products',
     'view_users',
     'create_users',
     'edit_users',
@@ -51,10 +42,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'create_tools',
     'edit_tools',
     'delete_tools',
-    'view_products',
-    'create_products',
-    'edit_products',
-    'delete_products',
     'view_users',
     'create_users',
     'edit_users',
@@ -75,10 +62,6 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'create_tools',
     'edit_tools',
     'delete_tools',
-    'view_products',
-    'create_products',
-    'edit_products',
-    'delete_products',
     'view_users',
     'create_users',
     'edit_users',

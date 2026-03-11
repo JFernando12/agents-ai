@@ -35,7 +35,6 @@ ALL_TABLES = [
     os.getenv("UNANSWERED_TABLE",         "ai-unanswered"),
     os.getenv("UNANSWERED_COMMENT_TABLE", "ai-unanswered-comment"),
     os.getenv("TOOL_TABLE",               "ai-tool"),
-    os.getenv("PRODUCT_TABLE",            "ai-product"),
     os.getenv("ACCOUNT_TABLE",            "ai-account"),
     os.getenv("USER_TABLE",               "ai-user"),
 ]
