@@ -18,7 +18,6 @@ class ToolsIntegration:
         tool_name: str,
         parameters: dict[str, Any],
         tool_ids: list[str],
-        whatsapp_context: dict[str, str] | None = None,
     ) -> ToolResult:
         try:
             # Look up tool config from DB using the agent's assigned tool IDs
@@ -47,20 +46,6 @@ class ToolsIntegration:
                 else:
                     remaining_params[k] = v
             parameters = remaining_params
-
-            # Resolve WhatsApp context placeholders ({_session_id}, {_channel_id},
-            # {_from_phone}) in the URL and silently inject them into the body
-            # for POST / PUT / PATCH requests.
-            if whatsapp_context:
-                ctx = {
-                    "_session_id": whatsapp_context.get("session_id", ""),
-                    "_channel_id": whatsapp_context.get("channel_id", ""),
-                    "whatsapp_phone": whatsapp_context.get("from_phone", ""),
-                }
-                for placeholder, value in ctx.items():
-                    url = url.replace(f"{{{placeholder}}}", value)
-                if method in ("POST", "PUT", "PATCH"):
-                    parameters = {**parameters, **ctx}
 
             print(f"[TOOL EXECUTED] {tool_name} → {method} {url} | params: {parameters}")
 

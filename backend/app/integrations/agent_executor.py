@@ -78,13 +78,29 @@ class AgentExecutor:
     # Prompt / message builders
     # -------------------------------------------------------------------------
 
-    def _build_system_prompt(self, system_prompt: str, context: dict | None, whatsapp_enabled: bool = False) -> str:
+    def _build_system_prompt(
+        self,
+        system_prompt: str,
+        context: dict | None,
+        whatsapp_enabled: bool = False,
+        whatsapp_context: dict | None = None,
+    ) -> str:
         parts = []
         if system_prompt:
             parts.append(system_prompt)
         if context:
             context_lines = "\n".join(f"- {k}: {v}" for k, v in context.items())
             parts.append(f"### Contexto adicional\n\n{context_lines}")
+        if whatsapp_enabled and whatsapp_context:
+            wa_section = (
+                "## Datos de sesión\n\n"
+                "Usa estos valores en todas las tools que los requieran. "
+                "No se los pidas al cliente, ya los tienes aquí:\n\n"
+                f"- `whatsapp_phone`: `{whatsapp_context.get('from_phone', '')}`\n"
+                f"- `_session_id`: `{whatsapp_context.get('session_id', '')}`\n"
+                f"- `_channel_id`: `{whatsapp_context.get('channel_id', '')}`"
+            )
+            parts.append(wa_section)
         if whatsapp_enabled:
             parts.append(WA_JSON_SYSTEM_SUFFIX)
         return "\n\n".join(parts)
@@ -281,7 +297,6 @@ class AgentExecutor:
                 tool_name,
                 tool_input,
                 enabled_tool_ids,
-                whatsapp_context=whatsapp_context,
             )
 
         # Serialize output for trace (convert dicts to JSON string)
@@ -445,7 +460,9 @@ class AgentExecutor:
         rag_eval_records: list = []
 
         model_id = self._resolve_model_id(model)
-        full_system_prompt = self._build_system_prompt(system_prompt, context, whatsapp_enabled=whatsapp_enabled)
+        full_system_prompt = self._build_system_prompt(
+            system_prompt, context, whatsapp_enabled=whatsapp_enabled, whatsapp_context=whatsapp_context
+        )
         converse_messages = self._build_converse_messages(messages, attached_text)
         tool_specs, sub_agent_name_to_id = self._build_tool_specs(
             enabled_tool_ids, enabled_sub_agent_ids
