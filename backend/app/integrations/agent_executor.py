@@ -97,8 +97,8 @@ class AgentExecutor:
                 "Usa estos valores en todas las tools que los requieran. "
                 "No se los pidas al cliente, ya los tienes aquí:\n\n"
                 f"- `whatsapp_phone`: `{whatsapp_context.get('from_phone', '')}`\n"
-                f"- `_session_id`: `{whatsapp_context.get('session_id', '')}`\n"
-                f"- `_channel_id`: `{whatsapp_context.get('channel_id', '')}`"
+                f"- `session_id`: `{whatsapp_context.get('session_id', '')}`\n"
+                f"- `channel_id`: `{whatsapp_context.get('channel_id', '')}`"
             )
             parts.append(wa_section)
         if whatsapp_enabled:
