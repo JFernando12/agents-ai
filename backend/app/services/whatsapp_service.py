@@ -4,6 +4,11 @@ import threading
 from datetime import datetime
 from typing import Optional
 
+# ── Debounce state (module-level, shared across all WhatsAppService calls) ────
+_debounce_lock = threading.Lock()
+_debounce_timers: dict[str, threading.Timer] = {}
+_debounce_buffers: dict[str, list[dict]] = {}
+
 from app.models.whatsapp import (
     WhatsAppChannel,
     WhatsAppChannelCreate,
@@ -15,6 +20,7 @@ from app.models.whatsapp import (
 )
 from app.models.chat import ChatRequest
 from app.models.conversation import ConversationCreate
+from app.config.environment import env
 from app.repositories.whatsapp_repository import whatsapp_repository
 from app.services.conversation_service import conversation_service
 from app.integrations.agent_executor import AgentExecutor
@@ -69,6 +75,76 @@ class WhatsAppService:
         whatsapp_repository.update_channel(channel_id, {'is_active': new_state})
         channel.is_active = not channel.is_active
         return channel
+
+    # ── Debounce / message buffering ──────────────────────────────────────────
+
+    def _debounce_key(self, channel_id: str, from_phone: str) -> str:
+        return f"{channel_id}:{from_phone}"
+
+    def enqueue_incoming_message(
+        self,
+        channel_id: str,
+        from_phone: str,
+        contact_name: Optional[str],
+        message_text: str,
+        wa_message_id: str,
+        media_id: Optional[str] = None,
+        caption: Optional[str] = None,
+    ) -> None:
+        """Acumula mensajes del mismo usuario durante DEBOUNCE_DELAY segundos
+        antes de enviarlo al agente, evitando múltiples llamadas por ráfaga."""
+        key = self._debounce_key(channel_id, from_phone)
+        payload = dict(
+            channel_id=channel_id,
+            from_phone=from_phone,
+            contact_name=contact_name,
+            message_text=message_text,
+            wa_message_id=wa_message_id,
+            media_id=media_id,
+            caption=caption,
+        )
+        with _debounce_lock:
+            # Cancelar timer anterior (si el usuario sigue escribiendo)
+            if key in _debounce_timers:
+                _debounce_timers[key].cancel()
+            # Acumular mensaje en el buffer
+            _debounce_buffers.setdefault(key, []).append(payload)
+            # Programar nuevo timer
+            t = threading.Timer(env.whatsapp_debounce_delay, self._flush_debounce, args=[key])
+            _debounce_timers[key] = t
+            t.daemon = True
+            t.start()
+
+    def _flush_debounce(self, key: str) -> None:
+        """Llamado por el timer cuando el usuario deja de escribir.
+        Combina todos los mensajes acumulados y los procesa como uno."""
+        with _debounce_lock:
+            messages = _debounce_buffers.pop(key, [])
+            _debounce_timers.pop(key, None)
+
+        if not messages:
+            return
+
+        if len(messages) == 1:
+            self.process_incoming_message(**messages[0])
+            return
+
+        # Combinar textos de múltiples mensajes (saltar los vacíos de imágenes)
+        texts = [m["message_text"] for m in messages if m["message_text"]]
+        combined_text = "\n".join(texts)
+
+        # Si algún mensaje traía imagen, usar el último
+        last_with_image = next((m for m in reversed(messages) if m["media_id"]), None)
+
+        self.process_incoming_message(
+            channel_id=messages[0]["channel_id"],
+            from_phone=messages[0]["from_phone"],
+            contact_name=messages[0]["contact_name"],
+            message_text=combined_text,
+            wa_message_id=messages[0]["wa_message_id"],  # dedup sobre el primero
+            media_id=last_with_image["media_id"] if last_with_image else None,
+            caption=last_with_image["caption"] if last_with_image else None,
+        )
 
     # ── Incoming message processor (runs in BackgroundTask) ──────────────────
 

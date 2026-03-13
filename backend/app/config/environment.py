@@ -47,6 +47,9 @@ class Environment(BaseSettings):
     whatsapp_session_table: str = 'ai-whatsapp-session'
     whatsapp_message_table: str = 'ai-whatsapp-message'
 
+    # WhatsApp debounce
+    whatsapp_debounce_delay: float = float(os.getenv('WHATSAPP_DEBOUNCE_DELAY', '7.0'))
+
     # RAG defaults (overridden per-agent via RAGConfig)
     rag_vector_bucket: str = 'sales-agent-ai-vectors'
     rag_vector_index: str = 'documents-index'

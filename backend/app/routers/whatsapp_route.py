@@ -126,7 +126,7 @@ async def receive_webhook(
                         continue
 
                     background_tasks.add_task(
-                        whatsapp_service.process_incoming_message,
+                        whatsapp_service.enqueue_incoming_message,
                         channel_id=channel_id,
                         from_phone=from_phone,
                         contact_name=contact_name,
