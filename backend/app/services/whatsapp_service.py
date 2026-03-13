@@ -153,6 +153,7 @@ class WhatsAppService:
                 )
                 return
 
+            history_image_text = f'[imagen]{(": " + caption) if caption else ""}'
             message_text = f"[Cliente envió imagen: {presigned_url}]"
             if caption:
                 message_text += f' (caption: "{caption}")'
@@ -275,7 +276,7 @@ class WhatsAppService:
             history_text = self._extract_text_for_history(wa_payload) or answer
 
             from app.models.conversation import Message
-            user_msg = Message(role='user', content=message_text, timestamp=user_received_at)
+            user_msg = Message(role='user', content=history_image_text if msg_save_type == 'image' else message_text, timestamp=user_received_at)
             assistant_msg_obj = Message(role='assistant', content=history_text, timestamp=datetime.now())
             conversation_repository.save_message(session.conversation_id, user_msg)
             conversation_repository.save_message(session.conversation_id, assistant_msg_obj)
