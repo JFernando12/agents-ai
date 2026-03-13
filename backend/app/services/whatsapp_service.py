@@ -126,7 +126,7 @@ class WhatsAppService:
                 print(f"[WhatsApp] Image download/upload failed for {media_id}: {_img_err}")
                 return
 
-        if session.status == "human_handoff":
+            if session.status == "human_handoff":
                 now_ms = int(datetime.now().timestamp() * 1000)
                 whatsapp_repository.save_message({
                     'session_id': session.id,
@@ -153,7 +153,6 @@ class WhatsAppService:
                 )
                 return
 
-            history_image_text = f'[imagen]{(": " + caption) if caption else ""}'
             message_text = f"[Cliente envió imagen: {presigned_url}]"
             if caption:
                 message_text += f' (caption: "{caption}")'
@@ -276,7 +275,7 @@ class WhatsAppService:
             history_text = self._extract_text_for_history(wa_payload) or answer
 
             from app.models.conversation import Message
-            user_msg = Message(role='user', content=history_image_text if msg_save_type == 'image' else message_text, timestamp=user_received_at)
+            user_msg = Message(role='user', content=message_text, timestamp=user_received_at)
             assistant_msg_obj = Message(role='assistant', content=history_text, timestamp=datetime.now())
             conversation_repository.save_message(session.conversation_id, user_msg)
             conversation_repository.save_message(session.conversation_id, assistant_msg_obj)
@@ -577,7 +576,7 @@ class WhatsAppService:
                 message=body.message,
             )
         elif msg_type == 'image':
-            wa_media_url = s3_service.generate_presigned_url(media_s3_key, expiration=3600) if media_s3_key else ''
+            wa_media_url = s3_service.generate_presigned_url(media_s3_key, expiration=3600) or '' if media_s3_key else ''
             success = whatsapp_client.send_image(
                 wa_token=channel.wa_token,
                 phone_number_id=channel.phone_number_id,
@@ -586,7 +585,7 @@ class WhatsAppService:
                 caption=body.caption,
             )
         elif msg_type == 'document':
-            wa_media_url = s3_service.generate_presigned_url(media_s3_key, expiration=3600) if media_s3_key else ''
+            wa_media_url = s3_service.generate_presigned_url(media_s3_key, expiration=3600) or '' if media_s3_key else ''
             success = whatsapp_client.send_document(
                 wa_token=channel.wa_token,
                 phone_number_id=channel.phone_number_id,
