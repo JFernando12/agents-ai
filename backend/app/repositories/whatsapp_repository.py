@@ -7,6 +7,7 @@ from boto3.dynamodb.conditions import Key, Attr
 
 from app.config import env
 from app.models.whatsapp import WhatsAppChannel, WhatsAppSession, WhatsAppMessage
+from app.integrations.s3_service import s3_service
 from .base_dynamodb_repository import BaseDynamoDBRepository
 
 
@@ -233,6 +234,8 @@ class WhatsAppRepository(BaseDynamoDBRepository):
         }
         if msg.get('wa_message_id'):
             item['wa_message_id'] = msg['wa_message_id']
+        if msg.get('media_s3_key'):
+            item['media_s3_key'] = msg['media_s3_key']
         if msg.get('media_url'):
             item['media_url'] = msg['media_url']
         if msg.get('error_detail'):
@@ -329,8 +332,10 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             labels=list(item.get('labels') or []),
         )
 
-    @staticmethod
-    def _map_message(item: dict) -> WhatsAppMessage:
+    def _map_message(self, item: dict) -> WhatsAppMessage:
+        media_url = item.get('media_url')
+        if not media_url and item.get('media_s3_key'):
+            media_url = s3_service.generate_presigned_url(item['media_s3_key'], expiration=3600)
         return WhatsAppMessage(
             id=item['id'],
             session_id=item['session_id'],
@@ -339,7 +344,7 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             role=item['role'],
             content=item['content'],
             type=item.get('type', 'text'),
-            media_url=item.get('media_url'),
+            media_url=media_url,
             status=item['status'],
             sent_by=item.get('sent_by', 'agent'),
             error_detail=item.get('error_detail'),

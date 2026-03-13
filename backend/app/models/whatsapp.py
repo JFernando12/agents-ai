@@ -88,8 +88,9 @@ class ManualSendRequest(BaseModel):
     type: str = "text"  # text | image | document | buttons | list
     # text
     message: str = ""
-    # image / document
-    media_url: str | None = None
+    # image / document — the frontend must first call GET /media/upload-url,
+    # upload the file directly to S3, then pass the returned s3_key here.
+    media_s3_key: str | None = None
     filename: str | None = None
     caption: str | None = None
     # buttons

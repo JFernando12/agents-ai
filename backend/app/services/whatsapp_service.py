@@ -82,29 +82,15 @@ class WhatsAppService:
         media_id: Optional[str] = None,
         caption: Optional[str] = None,
     ) -> None:
-        """
-        Full pipeline for an incoming WhatsApp message:
-        1. Deduplicate by wa_message_id
-        2. Load channel
-        3. Get or create Conversation + Session
-        4. Save incoming message as 'received'
-        5. Set status to 'processing'
-        6. Run AgentExecutor
-        7. Save assistant message and send via WhatsApp Cloud API
-        """
-        # 1. Dedup
         if whatsapp_repository.message_exists_by_wa_id(wa_message_id):
             print(f"[WhatsApp] Duplicate message {wa_message_id}, skipping.")
             return
 
-        # 2. Load channel
         channel = whatsapp_repository.get_channel(channel_id)
         if not channel or not channel.is_active:
             print(f"[WhatsApp] Channel {channel_id} not found or inactive.")
             return
 
-        # 3. Get or create Conversation + Session
-        # Check for existing session first to reuse its conversation
         existing_session = whatsapp_repository.find_session_by_phone(channel_id, from_phone)
         if existing_session:
             conversation_id = existing_session.conversation_id
@@ -134,13 +120,13 @@ class WhatsAppService:
                 image_bytes, mime_type = whatsapp_client.download_media(media_id, channel.wa_token)
                 ext = mime_type.split("/", 1)[-1].split(";")[0].strip() or "jpg"
                 s3_key = f"whatsapp/media/{channel_id}/{wa_message_id}.{ext}"
-                s3_url = s3_service.upload_bytes(image_bytes, s3_key, mime_type)
+                s3_service.upload_bytes(image_bytes, s3_key, mime_type)
+                presigned_url = s3_service.generate_presigned_url(s3_key, expiration=7200)
             except Exception as _img_err:
                 print(f"[WhatsApp] Image download/upload failed for {media_id}: {_img_err}")
                 return
 
-            if session.status == "human_handoff":
-                # Image received while handoff is active — save and confirm receipt
+        if session.status == "human_handoff":
                 now_ms = int(datetime.now().timestamp() * 1000)
                 whatsapp_repository.save_message({
                     'session_id': session.id,
@@ -149,7 +135,7 @@ class WhatsAppService:
                     'role': 'user',
                     'content': caption or '[imagen]',
                     'type': 'image',
-                    'media_url': s3_url,
+                    'media_s3_key': s3_key,
                     'status': 'received',
                     'sent_by': 'user',
                 })
@@ -167,14 +153,13 @@ class WhatsAppService:
                 )
                 return
 
-            # Normal session: expose S3 URL to the agent
-            message_text = f"[Cliente envió imagen: {s3_url}]"
+            message_text = f"[Cliente envió imagen: {presigned_url}]"
             if caption:
                 message_text += f' (caption: "{caption}")'
             msg_save_type = 'image'
-            msg_save_media_url = s3_url
+            msg_save_media_url = s3_key
 
-        # Skip agent for any message (text or image) in a human_handoff session
+        # Skip agent for human_handoff sessions
         if session.status == "human_handoff":
             now_ms = int(datetime.now().timestamp() * 1000)
             whatsapp_repository.save_message({
@@ -195,12 +180,9 @@ class WhatsAppService:
             return
 
         now = int(datetime.now().timestamp() * 1000)
-        # Capture user timestamp NOW, before the agent runs, so it is
-        # always strictly earlier than the assistant timestamp.
         user_received_at = datetime.now()
         preview = message_text[:80]
 
-        # 4. Save incoming user message
         msg_id = whatsapp_repository.save_message({
             'session_id': session.id,
             'channel_id': channel_id,
@@ -208,7 +190,7 @@ class WhatsAppService:
             'role': 'user',
             'content': (caption or '[imagen]') if msg_save_type == 'image' else message_text,
             'type': msg_save_type,
-            'media_url': msg_save_media_url,
+            'media_s3_key': msg_save_media_url if msg_save_type == 'image' else None,
             'status': 'received',
             'sent_by': 'user',
         })
@@ -220,7 +202,6 @@ class WhatsAppService:
             'unread_count': int(session.unread_count or 0) + 1,
         })
 
-        # 5. Save assistant placeholder as 'processing'
         placeholder_id = whatsapp_repository.save_message({
             'session_id': session.id,
             'channel_id': channel_id,
@@ -233,11 +214,9 @@ class WhatsAppService:
 
         # 6. Build history and run agent
         try:
-            history_msgs = conversation_repository.get_messages(
-                conversation_id=session.conversation_id,
+            history_msgs = conversation_repository.get_messages(                conversation_id=session.conversation_id,
                 limit=30,
             )
-            # get_messages returns chronological order (oldest first)
             messages = [{'role': msg.role, 'text': msg.content} for msg in history_msgs]
             messages.append({'role': 'user', 'text': message_text})
 
@@ -261,8 +240,7 @@ class WhatsAppService:
             )
             answer = agent_response.response
 
-            # Strip markdown code fences the LLM sometimes wraps around JSON
-            # e.g. ```json\n{...}\n``` → {...}
+            # Strip markdown code fences the LLM sometimes adds
             stripped = answer.strip()
             if stripped.startswith("```"):
                 stripped = stripped.split("\n", 1)[-1]  # drop opening fence line
@@ -277,16 +255,12 @@ class WhatsAppService:
 
             history_text = self._extract_text_for_history(wa_payload) or answer
 
-            # Save human-readable text to conversation history (not raw JSON)
             from app.models.conversation import Message
             user_msg = Message(role='user', content=message_text, timestamp=user_received_at)
             assistant_msg_obj = Message(role='assistant', content=history_text, timestamp=datetime.now())
             conversation_repository.save_message(session.conversation_id, user_msg)
             conversation_repository.save_message(session.conversation_id, assistant_msg_obj)
 
-            # Update placeholder with readable content only.
-            # Status is set by _dispatch_wa_message after the actual API call
-            # so it always reflects the real outcome.
             whatsapp_repository.message_table.update_item(
                 Key={'id': placeholder_id},
                 UpdateExpression='SET #content = :content',
@@ -442,7 +416,6 @@ class WhatsAppService:
             if not messages_list:
                 return
 
-            # First sub-message sent synchronously — its outcome sets DB status.
             first_success = self._send_single(messages_list[0], channel, to)
             if not first_success:
                 print(f"[WhatsApp] Failed to send first multi-message to {to}")
@@ -455,11 +428,9 @@ class WhatsAppService:
                 content=self._extract_text_for_history(payload),
             )
 
-            # Remaining sub-messages go out in a daemon thread, zero DB ops.
             if len(messages_list) > 1:
                 def _send_remaining(remaining: list, prev_type: str) -> None:
                     for msg in remaining:
-                        # Wait longer after an image — Meta's media API is slower
                         delay = 1.5 if prev_type == 'image' else 0.8
                         time.sleep(delay)
                         ok = self._send_single(msg, channel, to)
@@ -474,7 +445,6 @@ class WhatsAppService:
                 ).start()
             return
 
-        # ── single message ─────────────────────────────────────────────────────
         success = self._send_single(payload, channel, to)
         if not success:
             print(f"[WhatsApp] Failed to send {msg_type} message to {to}")
@@ -548,18 +518,19 @@ class WhatsAppService:
         if msg_type == 'text':
             content = body.message
         elif msg_type in ('image', 'document'):
-            content = body.caption or body.filename or body.media_url or ''
+            content = body.caption or body.filename or body.media_s3_key or ''
         else:
             content = body.message or ''
 
-        # Persist message to WhatsApp table
+        media_s3_key = body.media_s3_key or None
+
         msg_id = whatsapp_repository.save_message({
             'session_id': session_id,
             'channel_id': session.channel_id,
             'role': 'assistant',
             'content': content,
             'type': msg_type,
-            'media_url': body.media_url,
+            'media_s3_key': media_s3_key,
             'status': 'sent',
             'sent_by': 'human',
         })
@@ -573,13 +544,11 @@ class WhatsAppService:
         )
         conversation_repository.save_message(session.conversation_id, conv_msg)
 
-        # Update session preview
         whatsapp_repository.update_session(session_id, {
             'last_message_at': now,
             'last_message_preview': content[:80],
         })
 
-        # Send via API
         if msg_type == 'text':
             success = whatsapp_client.send_text(
                 wa_token=channel.wa_token,
@@ -588,19 +557,21 @@ class WhatsAppService:
                 message=body.message,
             )
         elif msg_type == 'image':
+            wa_media_url = s3_service.generate_presigned_url(media_s3_key, expiration=3600) if media_s3_key else ''
             success = whatsapp_client.send_image(
                 wa_token=channel.wa_token,
                 phone_number_id=channel.phone_number_id,
                 to=session.from_phone,
-                url=body.media_url or '',
+                url=wa_media_url,
                 caption=body.caption,
             )
         elif msg_type == 'document':
+            wa_media_url = s3_service.generate_presigned_url(media_s3_key, expiration=3600) if media_s3_key else ''
             success = whatsapp_client.send_document(
                 wa_token=channel.wa_token,
                 phone_number_id=channel.phone_number_id,
                 to=session.from_phone,
-                url=body.media_url or '',
+                url=wa_media_url,
                 filename=body.filename or 'document',
                 caption=body.caption,
             )

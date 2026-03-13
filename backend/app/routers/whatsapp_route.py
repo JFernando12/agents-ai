@@ -1,4 +1,5 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, Request
+import uuid
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, Query, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 from typing import Optional
 
@@ -12,6 +13,7 @@ from app.models.whatsapp import (
 )
 from app.services.whatsapp_service import whatsapp_service
 from app.integrations.whatsapp_client import whatsapp_client
+from app.integrations.s3_service import s3_service
 from app.utils import success_response, error_response
 
 whatsapp_router = APIRouter(tags=["whatsapp"], prefix="/whatsapp")
@@ -284,6 +286,23 @@ def list_messages(
             {"items": data, "next_key": next_key},
             "Messages retrieved successfully",
         ),
+    )
+
+
+@whatsapp_router.get("/media/upload-url")
+def get_media_upload_url(
+    content_type: str = Query(..., description="MIME type of the file, e.g. image/jpeg"),
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin", "editor")),
+):
+    """Return a presigned PUT URL + s3_key so the frontend can upload a file directly to S3."""
+    ext = content_type.split("/")[-1].split(";")[0].strip() or "bin"
+    s3_key = f"whatsapp/manual/{uuid.uuid4().hex}.{ext}"
+    upload_url = s3_service.generate_presigned_upload_url(s3_key, content_type, expiration=300)
+    if not upload_url:
+        return JSONResponse(status_code=500, content=error_response("Could not generate upload URL"))
+    return JSONResponse(
+        status_code=200,
+        content=success_response({"upload_url": upload_url, "s3_key": s3_key}, "Upload URL generated"),
     )
 
 

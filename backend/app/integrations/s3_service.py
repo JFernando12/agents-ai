@@ -28,6 +28,18 @@ class S3Service:
         except Exception as e:
             logging.error(f"Unexpected error generating presigned URL for {s3_key}: {str(e)}")
             return None
+
+    def generate_presigned_upload_url(self, s3_key: str, content_type: str, expiration: int = 300) -> str | None:
+        """Return a presigned PUT URL so the client can upload directly to S3."""
+        try:
+            return self.s3_client.generate_presigned_url(
+                'put_object',
+                Params={'Bucket': self.bucket_name, 'Key': s3_key, 'ContentType': content_type},
+                ExpiresIn=expiration,
+            )
+        except Exception as e:
+            logging.error(f"Error generating presigned upload URL for {s3_key}: {e}")
+            return None
     
     def check_object_exists(self, s3_key: str) -> bool:
         try:
