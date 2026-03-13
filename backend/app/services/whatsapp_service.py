@@ -247,11 +247,30 @@ class WhatsAppService:
                 stripped = stripped.rsplit("```", 1)[0]  # drop closing fence
                 stripped = stripped.strip()
 
-            # Parse canonical JSON first so we can extract readable text for history
+            # Parse canonical JSON. If the LLM prepended plain text before the
+            # JSON object (e.g. "\u00a1Listo!\n{\"type\"...}"), locate the first
+            # top-level JSON object and parse that instead of failing silently.
+            def _extract_json(s: str) -> dict | None:
+                start = s.find('{')
+                if start == -1:
+                    return None
+                depth = 0
+                for i, ch in enumerate(s[start:], start):
+                    if ch == '{':
+                        depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            try:
+                                return json.loads(s[start:i + 1])
+                            except json.JSONDecodeError:
+                                return None
+                return None
+
             try:
                 wa_payload = json.loads(stripped)
             except (json.JSONDecodeError, TypeError):
-                wa_payload = {'type': 'text', 'body': answer}
+                wa_payload = _extract_json(stripped) or {'type': 'text', 'body': answer}
 
             history_text = self._extract_text_for_history(wa_payload) or answer
 

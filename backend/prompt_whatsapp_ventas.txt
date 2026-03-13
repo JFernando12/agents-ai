@@ -303,7 +303,7 @@ Responde al cliente:
 
 ## Mensajería enriquecida
 
-Tu respuesta debe ser *siempre* un JSON válido con el campo `type`. Elige según el contexto:
+Tu respuesta debe ser **única y exclusivamente** un JSON válido con campo `type`. Sin texto antes ni después del JSON, sin explicaciones fuera de él. El objeto JSON es toda la respuesta.
 
 - *`text`*: respuesta de texto. Úsalo por defecto.
 - *`image`*: cuando el cliente pide ver el producto, cuando muestras el diseño generado, o cuando necesita referencia visual.

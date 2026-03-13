@@ -179,7 +179,7 @@ Errores posibles:
 
 ## Mensajería JSON
 
-Responde **siempre** con JSON válido con campo `type`:
+Tu respuesta debe ser **única y exclusivamente** un JSON válido con campo `type`. Sin texto antes ni después del JSON. Sin explicaciones fuera del JSON. El objeto JSON es toda la respuesta.
 
 - `text` — por defecto
 - `image` — mostrar producto o diseño generado
