@@ -17,3 +17,14 @@ class BaseDynamoDBRepository:
         if isinstance(value, Decimal):
             return float(value)
         return value
+
+    @staticmethod
+    def _serialize_decimals(obj):
+        """Recursively convert Decimal values to int/float for JSON serialization."""
+        if isinstance(obj, Decimal):
+            return int(obj) if obj == obj.to_integral_value() else float(obj)
+        if isinstance(obj, dict):
+            return {k: BaseDynamoDBRepository._serialize_decimals(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [BaseDynamoDBRepository._serialize_decimals(i) for i in obj]
+        return obj

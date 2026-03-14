@@ -159,7 +159,7 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             kwargs['ExclusiveStartKey'] = last_key
         response = self.session_table.query(**kwargs)
         sessions = [self._map_session(item) for item in response.get('Items', [])]
-        next_key = response.get('LastEvaluatedKey')
+        next_key = self._serialize_decimals(response.get('LastEvaluatedKey'))
         return sessions, next_key
 
     def update_session(self, session_id: str, updates: dict) -> None:
@@ -274,7 +274,7 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             kwargs['ExclusiveStartKey'] = last_key
         response = self.message_table.query(**kwargs)
         messages = [self._map_message(item) for item in response.get('Items', [])]
-        next_key = response.get('LastEvaluatedKey')
+        next_key = self._serialize_decimals(response.get('LastEvaluatedKey'))
         return messages, next_key
 
     def message_exists_by_wa_id(self, wa_message_id: str) -> bool:
