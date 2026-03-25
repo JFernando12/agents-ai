@@ -348,6 +348,24 @@ def delete_session(
     )
 
 
+@whatsapp_router.post("/sessions/{session_id}/read")
+def mark_session_read(
+    session_id: str,
+    current_user: User = Depends(require_roles("super_admin", "owner", "admin", "editor")),
+):
+    session = whatsapp_service.get_session(session_id)
+    if not session:
+        return JSONResponse(status_code=404, content=error_response("Session not found"))
+    channel = whatsapp_service.get_channel(session.channel_id)
+    if not channel or channel.account_id != current_user.account_id:
+        return JSONResponse(status_code=403, content=error_response("Access denied"))
+    whatsapp_service.mark_session_read(session_id)
+    return JSONResponse(
+        status_code=200,
+        content=success_response(None, "Session marked as read"),
+    )
+
+
 @whatsapp_router.post("/sessions/{session_id}/toggle")
 def toggle_session_agent(
     session_id: str,

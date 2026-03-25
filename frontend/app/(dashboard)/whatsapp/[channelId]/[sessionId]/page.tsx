@@ -1,6 +1,6 @@
 'use client';
 
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, User, Trash2, Bot, BotOff } from 'lucide-react';
@@ -9,6 +9,7 @@ import {
   useSendWhatsAppMessage,
   useDeleteWhatsAppSession,
   useToggleWhatsAppSession,
+  useMarkSessionRead,
 } from '@/lib/hooks/useWhatsApp';
 import { useQuery } from '@tanstack/react-query';
 import { whatsappApi } from '@/lib/api/whatsapp';
@@ -23,6 +24,12 @@ export default function WhatsAppConversationPage({ params }: Props) {
   const { channelId, sessionId } = use(params);
   const router = useRouter();
   const deleteSession = useDeleteWhatsAppSession();
+  const markRead = useMarkSessionRead();
+
+  useEffect(() => {
+    if (sessionId) markRead.mutate(sessionId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   const { data: session } = useQuery({
     queryKey: ['whatsapp-session', sessionId],

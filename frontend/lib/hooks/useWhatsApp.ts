@@ -132,3 +132,15 @@ export const useToggleWhatsAppSession = (sessionId: string) => {
     },
   });
 };
+
+// ── Mark session as read ──────────────────────────────────────────────────────
+
+export const useMarkSessionRead = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => whatsappApi.markSessionRead(sessionId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['whatsapp-sessions'] });
+    },
+  });
+};

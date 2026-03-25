@@ -639,6 +639,9 @@ class WhatsAppService:
             conversation_repository.delete(session.conversation_id)
         return whatsapp_repository.delete_session(session_id)
 
+    def mark_session_read(self, session_id: str) -> None:
+        whatsapp_repository.update_session(session_id, {'unread_count': 0})
+
     def get_messages(
         self,
         session_id: str,

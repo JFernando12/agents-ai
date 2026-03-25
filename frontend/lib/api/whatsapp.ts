@@ -96,6 +96,10 @@ class WhatsAppApiService extends ApiService {
     const res = await this.api.post(`/whatsapp/sessions/${sessionId}/toggle`);
     return res.data.data;
   };
+
+  markSessionRead = async (sessionId: string): Promise<void> => {
+    await this.api.post(`/whatsapp/sessions/${sessionId}/read`);
+  };
 }
 
 export const whatsappApi = new WhatsAppApiService();
