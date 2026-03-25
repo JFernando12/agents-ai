@@ -1,17 +1,75 @@
 'use client';
 
+import { Fragment } from 'react';
 import { WhatsAppMessage } from '@/types';
-import { CheckCircle2, Clock, AlertCircle, Loader2, Bot, UserRound } from 'lucide-react';
+import {
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Loader2,
+  Bot,
+  UserRound,
+} from 'lucide-react';
 
 interface Props {
   message: WhatsAppMessage;
 }
 
 function StatusIcon({ status }: { status: WhatsAppMessage['status'] }) {
-  if (status === 'processing') return <Loader2 className="w-3 h-3 animate-spin text-gray-400" />;
-  if (status === 'sent') return <CheckCircle2 className="w-3 h-3 text-emerald-500" />;
-  if (status === 'failed') return <AlertCircle className="w-3 h-3 text-red-500" />;
+  if (status === 'processing')
+    return <Loader2 className="w-3 h-3 animate-spin text-gray-400" />;
+  if (status === 'sent')
+    return <CheckCircle2 className="w-3 h-3 text-emerald-500" />;
+  if (status === 'failed')
+    return <AlertCircle className="w-3 h-3 text-red-500" />;
   return <Clock className="w-3 h-3 text-gray-400" />;
+}
+
+// Parses WhatsApp-style markdown: *bold*, _italic_, ~strikethrough~, `code`
+function WhatsAppText({ text }: { text: string }) {
+  const lines = text.split('\n');
+
+  function parseLine(line: string): React.ReactNode[] {
+    const parts: React.ReactNode[] = [];
+    const regex = /(\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~|`[^`\n]+`)/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex)
+        parts.push(line.slice(lastIndex, match.index));
+      const token = match[0];
+      const inner = token.slice(1, -1);
+      if (token.startsWith('*'))
+        parts.push(<strong key={match.index}>{inner}</strong>);
+      else if (token.startsWith('_'))
+        parts.push(<em key={match.index}>{inner}</em>);
+      else if (token.startsWith('~'))
+        parts.push(<del key={match.index}>{inner}</del>);
+      else if (token.startsWith('`'))
+        parts.push(
+          <code
+            key={match.index}
+            className="bg-black/10 rounded px-0.5 font-mono text-xs"
+          >
+            {inner}
+          </code>,
+        );
+      lastIndex = match.index + token.length;
+    }
+    if (lastIndex < line.length) parts.push(line.slice(lastIndex));
+    return parts;
+  }
+
+  return (
+    <span>
+      {lines.map((line, i) => (
+        <Fragment key={i}>
+          {parseLine(line)}
+          {i < lines.length - 1 && <br />}
+        </Fragment>
+      ))}
+    </span>
+  );
 }
 
 export default function WhatsAppMessageBubble({ message }: Props) {
@@ -62,14 +120,16 @@ export default function WhatsAppMessageBubble({ message }: Props) {
               <img
                 src={message.media_url}
                 alt="imagen"
-                className="rounded-lg max-w-full"
+                className="rounded-lg max-h-60 w-auto max-w-full"
               />
               {message.content && message.content !== '[imagen]' && (
-                <p className="mt-1">{message.content}</p>
+                <p className="mt-1">
+                  <WhatsAppText text={message.content} />
+                </p>
               )}
             </div>
           ) : (
-            message.content
+            <WhatsAppText text={message.content ?? ''} />
           )}
         </div>
 

@@ -498,32 +498,67 @@ class WhatsAppService:
 
         For 'multi': each sub-message is sent individually to WA (first one
         synchronously, the rest in a daemon thread with inter-message delays),
-        but only a single DB record is written — the placeholder row whose
-        content was already set by process_incoming_message via
-        _extract_text_for_history.  The DB status is driven by whether the
-        first (synchronous) send actually succeeds.
+        and each sub-message gets its own DB record — the placeholder row is
+        updated with the first sub-message, subsequent ones are inserted as new rows.
         """
         msg_type = payload.get('type', 'text')
 
-        # ── multi: fan-out to WA, single DB record ────────────────────────────
+        # ── multi: fan-out to WA, one DB record per sub-message ──────────────
         if msg_type == 'multi':
             messages_list = payload.get('messages', [])
             if not messages_list:
                 return
 
-            first_success = self._send_single(messages_list[0], channel, to)
+            def _sub_fields(msg: dict) -> dict:
+                t = msg.get('type', 'text')
+                if t == 'text':
+                    return {'content': msg.get('body', ''), 'type': 'text'}
+                if t == 'image':
+                    return {'content': msg.get('caption', ''), 'type': 'image', 'media_url': msg.get('url', '')}
+                if t == 'document':
+                    return {'content': msg.get('caption') or msg.get('filename', ''), 'type': 'document', 'media_url': msg.get('url', '')}
+                if t in ('buttons', 'list'):
+                    return {'content': msg.get('body', ''), 'type': t}
+                return {'content': json.dumps(msg, ensure_ascii=False), 'type': 'text'}
+
+            # First sub-message: update the placeholder with real content + status,
+            # or insert a new record if there is no placeholder (e.g. async_webhook).
+            first_msg = messages_list[0]
+            first_success = self._send_single(first_msg, channel, to)
             if not first_success:
                 print(f"[WhatsApp] Failed to send first multi-message to {to}")
-            self._persist_result(
-                placeholder_id=placeholder_id,
-                success=first_success,
-                msg_type='multi',
-                session_id=session.id,
-                channel_id=channel_id,
-                content=self._extract_text_for_history(payload),
-            )
+            first_fields = _sub_fields(first_msg)
+            first_status = 'sent' if first_success else 'failed'
+            if placeholder_id:
+                update_expr = 'SET #status = :status, #content = :content, #type = :type'
+                expr_names = {'#status': 'status', '#content': 'content', '#type': 'type'}
+                expr_values = {
+                    ':status': first_status,
+                    ':content': first_fields['content'],
+                    ':type': first_fields['type'],
+                }
+                if first_fields.get('media_url'):
+                    update_expr += ', media_url = :media_url'
+                    expr_values[':media_url'] = first_fields['media_url']
+                whatsapp_repository.message_table.update_item(
+                    Key={'id': placeholder_id},
+                    UpdateExpression=update_expr,
+                    ExpressionAttributeNames=expr_names,
+                    ExpressionAttributeValues=expr_values,
+                )
+            else:
+                self._persist_result(
+                    placeholder_id=None,
+                    success=first_success,
+                    msg_type=first_fields['type'],
+                    session_id=session.id,
+                    channel_id=channel_id,
+                    **first_fields,
+                )
 
             if len(messages_list) > 1:
+                session_id_captured = session.id
+
                 def _send_remaining(remaining: list, prev_type: str) -> None:
                     for msg in remaining:
                         delay = 1.5 if prev_type == 'image' else 0.8
@@ -531,6 +566,15 @@ class WhatsAppService:
                         ok = self._send_single(msg, channel, to)
                         if not ok:
                             print(f"[WhatsApp] Failed to send multi sub-message ({msg.get('type')}) to {to}")
+                        fields = _sub_fields(msg)
+                        self._persist_result(
+                            placeholder_id=None,
+                            success=ok,
+                            msg_type=fields['type'],
+                            session_id=session_id_captured,
+                            channel_id=channel_id,
+                            **fields,
+                        )
                         prev_type = msg.get('type', 'text')
 
                 threading.Thread(
