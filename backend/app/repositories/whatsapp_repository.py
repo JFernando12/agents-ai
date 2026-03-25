@@ -238,6 +238,8 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             item['media_s3_key'] = msg['media_s3_key']
         if msg.get('media_url'):
             item['media_url'] = msg['media_url']
+        if msg.get('interactive_data'):
+            item['interactive_data'] = msg['interactive_data']
         if msg.get('error_detail'):
             item['error_detail'] = msg['error_detail']
         self.message_table.put_item(Item=item)
@@ -345,6 +347,7 @@ class WhatsAppRepository(BaseDynamoDBRepository):
             content=item['content'],
             type=item.get('type', 'text'),
             media_url=media_url,
+            interactive_data=item.get('interactive_data'),
             status=item['status'],
             sent_by=item.get('sent_by', 'agent'),
             error_detail=item.get('error_detail'),

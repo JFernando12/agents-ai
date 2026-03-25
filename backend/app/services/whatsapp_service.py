@@ -467,11 +467,18 @@ class WhatsAppService:
         """
         status = 'sent' if success else 'failed'
         if placeholder_id:
+            update_expr = 'SET #status = :status, #type = :type'
+            expr_names = {'#status': 'status', '#type': 'type'}
+            expr_values = {':status': status, ':type': msg_type}
+            interactive_data = extra_fields.get('interactive_data')
+            if interactive_data:
+                update_expr += ', interactive_data = :interactive_data'
+                expr_values[':interactive_data'] = interactive_data
             whatsapp_repository.message_table.update_item(
                 Key={'id': placeholder_id},
-                UpdateExpression='SET #status = :status',
-                ExpressionAttributeNames={'#status': 'status'},
-                ExpressionAttributeValues={':status': status},
+                UpdateExpression=update_expr,
+                ExpressionAttributeNames=expr_names,
+                ExpressionAttributeValues=expr_values,
             )
         else:
             whatsapp_repository.save_message({
@@ -517,8 +524,10 @@ class WhatsAppService:
                     return {'content': msg.get('caption', ''), 'type': 'image', 'media_url': msg.get('url', '')}
                 if t == 'document':
                     return {'content': msg.get('caption') or msg.get('filename', ''), 'type': 'document', 'media_url': msg.get('url', '')}
-                if t in ('buttons', 'list'):
-                    return {'content': msg.get('body', ''), 'type': t}
+                if t == 'buttons':
+                    return {'content': msg.get('body', ''), 'type': 'buttons', 'interactive_data': {'buttons': msg.get('buttons', [])}}
+                if t == 'list':
+                    return {'content': msg.get('body', ''), 'type': 'list', 'interactive_data': {'sections': msg.get('sections', []), 'button_label': msg.get('button_label')}}
                 return {'content': json.dumps(msg, ensure_ascii=False), 'type': 'text'}
 
             # First sub-message: update the placeholder with real content + status,
@@ -540,6 +549,9 @@ class WhatsAppService:
                 if first_fields.get('media_url'):
                     update_expr += ', media_url = :media_url'
                     expr_values[':media_url'] = first_fields['media_url']
+                if first_fields.get('interactive_data'):
+                    update_expr += ', interactive_data = :interactive_data'
+                    expr_values[':interactive_data'] = first_fields['interactive_data']
                 whatsapp_repository.message_table.update_item(
                     Key={'id': placeholder_id},
                     UpdateExpression=update_expr,
@@ -592,8 +604,8 @@ class WhatsAppService:
             'text':     {'content': payload.get('body', ''), 'type': 'text'},
             'image':    {'content': payload.get('caption', ''), 'type': 'image',    'media_url': payload.get('url', '')},
             'document': {'content': payload.get('caption') or payload.get('filename', ''), 'type': 'document', 'media_url': payload.get('url', '')},
-            'buttons':  {'content': payload.get('body', ''), 'type': 'buttons'},
-            'list':     {'content': payload.get('body', ''), 'type': 'list'},
+            'buttons':  {'content': payload.get('body', ''), 'type': 'buttons', 'interactive_data': {'buttons': payload.get('buttons', [])}},
+            'list':     {'content': payload.get('body', ''), 'type': 'list',    'interactive_data': {'sections': payload.get('sections', []), 'button_label': payload.get('button_label')}},
         }
         extra = _CONTENT_FIELDS.get(
             msg_type,

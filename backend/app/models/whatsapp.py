@@ -60,8 +60,9 @@ class WhatsAppMessage(BaseModel):
     wa_message_id: Optional[str] = None
     role: str                               # user | assistant
     content: str
-    type: str = "text"                      # text | image | audio | document | sticker
+    type: str = "text"                      # text | image | audio | document | sticker | buttons | list
     media_url: Optional[str] = None
+    interactive_data: Optional[dict] = None # buttons / list options
     status: str                             # received | processing | sent | failed
     sent_by: str = "agent"                  # agent | human
     error_detail: Optional[str] = None

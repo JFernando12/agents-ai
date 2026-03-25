@@ -128,6 +128,57 @@ export default function WhatsAppMessageBubble({ message }: Props) {
                 </p>
               )}
             </div>
+          ) : message.type === 'buttons' &&
+            message.interactive_data?.buttons ? (
+            <div>
+              {message.content && (
+                <p className="mb-2">
+                  <WhatsAppText text={message.content} />
+                </p>
+              )}
+              <div className="flex flex-col gap-1.5 mt-1">
+                {message.interactive_data.buttons.map((btn) => (
+                  <div
+                    key={btn.id}
+                    className="border border-white/30 rounded-lg px-3 py-1.5 text-xs text-center font-medium opacity-80"
+                  >
+                    {btn.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : message.type === 'list' && message.interactive_data?.sections ? (
+            <div>
+              {message.content && (
+                <p className="mb-2">
+                  <WhatsAppText text={message.content} />
+                </p>
+              )}
+              {message.interactive_data.sections.map((section, si) => (
+                <div key={si} className="mt-1.5">
+                  {section.title && (
+                    <p className="text-[10px] uppercase tracking-wide opacity-60 mb-1">
+                      {section.title}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-1">
+                    {section.rows.map((row) => (
+                      <div
+                        key={row.id}
+                        className="border border-white/30 rounded-lg px-3 py-1.5 text-xs font-medium opacity-80"
+                      >
+                        <span>{row.title}</span>
+                        {row.description && (
+                          <span className="block text-[10px] opacity-60">
+                            {row.description}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <WhatsAppText text={message.content ?? ''} />
           )}

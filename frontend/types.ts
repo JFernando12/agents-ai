@@ -429,6 +429,28 @@ export type WhatsAppMessageStatus = 'received' | 'processing' | 'sent' | 'failed
 export type WhatsAppMessageRole = 'user' | 'assistant';
 export type WhatsAppMessageSentBy = 'agent' | 'human' | 'user';
 
+export interface WhatsAppInteractiveButton {
+  id: string;
+  title: string;
+}
+
+export interface WhatsAppInteractiveListRow {
+  id: string;
+  title: string;
+  description?: string;
+}
+
+export interface WhatsAppInteractiveListSection {
+  title?: string;
+  rows: WhatsAppInteractiveListRow[];
+}
+
+export interface WhatsAppInteractiveData {
+  buttons?: WhatsAppInteractiveButton[];
+  sections?: WhatsAppInteractiveListSection[];
+  button_label?: string;
+}
+
 export interface WhatsAppMessage {
   id: string;
   session_id: string;
@@ -436,12 +458,20 @@ export interface WhatsAppMessage {
   wa_message_id?: string | null;
   role: WhatsAppMessageRole;
   content: string;
-  type: 'text' | 'image' | 'audio' | 'document' | 'sticker';
+  type:
+    | 'text'
+    | 'image'
+    | 'audio'
+    | 'document'
+    | 'sticker'
+    | 'buttons'
+    | 'list';
   media_url?: string | null;
+  interactive_data?: WhatsAppInteractiveData | null;
   status: WhatsAppMessageStatus;
   sent_by: WhatsAppMessageSentBy;
   error_detail?: string | null;
-  created_at: number;   // epoch ms
+  created_at: number; // epoch ms
 }
 
 export interface WhatsAppStats {
